@@ -1,0 +1,26 @@
+# EDC+ benchmark requirements
+# Requires its own conda environment (Python 3.9)
+# Based on the EDC framework: https://arxiv.org/abs/2404.03868
+#
+# Setup:
+#   conda create -n edc python=3.9
+#   conda activate edc
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+#   pip install -r requirements/benchmarks/edc-plus.txt
+
+transformers>=4.40,<4.50
+sentence-transformers>=3.0,<4.0
+openai>=1.0
+accelerate>=0.29
+datasets>=2.12
+scikit-learn>=1.5
+scipy>=1.13
+nltk>=3.8
+pandas>=2.2
+numpy>=1.26
+tqdm
+requests
+pydantic>=2.0
+beautifulsoup4
+lxml
+unidecode

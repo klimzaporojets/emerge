@@ -1,0 +1,11 @@
+{
+  "input_dataset_base_path": "",
+  "output_base_dir": "",
+  "wrapper_root": "./src/benchmarks/wrappers/",
+  "models": [
+    {
+      "name": "edc_plus",
+      "edc_config": "config/benchmarks/s02_run_benchmarks/edc_plus_zs_gpt_5_1/edc_config.json"
+    }
+  ]
+}

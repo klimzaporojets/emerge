@@ -1,0 +1,7 @@
+You are given the following text:
+##chunk##
+
+Does the text contain information that explicitly or implicitly (the text provides some hints), directly or indirectly represents the following triple? Use common sense but not the knowledge that can not be inferred from the text above.
+##triples_string##
+
+Answer "YES" if the text above explicitly or implicitly states or implies the given triple, or answer "NO" otherwise. Follow your "YES" or "NO" answer with a brief explanation.

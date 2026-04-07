@@ -1,0 +1,7 @@
+You are given the following text:
+##chunk##
+
+Can the following triples be directly or indirectly (the text provides some hints) inferred from the text? Use common sense but not the knowledge that can not be inferred from the text above.
+##triples_string##
+
+Write a numbered list with the triples above, where each of the triples is followed by YES if the triple is represented in the text, and NO otherwise. Follow your "YES" or "NO" answer for each of the triples with a brief explanation.

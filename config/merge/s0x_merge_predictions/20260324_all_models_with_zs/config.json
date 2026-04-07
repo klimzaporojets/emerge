@@ -1,0 +1,124 @@
+{
+  "_input_main_dataset": "most likely the complete dataset, but can also be the subsampled dataset or any other TO which all the others will merge",
+  "input_main_dataset_path": "/path/to/storage/wikipedia-processing/output/experiments/s07_subsample_dataset/20251203_tiny/",
+  "output_merged_dataset_path": "/path/to/storage/emerge/output/experiments/s0x_merge_predictions/20260324_all_models_with_zs/",
+  "input_other_datasets_paths": [
+    {
+      "dataset_title": "llm llama 405 assessment prompt v1",
+      "input_dataset_path": "/path/to/storage/wikipedia-processing/output/experiments/s05_generate_dataset_with_llm/20251216_v8_llama_405b_v1_subsampled_dataset_reinput_1/llm_assessed/",
+      "merge_predictions": false
+    },
+    {
+      "dataset_title": "human assessments",
+      "input_dataset_path": "/path/to/storage/wikipedia-processing/output/experiments/s09_annotate_dataset/20250916/solved_disagreements/",
+      "merge_predictions": false
+    },
+    {
+      "dataset_title": "edc-plus azure_ai/Mistral-small predictions",
+      "input_dataset_path": "/path/to/storage/benchmarks/output/edc/emerge_shuffled/20260110_mistral_24b_azure_tiny/last_processed/",
+      "_input_dataset_path": "/path/to/storage/benchmarks/output/edc/emerge_shuffled/20260110_mistral_24b_azure_tiny/last_processed/",
+      "merge_predictions": true,
+      "predictions_model_name": "edc-plus-azure_ai/Mistral-small",
+      "predictions_model_type": "edc",
+      "canonicalize": false
+    },
+    {
+      "dataset_title": "edc-plus azure_ai/Mistral-Large-2411 predictions",
+      "input_dataset_path": "/path/to/storage/benchmarks/output/edc/emerge_shuffled/20260110_mistral_large_azure_tiny/last_processed/",
+      "_input_dataset_path": "/path/to/storage/benchmarks/output/edc/emerge_shuffled/20260110_mistral_large_azure_tiny/last_processed/",
+      "merge_predictions": true,
+      "predictions_model_name": "edc-plus-azure_ai/Mistral-Large-2411",
+      "predictions_model_type": "edc",
+      "canonicalize": false
+    },
+    {
+      "dataset_title": "relik-oie predictions",
+      "input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s01_run_benchmarks/20250917/relik-open_ie-large-rel-embeddings/results/",
+      "_input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s01_run_benchmarks/20250917/relik-open_ie-large-rel-embeddings/results/",
+      "merge_predictions": true,
+      "predictions_model_name": "relik-oie",
+      "predictions_model_type": "relik"
+    },
+    {
+      "dataset_title": "relik-cie predictions",
+      "input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s01_run_benchmarks/20250917/relik-cie-large-rel-embeddings/results/",
+      "_input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s01_run_benchmarks/20250917/relik-cie-large-rel-embeddings/results/",
+      "merge_predictions": true,
+      "predictions_model_name": "relik-cie",
+      "predictions_model_type": "relik"
+    },
+    {
+      "dataset_title": "kg-gen azure_ai/Mistral-small predictions",
+      "input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s02_run_benchmarks_v2/20260112_slurm_tiny/20260111_kggen_mistral_small/kggen_mistral_small/",
+      "_input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s02_run_benchmarks_v2/20260112_slurm_tiny/20260111_kggen_mistral_small/kggen_mistral_small/",
+      "merge_predictions": true,
+      "predictions_model_name": "kg-gen/azure_ai/Mistral-small",
+      "predictions_model_type": "kg-gen"
+    },
+    {
+      "dataset_title": "kg-gen azure_ai/Mistral-Large-2411 predictions",
+      "input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s02_run_benchmarks_v2/20260112_slurm_tiny/20260111_kggen_mistral_large/kggen_mistral_large/",
+      "_input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s02_run_benchmarks_v2/20260112_slurm_tiny/20260111_kggen_mistral_large/kggen_mistral_large/",
+      "merge_predictions": true,
+      "predictions_model_name": "kg-gen/azure_ai/Mistral-Large-2411",
+      "predictions_model_type": "kg-gen"
+    },
+    {
+      "dataset_title": "rakg azure_ai/Mistral-small predictions",
+      "input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s02_run_benchmarks_v2/20260112_slurm_tiny/20260112_rakg_mistral_small/rakg_mistral_small/",
+      "_input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s02_run_benchmarks_v2/20260112_slurm_tiny/20260112_rakg_mistral_small/rakg_mistral_small/",
+      "merge_predictions": true,
+      "predictions_model_name": "rakg/azure_ai/Mistral-small",
+      "predictions_model_type": "rakg"
+    },
+    {
+      "dataset_title": "rakg azure_ai/Mistral-Large-2411 predictions",
+      "input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s02_run_benchmarks_v2/20260112_slurm_tiny/20260112_rakg_mistral_large/rakg_mistral_large/",
+      "_input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s02_run_benchmarks_v2/20260112_slurm_tiny/20260112_rakg_mistral_large/rakg_mistral_large/",
+      "merge_predictions": true,
+      "predictions_model_name": "rakg/azure_ai/Mistral-Large-2411",
+      "predictions_model_type": "rakg"
+    },
+    {
+      "dataset_title": "rebel predictions",
+      "input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s02_run_benchmarks_v2/20260112_slurm_tiny/20260112_rebel/rebel/",
+      "_input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s02_run_benchmarks_v2/20260112_slurm_tiny/20260112_rebel/rebel/",
+      "merge_predictions": true,
+      "predictions_model_name": "rebel",
+      "predictions_model_type": "rebel"
+    },
+    {
+      "dataset_title": "edc-plus open-ai/gpt-5.1 predictions canonicalized",
+      "input_dataset_path": "/path/to/storage/benchmarks/output/edc/emerge_shuffled/20260115_test_set_tiny/20260123_gpt_5_1_w_canonicalization/last_processed/",
+      "_input_dataset_path": "/path/to/storage/benchmarks/output/edc/emerge_shuffled/20260115_test_set_tiny/20260123_gpt_5_1_w_canonicalization/last_processed/",
+      "merge_predictions": true,
+      "predictions_model_name": "edc-plus-open-ai/gpt-5.1/non-canonicalized",
+      "canonicalize": false,
+      "predictions_model_type": "edc"
+    },
+    {
+      "dataset_title": "kg-gen azure/gpt5.1 predictions",
+      "input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s02_run_benchmarks_v2/20260112_slurm_tiny/20260115_kggen_gpt_5_1/kggen/",
+      "_input_dataset_path": "/path/to/storage/benchmarks/output/experiments/s02_run_benchmarks_v2/20260112_slurm_tiny/20260115_kggen_gpt_5_1/kggen/",
+      "merge_predictions": true,
+      "predictions_model_name": "kg-gen/azure/gpt5.1",
+      "predictions_model_type": "kg-gen"
+    },
+    {
+      "dataset_title": "edc-plus ZS GPT 5.1 predictions",
+      "input_dataset_path": "/path/to/storage/benchmarks/output/edc/emerge_shuffled/20260123_gpt_5_1_no_few_shot_examples/last_processed/",
+      "merge_predictions": true,
+      "predictions_model_name": "edc-plus-zshot-open_ai/GPT-5_1",
+      "predictions_model_type": "edc",
+      "canonicalize": false
+    },
+    {
+      "dataset_title": "edc-plus ZS Mistral-Large-2411 predictions",
+      "input_dataset_path": "/path/to/storage/benchmarks/output/edc/emerge_shuffled/20260115_mistral_large_no_few_shot_examples/last_processed/",
+      "merge_predictions": true,
+      "predictions_model_name": "edc-plus-zshot-azure_ai/Mistral-Large-2411",
+      "predictions_model_type": "edc",
+      "canonicalize": false
+    }
+  ]
+}

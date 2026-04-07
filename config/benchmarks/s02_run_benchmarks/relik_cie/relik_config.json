@@ -1,0 +1,105 @@
+{
+  "input_dataset_base_path": "./data/evaluation_set/",
+  "display_score_every": 1,
+  "load_page_title_to_qid_mapping": true,
+  "output_base_dir": "./output/s02_run_benchmarks/relik_cie/",
+  "last_processed_base_dir": "./output/s02_run_benchmarks/relik_cie/",
+  "task": "BOTH",
+  "benchmark_models": [
+    {
+      "name": "relik-cie-large",
+      "config_name": "relik-ie/relik-cie-large",
+      "cache_dir": "./output/cache/",
+      "entity_index_base_path": "/path/to/storage/wikipedia-processing/output/experiments/s08_extract_relik_index/20250506_slurm/indexes-e5-small-v2-wikipedia-matryoshka/",
+      "relation_index_base_path": "./data/indices/relik_edc_relation_indexes/",
+      "entity_index_precision": "16",
+      "relation_index_precision": "16",
+      "output_dir": "relik-cie-large-rel-embeddings/results/",
+      "last_processed_dir": "relik-cie-large-rel-embeddings/last_processed/",
+      "batch_size": 100,
+      "task": "BOTH",
+      "snapshots": [
+        {
+          "dataset_path": "snapshot_2019-01-01",
+          "entity_index_path": "2019-01-01",
+          "relation_index_path": "2019-01-01",
+          "dataset_alias": "2019-10-01",
+          "entity_index_alias": "2019-01-01_small",
+          "relation_index_alias": "2019-01-01_small"
+        },
+        {
+          "dataset_path": "snapshot_2020-01-01",
+          "entity_index_path": "2020-01-01",
+          "relation_index_path": "2020-01-01",
+          "dataset_alias": "2020-01-01",
+          "entity_index_alias": "2020-01-01_small",
+          "relation_index_alias": "2020-01-01_small"
+        },
+        {
+          "dataset_path": "snapshot_2021-01-01",
+          "entity_index_path": "2021-01-01",
+          "relation_index_path": "2021-01-01",
+          "dataset_alias": "2021-01-01",
+          "entity_index_alias": "2021-01-01_small",
+          "relation_index_alias": "2021-01-01_small"
+        },
+        {
+          "dataset_path": "snapshot_2022-01-01",
+          "entity_index_path": "2022-01-01",
+          "relation_index_path": "2022-01-01",
+          "dataset_alias": "2022-01-01",
+          "entity_index_alias": "2022-01-01_small",
+          "relation_index_alias": "2022-01-01_small"
+        },
+        {
+          "dataset_path": "snapshot_2023-01-01",
+          "entity_index_path": "2023-01-01",
+          "relation_index_path": "2023-01-01",
+          "dataset_alias": "2023-01-01",
+          "entity_index_alias": "2023-01-01_small",
+          "relation_index_alias": "2023-01-01_small"
+        },
+        {
+          "dataset_path": "snapshot_2024-01-01",
+          "entity_index_path": "2024-01-01",
+          "relation_index_path": "2024-01-01",
+          "dataset_alias": "2024-01-01",
+          "entity_index_alias": "2024-01-01_small",
+          "relation_index_alias": "2024-01-01_small"
+        },
+        {
+          "dataset_path": "snapshot_2024-04-01",
+          "entity_index_path": "2024-04-01",
+          "relation_index_path": "2024-04-01",
+          "dataset_alias": "2024-04-01",
+          "entity_index_alias": "2024-04-01_small",
+          "relation_index_alias": "2024-04-01_small"
+        },
+        {
+          "dataset_path": "snapshot_2024-07-01",
+          "entity_index_path": "2024-07-01",
+          "relation_index_path": "2024-07-01",
+          "dataset_alias": "2024-07-01",
+          "entity_index_alias": "2024-07-01_small",
+          "relation_index_alias": "2024-07-01_small"
+        },
+        {
+          "dataset_path": "snapshot_2024-10-01",
+          "entity_index_path": "2024-10-01",
+          "relation_index_path": "2024-10-01",
+          "dataset_alias": "2024-10-01",
+          "entity_index_alias": "2024-10-01_small",
+          "relation_index_alias": "2024-10-01_small"
+        },
+        {
+          "dataset_path": "snapshot_2025-01-01",
+          "entity_index_path": "2025-01-01",
+          "relation_index_path": "2025-01-01",
+          "dataset_alias": "2025-01-01",
+          "entity_index_alias": "2025-01-01_small",
+          "relation_index_alias": "2025-01-01_small"
+        }
+      ]
+    }
+  ]
+}

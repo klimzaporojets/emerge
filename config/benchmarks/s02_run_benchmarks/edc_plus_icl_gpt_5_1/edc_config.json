@@ -1,0 +1,95 @@
+{
+  "wait_for_restart_time": 400,
+  "restart_apptainer_script_name": null,
+  "cuda_device_apptainer": 1,
+  "use_restart_script": true,
+  "run_canonicalizer": false,
+  "llm": {
+    "base_url": "https://ai-research-proxy.azurewebsites.net",
+    "backend": "http",
+    "model": "azure/gpt-5.1",
+    "concurrency": 16,
+    "timeout": 300,
+    "api_key_env": "OPENAI_API_KEY",
+    "api_version": "v1",
+    "mode": "completion",
+    "model_max_context": null
+  },
+  "generation_profiles": {
+    "GEN_OIE": {
+      "temperature": 0.2,
+      "max_new_tokens": 2048
+    },
+    "GEN_SD": {
+      "temperature": 0.7,
+      "max_new_tokens": 2048
+    },
+    "GEN_SC_VERIFY": {
+      "temperature": 0.1,
+      "max_new_tokens": 6
+    }
+  },
+  "oie_llm": null,
+  "oie_few_shot_example_file_path": "./few_shot_examples/emerge/oie_few_shot_examples.txt",
+  "oie_prompt_template_file_path": "./prompt_templates_emerge/oie_template_no_update.txt",
+  "sd_llm": null,
+  "sd_few_shot_example_file_path": "./few_shot_examples/emerge/sd_few_shot_examples.txt",
+  "sd_prompt_template_file_path": "./prompt_templates_emerge/sd_template.txt",
+  "sc_llm": null,
+  "ee_llm": null,
+  "enrich_schema": false,
+  "sc_prompt_template_file_path": "./prompt_templates_emerge/sc_template.txt",
+  "sc_embedder": "intfloat/e5-mistral-7b-instruct",
+  "sr_embedder": "intfloat/e5-mistral-7b-instruct",
+  "sr_adapter_path": null,
+  "refinement_iterations": 0,
+  "oie_refine_prompt_template_file_path": "./prompt_templates_emerge/oie_r_template_no_update.txt",
+  "oie_refine_few_shot_example_file_path": "./few_shot_examples/emerge/oie_few_shot_refine_examples.txt",
+  "ee_prompt_template_file_path": "./prompt_templates_emerge/ee_template.txt",
+  "ee_few_shot_example_file_path": "./few_shot_examples/emerge/ee_few_shot_examples.txt",
+  "em_prompt_template_file_path": "./prompt_templates_emerge/em_template.txt",
+  "base_input_dir": "./data/evaluation_set/",
+  "base_input_dir_last_processed": "./output/s02_run_benchmarks/edc_plus_icl_gpt_5_1/last_processed/",
+  "base_target_schema_dir": "./data/indices/relik_edc_relation_indexes/",
+  "base_relations_cache_dir": "./output/caches/edc/relations/",
+  "base_output_dir": "./output/s02_run_benchmarks/edc_plus_icl_gpt_5_1/last_processed/",
+  "snapshots_to_predict": [
+    {
+      "input_dir": "snapshot_2019-01-01",
+      "target_schema_path": "2019-01-01/documents.jsonl",
+      "cache_path": "relations-dict-2019-01-01.pickle"
+    },
+    {
+      "input_dir": "snapshot_2020-01-01",
+      "target_schema_path": "2020-01-01/documents.jsonl",
+      "cache_path": "relations-dict-2020-01-01.pickle"
+    },
+    {
+      "input_dir": "snapshot_2021-01-01",
+      "target_schema_path": "2021-01-01/documents.jsonl",
+      "cache_path": "relations-dict-2021-01-01.pickle"
+    },
+    {
+      "input_dir": "snapshot_2022-01-01",
+      "target_schema_path": "2022-01-01/documents.jsonl",
+      "cache_path": "relations-dict-2022-01-01.pickle"
+    },
+    {
+      "input_dir": "snapshot_2023-01-01",
+      "target_schema_path": "2023-01-01/documents.jsonl",
+      "cache_path": "relations-dict-2023-01-01.pickle"
+    },
+    {
+      "input_dir": "snapshot_2024-01-01",
+      "target_schema_path": "2024-01-01/documents.jsonl",
+      "cache_path": "relations-dict-2024-01-01.pickle"
+    },
+    {
+      "input_dir": "snapshot_2025-01-01",
+      "target_schema_path": "2025-01-01/documents.jsonl",
+      "cache_path": "relations-dict-2025-01-01.pickle"
+    }
+  ],
+  "input_parser": "tt2kg",
+  "schema_parser": "tt2kg"
+}

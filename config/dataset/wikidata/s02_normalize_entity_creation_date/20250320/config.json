@@ -1,0 +1,7 @@
+{
+  "path_wikidata_page": "/path/to/storage/wiki-dump-downloader/experiments/s01_download_wikidata_dump/20250201/pagetable/wikidatawiki-20250201-page.sql.gz",
+  "path_redirects": "/path/to/storage/wiki-dump-downloader/experiments/s01_download_wikidata_dump/20250201/redirecttable/wikidatawiki-20250201-redirect.sql.gz",
+  "caches_dir": "/path/to/storage/wikidata-processing/caches/20250201/",
+  "output_dir_data": "/path/to/storage/wikidata-processing/output/experiments/s02_normalize_entity_creation_date/20250201/normalized_creation_date/",
+  "path_extracted_entities": "/path/to/storage/wikidata-processing/output/experiments/s01_history_links_extraction/20260311/generated_history_entities/"
+}

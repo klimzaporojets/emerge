@@ -1,0 +1,11 @@
+# KG-GEN benchmark requirements
+# Requires its own conda environment (Python 3.12)
+#
+# Setup:
+#   conda create -n kggen python=3.12
+#   conda activate kggen
+#   pip install -r requirements/benchmarks/kggen.txt
+
+kg-gen>=0.4.0
+openai>=1.0
+tqdm

@@ -1,0 +1,38 @@
+{
+  "input_annotation_paths": [
+    "./data/annotation/"
+  ],
+  "tkgu_operations_to_check": [
+    "x-triples",
+    "e-triples",
+    "ee-triples",
+    "d-triples",
+    "ee-kg-triples"
+  ],
+  "human_annotators": [
+    {
+      "annotator": "annotator_1",
+      "alias": "H1"
+    },
+    {
+      "annotator": "annotator_2",
+      "alias": "H2"
+    }
+  ],
+  "llms_to_compare": {
+    "triple_assertion": [
+      "Meta-Llama-3.1-405B"
+    ],
+    "triple_deprecation": [
+      "Meta-Llama-3.1-405B"
+    ]
+  },
+  "_llms_to_compare": {
+    "triple_assertion": [
+      "Meta-Llama-3.1-405B_prompt_v2"
+    ],
+    "triple_deprecation": [
+      "Meta-Llama-3.1-405B_prompt_v2"
+    ]
+  }
+}

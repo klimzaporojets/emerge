@@ -1,0 +1,26 @@
+# EMERGE dataset creation pipeline requirements
+# Extends core requirements — install core.txt first
+#
+# Install:
+#   pip install -r requirements/core.txt
+#   pip install -r requirements/dataset.txt
+
+# Graph processing (for s04 snippet selection)
+torch_geometric
+
+# Text processing
+tiktoken
+sentencepiece
+mwparserfromhell
+
+# API services (for s03/s08 FastAPI services)
+fastapi
+uvicorn
+requests
+
+# File handling
+psutil
+py7zr
+
+# NLTK data (run after install):
+#   python -c "import nltk; nltk.download('words'); nltk.download('punkt'); nltk.download('punkt_tab')"

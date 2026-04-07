@@ -1,0 +1,51 @@
+{
+  "input_dir": "/path/to/storage/wikipedia-processing/output/experiments/s05_generate_dataset_with_llm_v8/20250830_v8_llama405b_w_deprecate/dataset",
+  "output_tmp_dir": "/path/to/storage/wikipedia-processing/output/experiments/s07_reduce_duplicates/deleteme_20250910_tmp",
+  "output_dir": "/path/to/storage/wikipedia-processing/output/experiments/s07_reduce_duplicates/20250910/",
+  "input_relation_dictionaries": "/path/to/storage/wikipedia-processing/output/experiments/s08_extract_relik_index/20250502/indexes-e5-small-v2-wikipedia-relations/",
+  "max_duplicates_per_delta": 10000000,
+  "pick_random_duplicates": false,
+  "maximum_jaccard_similarity": 0.50,
+  "minimum_edit_distance": 0.20,
+  "assessor_mappings": {
+    "Llama-8B": "Meta-Llama-3.1-8B"
+  },
+  "known_assessors": [
+    "Meta-Llama-3.1-8B",
+    "Meta-Llama-3.1-405B"
+  ],
+  "_llm_assessor_addition_triples": "Llama-8B",
+  "llm_assessor_addition_triples": "Meta-Llama-3.1-8B",
+  "llm_assessor_deprecation_triples": "Meta-Llama-3.1-405B",
+  "prompt_type_to_assessors": {
+    "without_qualifiers":
+    {
+      "triple_assertion": ["Meta-Llama-3.1-8B"],
+      "triple_deprecation": ["Meta-Llama-3.1-8B", "Meta-Llama-3.1-405B"]
+    },
+    "with_qualifiers":
+    {
+      "triple_assertion": ["Meta-Llama-3.1-8B"],
+      "triple_deprecation": ["Meta-Llama-3.1-405B"]
+    }
+  },
+  "min_token_length": 30,
+  "max_jaccard_similarity": 0.50,
+  "min_edit_distance": 0.20,
+  "preliminary_pass": {
+    "same_anchor": {
+      "long_text_cut": 2500,
+      "min_edit_distance_short_text": 0.15,
+      "min_edit_distance_long_text": 0.25,
+      "min_len_ratio_short_text": 0.85,
+      "min_len_ratio_long_text": 0.70,
+      "ml_edit_distance_short_text": 0.05,
+      "ml_edit_distance_long_text": 0.10
+    },
+    "different_anchor": {
+      "min_len_ratio": 0.98,
+      "min_edit_distance": 0.05
+    }
+  },
+  "remove_llm_prompt_logs": false
+}

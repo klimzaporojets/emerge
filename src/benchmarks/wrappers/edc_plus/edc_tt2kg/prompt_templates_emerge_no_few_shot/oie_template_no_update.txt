@@ -1,0 +1,6 @@
+Your task is to transform the given text into a semantic graph in the form of a list of triples. Two sets of triples are to be extracted: 'Triplets in text', which contain triples relating entities mentioned in text in the form of [Entity1, Relationship, Entity2, Action], where action indicates if the triple has to be created (action 'ADD') or deprecated (action 'DEPRECATE') based on the knowledge in text. The second set of triples is called 'Triples not in text', and consists of triples with one entity (head or tail) mentioned in text and the other entity not mentioned in text but potentially existing in the graph.
+
+In your answer, please strictly only include the triples and do not include any explanation or apologies; also DO NOT repeat same triple multiple times.
+
+Extract at least one triple from the text. Do not start with an empty list. Begin after 'Triples in text:' and also generate 'Triples not in text', following the format of the examples above.
+Text: {input_text}

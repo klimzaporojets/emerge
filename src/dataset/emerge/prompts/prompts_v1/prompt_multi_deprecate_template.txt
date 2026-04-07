@@ -1,0 +1,7 @@
+You are given the following text:
+##chunk##
+
+Does this text imply that the following triples are no longer valid or do not hold at the moment the text was written?
+##triples_string##
+
+Write a numbered list with the triples above, where each of the triples is followed by YES if the text implies that the triple is no longer valid or do not hold, and NO otherwise. Follow your "YES" or "NO" answer for each of the triples with a brief explanation.

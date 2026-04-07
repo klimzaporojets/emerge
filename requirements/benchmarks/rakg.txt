@@ -1,0 +1,15 @@
+# RAKG benchmark requirements
+# Requires its own conda environment (Python 3.11)
+# Also requires the external RAKG repository: https://github.com/RUC-NLPIR/RAKG
+#
+# Setup:
+#   conda create -n rakg python=3.11
+#   conda activate rakg
+#   git clone https://github.com/RUC-NLPIR/RAKG.git
+#   pip install -r requirements/benchmarks/rakg.txt
+#   # Also install RAKG's own requirements:
+#   pip install -r RAKG/requirements.txt
+
+openai>=1.0
+tqdm
+requests

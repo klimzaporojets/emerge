@@ -1,0 +1,20 @@
+{
+  "input_dataset_base_path": "./data/evaluation_set/",
+  "output_base_dir": "./output/s02_run_benchmarks/20260114_rakg_mistral_large/",
+  "wrapper_root": "./src/benchmarks/wrappers/",
+  "models": [
+    {
+      "name": "rakg",
+      "output_path": "rakg_mistral_large",
+      "cache_path": "./output/caches/rakg/rakg_cache.jsonl",
+      "openai_model": "azure_ai/Mistral-Large-2411",
+      "openai_similarity_model": "azure_ai/Mistral-Large-2411",
+      "openai_embedding_model": "Qwen/Qwen3-Embedding-8B",
+      "max_workers": 8,
+      "base_url": "https://ai-research-proxy.azurewebsites.net",
+      "base_url_embedding_model": "https://willma.hpc-cluster/api/v0/",
+      "batch_size": 50,
+      "use_similarity": false
+    }
+  ]
+}

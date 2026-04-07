@@ -1,0 +1,4 @@
+{
+  "input_path": "/path/to/storage/wikidata-processing/output/experiments/s04_extract_relik_index_properties/20250502_slurm/dictionary_cat/",
+  "output_path": "/path/to/storage/wikidata-processing/output/experiments/s04_extract_relik_index_properties/20250502_slurm/dictionary_cat_v2/"
+}

@@ -1,0 +1,20 @@
+{
+  "wiki_history_directory": "/path/to/storage/wiki-dump-downloader/experiments/s01_download_wikidata_dump/20250201/metahistory7zdump/",
+  "input_format": "7zip",
+  "output_dir": "/path/to/storage/wikidata-processing/output/experiments/s04_extract_relik_index_properties/20250502_slurm/",
+  "process_file_queue_size": 10000,
+  "queues_timeout": 1,
+  "caches_dir": "/path/to/storage/wikipedia-processing/caches/20250201/",
+  "snapshots": [
+    "2019-01-01",
+    "2020-01-01",
+    "2021-01-01",
+    "2022-01-01",
+    "2023-01-01",
+    "2024-01-01",
+    "2024-04-01",
+    "2024-07-01",
+    "2024-10-01",
+    "2025-01-01"
+  ]
+}

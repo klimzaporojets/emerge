@@ -1,0 +1,18 @@
+{
+  "caches_dir": "/path/to/storage/wikidata-processing/caches/20250201/",
+  "output_dir_data": "/path/to/storage/wikidata-processing/output/experiments/s03_get_kg_snapshot/20250320/",
+  "path_extracted_history_triples_wdata": "/path/to/storage/wikidata-processing/output/experiments/s02_normalize_history_graph/20250320/s02c_normalized_filtered_sorted_cat/s02a_generated_history_triples_filtered/",
+  "path_property_labels": "/path/to/storage/wikidata-processing/output/experiments/s03_get_wikidata_labels/20250321/map_property_id_to_label.tsv",
+  "wdata_entity_creation_date_path": "/path/to/storage/wikidata-processing/output/experiments/s02_normalize_entity_creation_date/20250201/normalized_creation_date/generated_entities/output_all_entities.csv",
+  "heads_in_wikipedia": false,
+  "tails_in_wikipedia": false,
+  "qids_in_both_wdata_and_wpedia_parsed_entities": false,
+  "precision_wdata": "milliseconds",
+  "output_with_labels": false,
+  "wpedia_entity_creation_date_path": "/path/to/storage/wikipedia-processing/output/experiments/s02_normalize_entity_creation_date/20250320/generated_entities/output_all_entities.csv",
+  "snapshot_timestamps": [
+    "2023-01-01",
+    "2024-01-01",
+    "2025-01-01"
+  ]
+}

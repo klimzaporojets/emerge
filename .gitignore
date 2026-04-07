@@ -1,0 +1,26 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.pkl
+*.pt
+*.sif
+target/
+*.log
+.ipynb_checkpoints/
+.idea/
+
+# Dataset files (hosted on HuggingFace, downloaded via scripts/download_data.sh)
+data/evaluation_set/
+data/annotation/
+data/kg_snapshots/
+
+# Output files
+output/
+
+# Private files (not for public release)
+_private/

@@ -1,0 +1,11 @@
+{
+  "path_wikidata_page": "/path/to/storage/wiki-dump-downloader/experiments/s01_download_wikidata_dump/20250201/pagetable/wikidatawiki-20250201-page.sql.gz",
+  "path_redirects": "/path/to/storage/wiki-dump-downloader/experiments/s01_download_wikidata_dump/20250201/redirecttable/wikidatawiki-20250201-redirect.sql.gz",
+  "caches_dir": "/path/to/storage/wikidata-processing/caches/20250201/",
+  "output_dir_data": "/path/to/storage/wikidata-processing/output/experiments/s02_normalize_history_graph/20250320/",
+  "path_extracted_history_triples": "/path/to/storage/wikidata-processing/output/experiments/s01_history_links_extraction/20260311/generated_history_triples/",
+  "path_extracted_history_entities": "/path/to/storage/wikidata-processing/output/experiments/s01_history_links_extraction/20260311/generated_history_entities/",
+  "stability_span": 168,
+  "stability_span_": "in hours, how much time should pass for a link to a particular target page to be considered stable",
+  "timestamp_precision": "milliseconds"
+}

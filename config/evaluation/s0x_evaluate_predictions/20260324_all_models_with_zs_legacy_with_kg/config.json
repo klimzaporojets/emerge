@@ -1,0 +1,120 @@
+{
+  "output_path": "./output/s0x_evaluate_predictions/20260324_all_models_with_zs_legacy_with_kg/wiki_eval_result.pkl",
+  "cache_path": "./output/s0x_evaluate_predictions/20260324_all_models_with_zs_legacy_with_kg/wiki_eval_result.pkl",
+  "input_dataset_path": "./data/evaluation_set/",
+  "llm_cache_flush_every": 5,
+  "load_results_from_cache": false,
+  "kg_snapshots_path": "./data/kg_snapshots/",
+  "snapshot_year_to_kg_file": {
+    "2019": "kg_snapshot_2019-01-01.tsv",
+    "2020": "kg_snapshot_2020-01-01.tsv",
+    "2021": "kg_snapshot_2021-01-01.tsv",
+    "2022": "kg_snapshot_2022-01-01.tsv",
+    "2023": "kg_snapshot_2023-01-01.tsv",
+    "2024": "kg_snapshot_2024-01-01.tsv",
+    "2025": "kg_snapshot_2025-01-01.tsv"
+  },
+  "models_to_evaluate": [
+    "relik-oie",
+    "relik-cie",
+    "edc-plus-azure_ai/Mistral-small",
+    "edc-plus-azure_ai/Mistral-Large-2411",
+    "edc-plus-open-ai/gpt-5.1/non-canonicalized",
+    "edc-plus-zshot-open_ai/GPT-5_1",
+    "edc-plus-zshot-azure_ai/Mistral-Large-2411",
+    "kg-gen/azure_ai/Mistral-small",
+    "kg-gen/azure_ai/Mistral-Large-2411",
+    "kg-gen/azure/gpt5.1",
+    "rakg/azure_ai/Mistral-small",
+    "rakg/azure_ai/Mistral-Large-2411",
+    "rebel"
+  ],
+  "models_to_report": [
+    "relik-oie",
+    "relik-cie",
+    "edc-plus-azure_ai/Mistral-small",
+    "edc-plus-azure_ai/Mistral-Large-2411",
+    "edc-plus-open-ai/gpt-5.1/non-canonicalized",
+    "edc-plus-zshot-open_ai/GPT-5_1",
+    "edc-plus-zshot-azure_ai/Mistral-Large-2411",
+    "kg-gen/azure_ai/Mistral-small",
+    "kg-gen/azure_ai/Mistral-Large-2411",
+    "kg-gen/azure/gpt5.1",
+    "rakg/azure_ai/Mistral-small",
+    "rakg/azure_ai/Mistral-Large-2411",
+    "rebel"
+  ],
+  "metrics_to_calculate": {
+    "cie": {},
+    "completeness": {
+      "similarity_models": [
+        {
+          "model": "all-mpnet-base-v2",
+          "model_alias": "all-mpnet-base-v2",
+          "device": "cuda",
+          "workers": 18,
+          "batch_size": 2048,
+          "max_records": -1,
+          "completeness_threshold": 0.9
+        }
+      ]
+    },
+    "entity_coverage": {
+      "similarity_models": [
+        {
+          "implementation_class": "sentence_transformer",
+          "model": "all-mpnet-base-v2",
+          "model_alias": "all-mpnet-base-v2",
+          "device": "cuda",
+          "workers": 18,
+          "batch_size": 2048,
+          "max_records": -1,
+          "shared_model_across_threads": false
+        },
+        {
+          "device": "cuda",
+          "implementation_class": "bert_scorer",
+          "model": "bert-base-uncased",
+          "model_alias": "bert-base",
+          "workers": 1,
+          "scorer_batch_size": 2048,
+          "scorer_nr_threads": 8,
+          "shared_model_across_threads": true
+        }
+      ]
+    },
+    "graph_judge": {
+      "similarity_bleu_rouge": {
+        "workers": 18
+      },
+      "similarity_models": [
+        {
+          "device": "cuda",
+          "implementation_class": "sentence_transformer",
+          "model": "sentence-transformers/all-mpnet-base-v2",
+          "model_alias": "st-all-mpnet-base-v2",
+          "workers": 18,
+          "data_batch_size": 32,
+          "scorer_batch_size": 1024,
+          "shared_model_across_threads": false
+        },
+        {
+          "device": "cuda",
+          "implementation_class": "bert_scorer",
+          "model": "bert-base-uncased",
+          "model_alias": "bert-base",
+          "workers": 1,
+          "data_batch_size": null,
+          "scorer_batch_size": 2048,
+          "scorer_nr_threads": 8,
+          "shared_model_across_threads": true
+        }
+      ]
+    }
+  },
+  "score_empty_predictions_as_zero": false,
+  "llm_assessors": {
+    "triple_assertion": "Meta-Llama-3.1-405B_prompt_v1",
+    "triple_deprecation": "Meta-Llama-3.1-405B_prompt_v1"
+  }
+}

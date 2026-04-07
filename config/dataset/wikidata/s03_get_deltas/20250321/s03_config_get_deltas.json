@@ -1,0 +1,51 @@
+{
+  "caches_dir": "/path/to/storage/wikidata-processing/caches/20250201/",
+  "output_dir_data": "/path/to/storage/wikidata-processing/output/experiments/s03_get_deltas_v3/20250321/",
+  "path_extracted_history_triples_wdata": "/path/to/storage/wikidata-processing/output/experiments/s02_normalize_history_graph/20250320/s02c_normalized_filtered_sorted_cat/s02a_generated_history_triples_filtered/",
+  "path_extracted_history_triples_wpedia": "/path/to/storage/wikipedia-processing/output/experiments/s02_history_links_normalization/20250320/normalized_filtered_sorted_cat/wikipedia_history_filtered/",
+  "path_wikipedia_wikidata_map": "/path/to/storage/wiki-dump-downloader/experiments/s01_download_wikipedia_dump/20250201/pagepropstable/enwiki-20250201-page_props.sql.gz",
+  "path_wikidata_labels": "/path/to/storage/wikidata-processing/output/experiments/s03_get_wikidata_labels/20250321/wikidata_canonical_names.tsv",
+  "path_property_labels": "/path/to/storage/wikidata-processing/output/experiments/s03_get_wikidata_labels/20250321/map_property_id_to_label.tsv",
+  "heads_in_wikipedia": true,
+  "tails_in_wikipedia": true,
+  "qids_in_both_wdata_and_wpedia_parsed_entities": true,
+  "volatile_only_changes_in_head": true,
+  "extract_disconnected_subgraphs": false,
+  "min_normalized_delta_nr_of_changes": 2.0,
+  "max_nr_of_delta_changed_entities": 1000,
+  "precision_wdata": "milliseconds",
+  "precision_wpedia": "seconds",
+  "min_nr_target_entities_per_page": 10,
+  "wpedia_entity_creation_date_path": "/path/to/storage/wikipedia-processing/output/experiments/s02_normalize_entity_creation_date/20250320/generated_entities/output_all_entities.csv",
+  "wdata_entity_creation_date_path": "/path/to/storage/wikidata-processing/output/experiments/s02_normalize_entity_creation_date/20250201/normalized_creation_date/generated_entities/output_all_entities.csv",
+  "fixed_timestamp_from": -1,
+  "fixed_timestamp_to": -1,
+  "__triple_removal_stability_offset_in_secs": 31536000,
+  "triple_removal_stability_offset_in_secs": 473040000,
+  "_triple_removal_stability_offset_in_secs": "How definite should be the removal, I think 1 year should be ok",
+  "delta_intervals_granularities": [
+    {
+      "granularity": "weekly",
+      "nr_delta_intervals": 5
+    }
+  ],
+  "__delta_intervals_start": [
+    1577833200,
+    1609455600,
+    1640991600,
+    1672527600
+  ],
+  "delta_intervals_start": [
+    "2019-01-01",
+    "2020-01-01",
+    "2021-01-01",
+    "2022-01-01",
+    "2023-01-01",
+    "2024-01-01",
+    "2024-04-01",
+    "2024-07-01",
+    "2024-10-01",
+    "2025-01-01"
+  ],
+  "_delta_intervals_start": "timestamps of the years"
+}

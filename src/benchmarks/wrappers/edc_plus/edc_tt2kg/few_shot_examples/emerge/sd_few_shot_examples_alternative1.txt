@@ -1,0 +1,87 @@
+Example 1:
+Text: Excerpt from the Wikipedia page describing Christopher Daniels: '''Daniel Christopher Covell''' (born March 24, 1970) is an American professional wrestler, best known by his ring name '''Christopher Daniels'''. He is currently signed with All Elite Wrestling (AEW). He is best known for his work in Ring of Honor (ROH).
+Triples: [['All Elite Wrestling', 'industry', 'Professional wrestling'], ['Ring of Honor', 'industry', 'Professional wrestling'], ['All Elite Wrestling', 'owned by', 'Shahid Khan'], ['All Elite Wrestling', 'country', 'United States'], ['All Elite Wrestling', 'legal form', 'Limited liability company'], ['All Elite Wrestling', 'legal form', 'Privately held company'], ['All Elite Wrestling', 'headquarters location', 'Jacksonville'], ['All Elite Wrestling', 'instance of', 'Business']]
+Relations: ['industry', 'owned by', 'country', 'legal form', 'headquarters location', 'instance of']
+Answer:
+industry: Specific industry of company or organization.
+owned by: Owner of the subject.
+country: Sovereign state that this item is in (not to be used for human beings).
+legal form: Legal form of an entity.
+headquarters location: City or town where an organization's headquarters is or has been situated.
+instance of: Type to which this subject corresponds/belongs. Different from "subclass of"; for example: K2 is an instance of mountain; volcanoes form a subclass of mountains, and the volcano is a type (instance) of volcanic landform.
+
+Example 2:
+Text: Excerpt from the Wikipedia page describing Joseph Ngute: '''Joseph Dion Ngute''' (born March 12, 1954) is a Cameroonian politician currently serving as the 9th Prime Minister of Cameroon, following his appointment in January 2019. He succeeded Philémon Yang, who had held the post since 2009.
+Triples: [['Joseph Ngute', 'position held', 'Prime Minister of Cameroon'], ['Philémon Yang', 'position held', 'Prime Minister of Cameroon'], ['List of prime ministers of Cameroon', 'is a list of', 'Prime Minister of Cameroon'], ['Prime Minister of Cameroon', 'country', 'Cameroon'], ['Prime Minister of Cameroon', 'officeholder', 'Philémon Yang'], ['Philémon Yang', 'country of citizenship', 'Cameroon'], ['Prime Minister of Cameroon', 'applies to jurisdiction', 'Cameroon'], ['Joseph Ngute', 'educated at', 'University of Warwick'], ['Joseph Ngute', 'place of birth', 'Ndian'], ['Joseph Ngute', 'instance of', 'human']]
+Relations: ['position held', 'is a list of', 'country', 'legal form', 'country of citizenship', 'officeholder', 'applies to jurisdiction', 'educated at', 'place of birth', 'instance of']
+Answer:
+position held: Subject currently or formerly holds the object position or public office	.
+is a list of: Common element between all listed items.
+country: Sovereign state that this item is in (not to be used for human beings).
+legal form: Legal form of an entity.
+country of citizenship: The object is a country that recognizes the subject as its citizen.
+officeholder: Function that serves as deputy/replacement of this function/office (scope/conditions vary depending on office).
+applies to jurisdiction: The item (institution, law, public office, public register, etc) or statement belongs to or has power over or applies to the value (a territorial jurisdiction: a country, state, municipality, etc).
+educated at: Educational institution attended by subject.
+place of birth: Most specific known birth location of a person, animal or fictional character.
+instance of: Type to which this subject corresponds/belongs. Different from "subclass of"; for example: K2 is an instance of mountain; volcanoes form a subclass of mountains, and the volcano is a type (instance) of volcanic landform.
+
+Example 3:
+Text: Excerpt from the Wikipedia page describing Magritte Award for Best Supporting Actress: The 1st Magritte Awards ceremony was held in 2011 with Christelle Cornil receiving the award for her role in ''Illegal''. As of the 2019 ceremony, Lucie Debay is the most recent winner in this category for her role in ''Our Struggles''.
+Triples: [['Our Struggles', 'cast member', 'Lucie Debay'], ['Illegal', 'cast member', 'Christelle Cornil'], ['8th Magritte Awards', 'followed by', '9th Magritte Awards'], ['9th Magritte Awards', 'follows', '8th Magritte Awards'], ['9th Magritte Awards', 'location', 'City of Brussels'], ['9th Magritte Awards', 'instance of', 'Awards ceremony'], ['9th Magritte Awards', 'part of', 'Magritte Awards']]
+Relations: ['cast member', 'followed by', 'follows', 'location', 'instance of', 'part of']
+Answer:
+cast member: Actor in the subject production [use "voice actor" for voice-only role] - [use "recorded participant" for non-fiction productions].
+followed by: Immediately following item in a series of which the subject is a part [if the subject has been replaced, e.g. political offices, use "replaced by"].
+follows: Immediately prior item in a series of which the subject is a part[if the subject has replaced the preceding item, e.g. political offices, use "replaces"].
+location: Location of the object, structure or event.
+instance of: Type to which this subject corresponds/belongs. Different from "subclass of"; for example: K2 is an instance of mountain; volcanoes form a "subclass of" mountains, and the volcano is a type (instance) of volcanic landform.
+part of: Object of which the subject is a part (if this subject is already part of object A which is a part of object B, then please only make the subject part of object A), inverse property of "has part".
+
+Example 4:
+Text: Excerpt from the Wikipedia page describing Ha! Ha! River (Saguenay River tributary): == Geography == The main hydrographic slopes near the Ha! Ha! River are: * North side: Baie des Ha! Ha!, Saguenay River; * East side: Huard Lake, Huard River, Cèdre River, Brébeuf Lake, Éternité Lake, Cazin River, Malbaie River; * South side: Chemin des Canots River, Porc-Épic River; * West side: rivière à Pierre, rivière à Mars, rivière à Mars North.
+Triples: [['Rivière Huard', 'mouth of the watercourse', 'Rivière Ha! Ha!'], ['Rivière Ha! Ha!', 'mouth of the watercourse', 'Saguenay River'], ['Saguenay River', 'tributary', 'Rivière Ha! Ha!'], ['Rivière Saint-Jean', 'origin of the watercourse', 'Brébeuf Lake'], ['Zec du Lac-Brébeuf', 'named after', 'Brébeuf Lake'], ['Brébeuf Lake', 'located in the administrative territorial entity', 'Saint-Félix-d'Otis'], ['Brébeuf Lake', 'named after', 'Jean de Brébeuf'], ['Brébeuf Lake', 'country', 'Canada'], ['Brébeuf Lake', 'outflows', 'Rivière Saint-Jean'], ['Brébeuf Lake', 'located in protected area', 'Zec du Lac-Brébeuf'], ['Brébeuf Lake', 'instance of', 'lake'], ['Rivière Huard', 'located in the administrative territorial entity', 'Ferland-et-Boilleau'], ['Rivière Huard', 'country', 'Canada'], ['Rivière Huard', 'instance of', 'River'], ['Rivière Porc-Épic', 'located in the administrative territorial entity', 'Lac-Pikauba'], ['Rivière Porc-Épic', 'country', 'Canada'], ['Rivière Porc-Épic', 'instance of', 'river'], ['Rivière du Chemin des Canots', 'located in the administrative territorial entity', 'Lac-Pikauba'], ['Rivière du Chemin des Canots', 'country', 'Canada'], ['Rivière du Chemin des Canots', 'located in protected area', 'Grands-Jardins National Park'], ['Rivière du Chemin des Canots', 'located in protected area', 'Laurentides Wildlife Reserve'], ['Rivière du Chemin des Canots', 'instance of', 'river']]
+Relations: ['mouth of the watercourse', 'tributary', 'origin of the watercourse', 'named after', 'country', 'outflows', 'located in protected area', 'instance of', 'located in the administrative territorial entity']
+Answer:
+mouth of the watercourse: The body of water to which the watercourse drains.
+tributary: Watercourse that flows into an other one (for lake inflows use "inflows").
+origin of the watercourse: Main source of a river, stream or lake.
+named after: Entity or event that inspired the subject's name, or namesake (in at least one language).
+country: Sovereign state that this item is in (not to be used for human beings).
+outflows: Rivers and other outflows waterway names. If evaporation or seepage are notable outflows, they may be included. Some terms may not be place names, e.g. evaporation.
+located in protected area: Protected area where a place or geographical feature is physically located.
+instance of: The subject entity is an instance or example of the type specified by the object entity.
+located in the administrative territorial entity: The item is located on the territory of the following administrative entity.
+
+Example 5:
+Text: Excerpt from the Wikipedia page describing Melih Bulu: Bulu was appointed as the rector of Boğaziçi University by government with a decree on 1 January 2021. His appointment was controversial and subject to protests by hundreds of students, professors, and lecturers, and by NGOs. Prior to his position at Boğaziçi University, he was the rector of İstinye University and Haliç University and held faculty positions at Istanbul Commerce University and Istanbul Şehir University.
+Triples: [['Melih Bulu', 'occupation', 'Rector'], ['Melih Bulu', 'employer', 'Haliç University'], ['Melih Bulu', 'employer', 'Boğaziçi University'], ['Melih Bulu', 'significant event', '2021 Boğaziçi University protests'], ['2021 Boğaziçi University protests', 'has cause', 'Melih Bulu'], ['Melih Bulu', 'employer', 'İstinye University'], ['Melih Bulu', 'educated at', 'Middle East Technical University'], ['2021 Boğaziçi University protests', 'located in the administrative territorial entity', 'Ankara'], ['2021 Boğaziçi University protests', 'country', 'Turkey'], ['2021 Boğaziçi University protests', 'instance of', 'demonstration'], ['Melih Bulu', 'occupation', 'politician'], ['Melih Bulu', 'place of birth', 'Kırıkkale Province'], ['Melih Bulu', 'country of citizenship', 'Turkey'], ['Melih Bulu', 'instance of', 'human'], ['Melih Bulu', 'given name', 'Melih'], ['2021 Boğaziçi University protests', 'located in the administrative territorial entity', 'Istanbul'], ['2021 Boğaziçi University protests', 'instance of', 'protest']]
+Relations: ['occupation', 'employer', 'significant event', 'has cause', 'educated at', 'located in the administrative territorial entity', 'country', 'instance of', 'country of citizenship', 'given name']
+Answer:
+occupation: Occupation of a person; see also "field of work", "position held".
+employer: Person or organization for which the subject works or worked.
+significant event: Significant or notable events associated with the subject.
+has cause: Underlying cause, entity that ultimately resulted in this effect.
+educated at: Educational institution attended by subject.
+located in the administrative territorial entity: The item is located on the territory of the following administrative entity.
+country:  Sovereign state that this item is in (not to be used for human beings).
+instance of:  Type to which this subject corresponds/belongs. Different from "subclass of"; for example: K2 is an instance of mountain; volcanoes form a subclass of mountains, and the volcano is a type (instance) of volcanic landform.
+country of citizenship: The object is a country that recognizes the subject as its citizen.
+given name: First name or another given name of this person; values used with the property should not link disambiguations nor family names.
+
+Example 6:
+Text: Excerpt from the Wikipedia page describing Chairman of the Kuomintang: The '''Chairman of the Kuomintang''' is the leader of the Kuomintang party of the Republic of China. The position has previously been titled as President (1912–1914), Premier (1919–1925), Chairman of the Central Executive Committee (1925–1938), Director-General (1938–1975), and Chairman (from 1975). The post is currently held on an interim basis by Lin Rong-te, who assumed the post on 15 January 2020, following the resignation of Wu Den-yih. The Chairman is now directly elected by party members for a term of four years, and may be re-elected for a second term.
+Triples: [['Lin Rong-te', 'member of political party', 'Kuomintang'], ['Wu Den-yih', 'position held', 'Chairman of the Kuomintang'], ['Lin Rong-te', 'country of citizenship', 'Republic of China'], ['Ling Rong-te', 'position held', 'Chairman of the Kuomintang'], ['Kuomintang', 'chairperson', 'Wu Den-yih'], ['Kuomintang', 'office held by head of the organization', 'Chairman of the Kuomintang'], ['Wu Den-yih', 'member of political party', 'Kuomintang'], ['Kuomintang', 'country', 'Republic of China'], ['Chairman of the Kuomintang', 'organization directed by the office or position', 'Kuomintang'], ['Chairman of the Kuomintang', 'officeholder', 'Wu Den-yih'], ['Wu Den-yih', 'country of citizenship', 'Republic of China'], ['Ling Rong-te', 'place of birth', 'Hsinchu City'], ['Long Rong-te', 'occupation', 'businessperson'], ['Lin Rong-te', 'occupation', 'politician'], ['Lin Rong-te', 'instance of', 'human']]
+Relations: ['member of political party', 'position held', 'country of citizenship', 'chairperson', 'office held by head of the organization', 'country', 'organization directed by the office or position', 'officeholder', 'place of birth', 'occupation', 'instance of']
+Answer:
+member of political party: The political party of which a person is or has been a member or otherwise affiliated.
+position held: Subject currently or formerly holds the object position or public office.
+country of citizenship: The object is a country that recognizes the subject as its citizen.
+chairperson: Presiding member of an organization, group or body.
+office held by head of the organization: Position of the head of this item.
+country: Sovereign state that this item is in (not to be used for human beings).
+organization directed by the office or position: Organization which is directed by this office.
+officeholder: Function that serves as deputy/replacement of this function/office (scope/conditions vary depending on office).
+place of birth: Most specific known birth location of a person, animal or fictional character.
+occupation: occupation of a person; see also "field of work", "position held"
+instance of: Type to which this subject corresponds/belongs. Different from "subclass of"; for example: K2 is an instance of mountain; volcanoes form a subclass of mountains, and the volcano is a type (instance) of volcanic landform.

@@ -1,0 +1,12 @@
+{
+  "input_dataset_base_path": "",
+  "output_base_dir": "",
+  "wrapper_root": "./src/benchmarks/wrappers/",
+  "models": [
+    {
+      "name": "relik",
+      "relik_config": "config/benchmarks/s02_run_benchmarks/relik_oie/relik_config.json",
+      "device": "cuda"
+    }
+  ]
+}

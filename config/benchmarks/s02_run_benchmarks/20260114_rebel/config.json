@@ -1,0 +1,18 @@
+{
+  "input_dataset_base_path": "./data/evaluation_set/",
+  "output_base_dir": "./output/s02_run_benchmarks/20260114_rebel/",
+  "wrapper_root": "./src/benchmarks/wrappers/",
+  "models": [
+    {
+      "name": "rebel",
+      "output_path": "rebel",
+      "model": "Babelscape/rebel-large",
+      "batch_size": 100,
+      "max_workers": 1,
+      "cache_path": "./output/caches/rebel/rebel_cache.jsonl",
+      "device": "cuda",
+      "max_length": 512,
+      "num_beams": 3
+    }
+  ]
+}

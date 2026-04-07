@@ -1,0 +1,14 @@
+{
+  "input_dir": "/path/to/storage/wikipedia-processing/output/experiments/s07_subsample_dataset/20250910/",
+  "output_dir": "/path/to/storage/wikipedia-processing/output/experiments/s07_subsample_dataset/20251203_tiny/",
+  "nr_samples_per_delta": 100,
+  "min_nr_d_instances": 40,
+  "min_nr_ee_kg_instances": 40,
+  "min_nr_e_instances": 40,
+  "min_nr_ee_instances": 40,
+  "d_triple_llm_assessors_names_no_qualif": ["Meta-Llama-3.1-405B", "Meta-Llama-3.1-8B"],
+  "d_triple_llm_assessors_names_qualif": ["Meta-Llama-3.1-405B"],
+  "llm_ee_kg_assessors": ["Meta-Llama-3.1-8B"],
+  "llm_e_assessors": ["Meta-Llama-3.1-8B"],
+  "llm_ee_assessors": ["Meta-Llama-3.1-8B"]
+}

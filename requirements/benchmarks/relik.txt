@@ -1,0 +1,10 @@
+# ReLiK benchmark requirements
+# Uses the same conda environment as core (emerge)
+# GPU required
+#
+# Setup:
+#   conda activate emerge  # same as core environment
+#   pip install -r requirements/benchmarks/relik.txt
+
+relik>=1.0
+spacy>=3.5

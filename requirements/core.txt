@@ -1,0 +1,48 @@
+# EMERGE core requirements — evaluation, statistics, and merge pipelines
+# Python 3.10+ required
+#
+# Install:
+#   pip install -r requirements/core.txt
+
+# PyTorch (install separately first — adjust CUDA version for your system)
+# See https://pytorch.org for the right command
+# Example: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+torch>=2.0
+torchvision
+torchaudio
+
+# Evaluation metrics
+bert_score>=0.3.13
+rouge_score>=0.1.2
+sentence-transformers>=2.2
+
+# Argument parsing
+typed-argument-parser>=1.9
+
+# LLM client (used by evaluation LLM-as-a-judge and benchmark wrappers)
+unified-llm-client @ git+https://github.com/klimzaporojets/unified-llm-client.git@3698d79
+
+# NLP / ML
+spacy>=3.5
+transformers>=4.30
+huggingface_hub>=0.20
+scikit-learn>=1.2
+scipy>=1.10
+python-Levenshtein>=0.21
+
+# Statistics and annotation
+nltk>=3.8
+krippendorff>=0.6
+statsmodels>=0.14
+
+# Compression
+lz4>=4.0
+
+# Data handling
+pandas>=2.0
+numpy>=1.24
+matplotlib>=3.7
+tqdm>=4.65
+
+# Jupyter (for stats notebooks)
+jupyter

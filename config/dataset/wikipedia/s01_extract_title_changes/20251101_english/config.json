@@ -1,0 +1,7 @@
+{
+  "wiki_dump_dir": "/path/to/storage/wiki-dump-downloader/experiments/s01_download_wikipedia_dump/20251101_english/",
+  "path_wikipedia_page_info": "pagetable/enwiki-20251101-page.sql.gz",
+  "path_wikipedia_page_logs": "xmlpagelogsdump/",
+  "cache_dir": "/path/to/storage/wikipedia-processing/data/caches/wiki_history_reader/enwiki_20251101/",
+  "output_dir_data": "/path/to/storage/wikipedia-processing/experiments/s01_extract_title_changes/20251101_english/"
+}

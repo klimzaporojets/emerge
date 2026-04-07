@@ -1,0 +1,15 @@
+{
+  "input_candidate_snippets_dir": "/path/to/storage/wikipedia-processing/output/experiments/s03_obtain_textual_delta_snippets_v8/20250324/mentions_context/",
+  "output_dir": "/path/to/storage/wikipedia-processing/output/experiments/s04_find_interesting_snippets_v3/20250413/generated_output/",
+  "last_processed_dir": "/path/to/storage/wikipedia-processing/output/experiments/s04_find_interesting_snippets_v3/20250413/last_processed/",
+  "connect_with_whole_kg": true,
+  "whole_kg_path": "/path/to/storage/wikidata-processing/caches/20250201/loaded_graph_all_v3_True_True_True_wdwEs7vC.pt",
+  "caches_dir": "/path/to/storage/wikipedia-processing/caches/20250201/",
+  "path_wikidata_labels": "/path/to/storage/wikidata-processing/output/experiments/s03_get_wikidata_labels/20250321/wikidata_canonical_names.tsv",
+  "path_property_labels": "/path/to/storage/wikidata-processing/output/experiments/s03_get_wikidata_labels/20250321/map_property_id_to_label.tsv",
+  "only_passages_after_kg_edge_removal": true,
+  "min_passage_length": 25,
+  "max_passage_length": 1000,
+  "min_percentage_english_words": 30,
+  "min_nr_emerging_triples": 1
+}

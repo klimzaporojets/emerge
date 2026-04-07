@@ -1,0 +1,12 @@
+{
+  "base_dir": "/path/to/storage/wikipedia-processing/output/experiments/",
+  "hash_length": 10,
+  "input_dirs": [
+    "s05_generate_dataset_with_llm/20250321_v4_llama400b/dataset",
+    "s05_generate_dataset_with_llm/20250414b_v4_llama400b/dataset"
+  ],
+  "output_dir": "s06b_refactor_final_format/20250830/dataset/",
+  "assessor_mappings": {
+    "Llama-8B": "Meta-Llama-3.1-8B"
+  }
+}

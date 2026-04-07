@@ -1,0 +1,19 @@
+{
+  "input_dataset_base_path": "./data/evaluation_set/",
+  "output_base_dir": "./output/s02_run_benchmarks/20260114_rakg_mistral_small/",
+  "wrapper_root": "./src/benchmarks/wrappers/",
+  "models": [
+    {
+      "name": "rakg",
+      "output_path": "rakg_mistral_small",
+      "cache_path": "./output/caches/rakg/rakg_cache.jsonl",
+      "openai_model": "azure_ai/Mistral-small",
+      "openai_similarity_model": "azure_ai/Mistral-small",
+      "openai_embedding_model": "nf-text-embedding-ada-002",
+      "max_workers": 8,
+      "base_url": "https://ai-research-proxy.azurewebsites.net",
+      "batch_size": 200,
+      "use_similarity": false
+    }
+  ]
+}

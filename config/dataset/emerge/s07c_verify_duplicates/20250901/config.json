@@ -1,0 +1,5 @@
+{
+  "input_dir": "/path/to/storage/wikipedia-processing/output/experiments/s07_subsample_dataset/20250910/",
+  "maximum_jaccard_similarity": 0.50,
+  "minimum_edit_distance": 0.20
+}

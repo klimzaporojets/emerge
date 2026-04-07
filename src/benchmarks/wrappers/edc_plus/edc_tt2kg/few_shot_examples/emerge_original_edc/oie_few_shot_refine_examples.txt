@@ -1,0 +1,29 @@
+Example 1:
+Text: Excerpt from the Wikipedia page describing Christopher Daniels: '''Daniel Christopher Covell''' (born March 24, 1970) is an American professional wrestler, best known by his ring name '''Christopher Daniels'''. He is currently signed with All Elite Wrestling (AEW). He is best known for his work in Ring of Honor (ROH).
+Candidate entities: ['Christopher_Daniels', 'All_Elite_Wrestling', 'Professional_wrestling', 'Ring_of_Honor']
+Triples in text: [['All_Elite_Wrestling', 'industry', 'Professional_wrestling'], ['Ring_of_Honor', 'industry', 'Professional_wrestling']]
+
+Example 2:
+Text: Excerpt from the Wikipedia page describing Joseph Ngute: '''Joseph Dion Ngute''' (born March 12, 1954) is a Cameroonian politician currently serving as the 9th Prime Minister of Cameroon, following his appointment in January 2019. He succeeded Philémon Yang, who had held the post since 2009.
+Candidate entities: ['Joseph Ngute', 'Prime Minister of Cameroon', 'Philémon_Yang', 'List_of_prime_ministers_of_Cameroon', 'Cameroon']
+Triples in text: [['Joseph_Ngute', 'position held', 'Prime_Minister_of_Cameroon'], ['List_of_prime_ministers_of_Cameroon', 'is a list of', 'Prime_Minister_of_Cameroon'], ['Prime_Minister_of_Cameroon', 'country', 'Cameroon'], ['Philémon_Yang', 'country of citizenship', 'Cameroon'], ['Prime_Minister_of_Cameroon', 'applies to jurisdiction', 'Cameroon']]
+
+Example 3:
+Text: Excerpt from the Wikipedia page describing Magritte Award for Best Supporting Actress: The 1st Magritte Awards ceremony was held in 2011 with Christelle Cornil receiving the award for her role in ''Illegal''. As of the 2019 ceremony, Lucie Debay is the most recent winner in this category for her role in ''Our Struggles''.
+Candidate entities: ['Magritte Award for Best Supporting Actress', 'Illegal', 'Christelle Cornil', '1st Magritte Awards', 'Our Struggles', '2019 ceremony', 'Lucie Debay']
+Triples in text: [['Our_Struggles', 'cast member', 'Lucie_Debay'], ['Illegal', 'cast member', 'Christelle_Cornil']]
+
+Example 4:
+Text: Excerpt from the Wikipedia page describing Ha! Ha! River (Saguenay River tributary): == Geography == The main hydrographic slopes near the Ha! Ha! River are: * North side: Baie des Ha! Ha!, Saguenay River; * East side: Huard Lake, Huard River, Cèdre River, Brébeuf Lake, Éternité Lake, Cazin River, Malbaie River; * South side: Chemin des Canots River, Porc-Épic River; * West side: rivière à Pierre, rivière à Mars, rivière à Mars North.
+Candidate entities: ['Rivière Huard', 'Rivière Ha! Ha!', 'Saguenay River', 'Huard River', 'Brébeuf Lake', 'Malbaie River', 'Chemin des Canots River', 'Porc-Épic River', 'rivière à Mars']
+Triples in text: [['Rivière_Huard', 'mouth of the watercourse', 'Rivière_Ha!_Ha!'], ['Rivière_Ha!_Ha!', 'mouth of the watercourse', 'Saguenay_River'], ['Saguenay_River', 'tributary', 'Rivière_Ha!_Ha!']]
+
+Example 5:
+Text: Excerpt from the Wikipedia page describing Melih Bulu: Bulu was appointed as the rector of Boğaziçi University by government with a decree on 1 January 2021. His appointment was controversial and subject to protests by hundreds of students, professors, and lecturers, and by NGOs. Prior to his position at Boğaziçi University, he was the rector of İstinye University and Haliç University and held faculty positions at Istanbul Commerce University and Istanbul Şehir University.
+Candidate entities: ['Melih Bulu', 'Rector', 'Haliç University', '2021 Boğaziçi University protests', 'İstinye University', 'Non-governmental organizations', 'Istanbul Commerce University', 'Istanbul Şehir University']
+Triples in text: [['Melih_Bulu', 'occupation', 'Rector'], ['Melih_Bulu', 'employer', 'Boğaziçi_University'], ['Melih_Bulu', 'significant event', '2021_Boğaziçi_University_protests'], ['2021_Boğaziçi_University_protests', 'has cause', 'Melih_Bulu']]
+
+Example 6:
+Text: Excerpt from the Wikipedia page describing Chairman of the Kuomintang: The '''Chairman of the Kuomintang''' is the leader of the Kuomintang party of the Republic of China. The position has previously been titled as President (1912–1914), Premier (1919–1925), Chairman of the Central Executive Committee (1925–1938), Director-General (1938–1975), and Chairman (from 1975). The post is currently held on an interim basis by Lin Rong-te, who assumed the post on 15 January 2020, following the resignation of Wu Den-yih. The Chairman is now directly elected by party members for a term of four years, and may be re-elected for a second term.
+Candidate entities: ['Lin Rong-te', 'Kuomintang', 'Wu_Den-yih', 'Chairman of the Kuomintang','Republic of China']
+Triples in text: [['Lin_Rong-te', 'member of political party', 'Kuomintang'], ['Lin_Rong-te', 'country of citizenship', 'Republic_of_China'], ['Ling_Rong-te', 'position held', 'Chairman_of_the_Kuomintang'], ['Kuomintang', 'office held by head of the organization', 'Chairman_of_the_Kuomintang'], ['Wu_Den-yih', 'member of political party', 'Kuomintang'], ['Kuomintang', 'country', 'Republic_of_China'], ['Chairman_of_the_Kuomintang', 'organization directed by the office or position', 'Kuomintang'], ['Wu_Den-yih', 'country of citizenship', 'Republic_of_China']]

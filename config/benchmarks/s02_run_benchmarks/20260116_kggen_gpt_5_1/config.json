@@ -1,0 +1,19 @@
+{
+  "input_dataset_base_path": "./data/evaluation_set/",
+  "output_base_dir": "./output/s02_run_benchmarks/20260116_kggen_gpt_5_1/",
+  "wrapper_root": "./src/benchmarks/wrappers/",
+  "models": [
+    {
+      "name": "kggen",
+      "output_path": "kggen",
+      "cache_path": "./output/caches/kg-gen/kg_gen_cache_gpt5_1.jsonl",
+      "model": "azure/gpt-5.1",
+      "temperature": 1.0,
+      "max_workers": 2,
+      "chunk_size": 16000,
+      "base_url": "https://ai-research-proxy.azurewebsites.net",
+      "batch_size": 200,
+      "max_tokens": 16000
+    }
+  ]
+}
