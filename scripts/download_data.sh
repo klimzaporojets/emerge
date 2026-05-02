@@ -62,14 +62,14 @@ snapshot_download(
     repo_id='${HF_REPO}',
     repo_type='dataset',
     local_dir='${DATA_DIR}',
-    allow_patterns=['evaluation_set/**', 'annotation/**'],
+    allow_patterns=['evaluation_set/**', 'human_annotation/**'],
 )
 "
 
 echo ""
 echo "Downloaded:"
 echo "  - data/evaluation_set/  (3,500 instances + 13 model predictions)"
-echo "  - data/annotation/      (human annotation data)"
+echo "  - data/human_annotation/ (human annotation data)"
 
 # Optionally download KG snapshots
 if [ "$DOWNLOAD_KG" = true ]; then
