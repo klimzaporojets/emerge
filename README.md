@@ -1,6 +1,6 @@
 # EMERGE: A Benchmark for Updating Knowledge Graphs with Emerging Textual Knowledge
 
-**[Paper](https://arxiv.org/abs/2507.03617)** | **[Dataset](https://huggingface.co/datasets/klimzaporojets/emerge-benchmark)** | **[Code](https://github.com/klimzaporojets/emerge-benchmark)**
+**[Paper](https://arxiv.org/abs/2507.03617)** | **[Dataset](https://huggingface.co/datasets/klimzaporojets/emerge-benchmark)** | **[Code](https://github.com/klimzaporojets/emerge)**
 
 Repository for the **EMERGE** benchmark: a dataset and evaluation framework for
 **Text-driven KG Updating (TKGU)** — evaluating methods for updating knowledge
@@ -12,8 +12,8 @@ graphs from textual evidence.
 
 ```bash
 # 1. Clone and set up
-git clone https://github.com/klimzaporojets/emerge-benchmark.git
-cd emerge-benchmark
+git clone https://github.com/klimzaporojets/emerge.git
+cd emerge
 conda create -n emerge python=3.10 -y && conda activate emerge
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 pip install -r requirements/core.txt
@@ -167,7 +167,7 @@ data/
 │   │   └── ...
 │   ├── snapshot_2020-01-01/ ... snapshot_2025-01-01/
 │   └── (7 snapshots x 5 deltas x 100 instances = 3,500 total)
-└── annotation/                 Human annotation data for agreement statistics
+└── human_annotation/           Human annotation data for agreement statistics
     └── solved_disagreements.jsonl
 ```
 
