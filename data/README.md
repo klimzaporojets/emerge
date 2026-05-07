@@ -15,7 +15,7 @@ data/
 │   │   └── ...
 │   └── snapshot_2025-01-01/
 │       └── ...
-└── annotation/
+└── human_annotation/
     └── solved_disagreements.jsonl
 ```
 
@@ -36,10 +36,13 @@ Each line in a delta JSONL file is a JSON object with the following structure:
 | `mentions` | list | Entity mentions with character offsets and Wikidata QIDs |
 | `revision_id` | int | Wikipedia revision ID |
 | `revision_date` | string | Wikipedia revision timestamp (ISO 8601) |
+| `revision_timestamp` | int | Wikipedia revision time (Unix epoch seconds, paired with `revision_date`) |
 | `anchor_title` | string | Wikipedia article title |
+| `anchor_page_id` | int | Wikipedia page ID (numeric) |
 | `anchor_page_qid` | string | Wikidata QID of the Wikipedia article |
 | `paragraph_idx` | int | Paragraph index within the article |
-| `delta_dates` | list | Start and end dates of the delta period |
+| `delta_dates` | list[2] | `[start_date, end_date]` of the delta period (ISO 8601) |
+| `delta_timestamps` | list[2] | `[start, end]` of the delta period (Unix epoch seconds, paired with `delta_dates`) |
 | `tkgu_triples` | list | Ground-truth TKGU triples (see below) |
 | `predictions` | dict | Model predictions keyed by model name (see below) |
 
@@ -65,10 +68,14 @@ Each triple represents a KG update operation derived from the passage:
 | `emerging_head` | bool | Whether the subject entity is new (not in the KG snapshot) |
 | `emerging_tail` | bool | Whether the object entity is new |
 | `head_creation_date` | string | Date the subject entity was created in Wikidata |
+| `head_creation_timestamp` | int | Unix epoch seconds, paired with `head_creation_date` |
 | `tail_creation_date` | string | Date the object entity was created in Wikidata |
+| `tail_creation_timestamp` | int | Unix epoch seconds, paired with `tail_creation_date` |
 | `triple_lifespan_date` | list[2] | `[add_date, delete_date]` — when the triple was added/removed (`null` if still active) |
+| `triple_lifespan_timestamp` | list[2] | `[add, delete]` Unix epoch seconds, paired with `triple_lifespan_date` (`null` element if still active) |
 | `llm_assessment` | list | LLM verification results (see below) |
 | `source_delta_type` | string | How the triple was discovered (e.g., `wikipedia_intersection`) |
+| `qualifier_info` | dict \| null | Optional Wikidata qualifier attached to the triple (see below) — present mainly on deprecation triples |
 
 ### `llm_assessment` (LLM verification of triple-passage alignment)
 
@@ -78,6 +85,17 @@ Each triple represents a KG update operation derived from the passage:
 | `llm_assessment` | bool | Whether the LLM confirms the passage supports this triple |
 | `llm_prompt_type` | string | `triple_assertion` or `triple_deprecation` |
 | `llm_prompt` | string | LLM's explanation |
+
+### `qualifier_info` (optional Wikidata qualifier on a triple)
+
+A Wikidata qualifier captures temporal or contextual scope on a statement (e.g., an "end time" attached to a `member of sports team` triple). The field is `null` for triples without a qualifier; when present it contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `qualifier_qid` | string | Wikidata property ID of the qualifier (e.g., `P582` = end time, `P580` = start time) |
+| `qualifier_label` | string | Human-readable name of the qualifier property (e.g., `"end time"`) |
+| `qualifier_date` | string | Qualifier value as ISO 8601 date |
+| `qualifier_timestamp` | int | Qualifier value as Unix epoch seconds (paired with `qualifier_date`) |
 
 ### `predictions` (benchmark model outputs)
 
@@ -93,5 +111,5 @@ Keyed by model name. Each model's predictions contain:
 
 ## Annotation data
 
-`data/annotation/solved_disagreements.jsonl` contains human annotation data used for
+`data/human_annotation/solved_disagreements.jsonl` contains human annotation data used for
 inter-annotator agreement statistics (Cohen's kappa, Fleiss' kappa, Krippendorff's alpha).
