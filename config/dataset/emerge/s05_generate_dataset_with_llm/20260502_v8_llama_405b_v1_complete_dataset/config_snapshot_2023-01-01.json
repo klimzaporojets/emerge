@@ -1,0 +1,49 @@
+{
+  "restart_apptainer_script_name": "dataset/s05_restart_apptainer_llama400b_v5.sh",
+  "input_dir_joined_snippets_triples": "/path/to/storage/wikipedia-processing/output/experiments/s05_generate_dataset_with_llm/20260502_v8_llama_405b_v1_complete_dataset_input_merged/",
+  "output_dir": "/path/to/storage/wikipedia-processing/output/experiments/s05_generate_dataset_with_llm/20260502_v8_llama_405b_v1_complete_dataset/llama405b_assessed/snapshot_2023-01-01/llm_assessed/",
+  "llm_tokenizer": "hugging-quants/Meta-Llama-3.1-405B-Instruct-GPTQ-INT4",
+  "_llm_tokenizer": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+  "log_prompt_per_triple": true,
+  "_checkpoint_save_interval": 500,
+  "checkpoint_save_interval": 250,
+  "last_processed_dir": "/path/to/storage/wikipedia-processing/output/experiments/s05_generate_dataset_with_llm/20260502_v8_llama_405b_v1_complete_dataset/llama405b_assessed/snapshot_2023-01-01/last_processed/",
+  "_last_processed_dir": "a dir that contains the file indicating the last processed instance idx so if program is restarted, it doesn't have to start from scratch",
+  "prompt_type": "prompt2",
+  "prompt_single_assert_path": "src/dataset/emerge/prompts/prompts_v1/prompt_single_assert_template.txt",
+  "prompt_single_deprecate_path": "src/dataset/emerge/prompts/prompts_v1/prompt_single_deprecate_template.txt",
+  "prompt_multi_assert_path": "src/dataset/emerge/prompts/prompts_v1/prompt_multi_assert_template.txt",
+  "prompt_multi_deprecate_path": "src/dataset/emerge/prompts/prompts_v1/prompt_multi_deprecate_template.txt",
+  "llm_client_url": "http://127.0.0.2",
+  "_max_nr_tokens_in_chunk": 1200,
+  "max_nr_tokens_in_chunk": 1000,
+  "max_triples_batch_size": 20,
+  "min_percentage_english_words": 30,
+  "triples_only_labels": false,
+  "_triples_only_labels": "when llm is given only the labels of the head, relation and tail and not qids, i think it can make it easier",
+  "tkgu_types": [
+    "d-triples",
+    "x-triples",
+    "ee-kg-triples",
+    "ee-triples",
+    "e-triples"
+  ],
+  "deprecated_triple_tkgus": [
+    "d-triples"
+  ],
+  "addition_triple_tkgus": [
+    "x-triples",
+    "e-triples",
+    "ee-kg-triples",
+    "ee-triples"
+  ],
+  "__only_removals": false,
+  "_only_removals": "has to be in false for the real dataset generation to also include cases where there are only addition of triples to kg",
+  "input_files_to_process": [
+    "delta_2023-01-08.jsonl",
+    "delta_2023-01-15.jsonl",
+    "delta_2023-01-22.jsonl",
+    "delta_2023-01-29.jsonl",
+    "delta_2023-02-05.jsonl"
+  ]
+}
