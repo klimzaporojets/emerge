@@ -16,8 +16,11 @@ target/
 
 # Dataset files (hosted on HuggingFace, downloaded via scripts/download_data.sh)
 data/evaluation_set/
-data/annotation/
+data/human_annotation/
 data/kg_snapshots/
+data/corpus/
+data/indices/
+data/.cache/
 
 # Output files
 output/
