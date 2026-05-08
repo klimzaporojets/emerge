@@ -730,6 +730,124 @@ python -u -m dataset.wikidata.python.s06_rename_relik_dictionary_properties \
 
 ---
 
+## Part 3: Quality control of LLM annotations
+
+> **What "garbage" means in this section.** Long LLM annotation runs
+> occasionally produce *degenerate* output — repeated tokens, n-gram
+> loops, truncation, near-empty responses. We refer to these
+> failure-mode outputs as "garbage" throughout this section and in
+> the script names (`find_garbage_clusters.py`,
+> `build_reinput_for_garbage.py`). The term has no quality judgement
+> beyond that — these are the LLM's own off-rails outputs that need
+> re-querying, not records we consider useless.
+
+Long LLM annotation runs occasionally produce this kind of off-rails
+output, especially when serving via quantised TGI. EMERGE applied an
+iterative **detect → reinput → re-run → merge** loop on the
+233K-record corpus to catch and re-query these cases. The loop
+converged in 3 iterations (871 → 240 → 220 flagged triples on each
+pass; final residual rate ≈0.011%).
+
+The four CLI tools in `scripts/dataset/` implement this loop:
+
+| Tool | Step | What it does |
+|------|------|--------------|
+| `find_garbage_clusters.py` | P3.1 | Detect TGI-degenerate / off-rails LLM output via heuristics (repeated_token, repeated_ngram, low_unique_ratio, repeated_punct, truncation, empty, very_few_words, contradiction). Emits human-readable Markdown + machine-readable JSONL. |
+| `inspect_cluster_neighbors.py` | P3.2 | Companion: prints triples adjacent to each detected cluster so you can eyeball whether the cluster boundaries captured the actual degenerate region tightly. |
+| `build_reinput_for_garbage.py` | P3.3 | Generic CLI: takes a `--source-root` annotation tree + the cluster JSONL → writes a sparse reinput tree where flagged triples have their 405B-prompt-v1 entries stripped. The output tree is the **input** to a second s05 run that re-queries just those triples. |
+| `merge_reinput_into_dataset.py` | P3.5 | Generic CLI: takes the original `--source-root` and the corrected `--reinput-file` (output of the second s05 run on the sparse tree) → splices corrected records back into a NEW merged tree by `hash_id`. Source tree never modified. |
+
+A reviewer running their own LLM annotation pipeline (any LLM, any
+infra) can chain these to reach a similar level of QA on their own
+output. The example paths in the docstrings are abstract placeholders
+(`<your-output-tree>`, `<reinput-tree>`); a runnable end-to-end
+example with concrete paths will be added once the rest of the
+migration settles.
+
+### P3.1 — Detect garbage clusters
+
+```bash
+python scripts/dataset/find_garbage_clusters.py \
+    --root <your-output-tree>/llama405b_assessed \
+    --output-md output/garbage_clusters_$(date +%Y%m%d_%H%M).md \
+    --output-jsonl output/garbage_clusters_$(date +%Y%m%d_%H%M).jsonl
+```
+
+Heuristics (each can be tuned via flags; defaults match the EMERGE
+release):
+
+- **`repeated_token`** — same token repeated >N times in a row
+- **`repeated_ngram`** — same n-gram repeated within a sliding window
+- **`low_unique_ratio`** — unique-token ratio below threshold
+- **`repeated_punct`** — punctuation-only loops
+- **`truncation`** — output ends mid-token
+- **`empty`** — empty or whitespace-only output
+- **`very_few_words`** — fewer than N words
+- **`contradiction`** — assertion + deprecation in the same response
+
+Sliding-window cluster detection groups consecutive flagged triples
+(default `--cluster-gap=50`, `--cluster-pad=20`).
+
+### P3.2 — Inspect cluster boundaries (sanity check)
+
+```bash
+python scripts/dataset/inspect_cluster_neighbors.py \
+    --root <your-output-tree>/llama405b_assessed \
+    --clusters-jsonl output/garbage_clusters_<ts>.jsonl \
+    --sample-n 5
+```
+
+Eyeball the printed neighbours; tighten `--cluster-gap` / `--cluster-pad`
+if you see a cluster boundary cutting through a contiguous degenerate
+region.
+
+### P3.3 — Build a sparse reinput tree
+
+```bash
+python scripts/dataset/build_reinput_for_garbage.py \
+    --source-root <your-output-tree>/llama405b_assessed \
+    --output-root <reinput-tree>/llama405b_assessed \
+    --clusters-jsonl output/garbage_clusters_<ts>.jsonl \
+    --output-manifest output/reinput_manifest_$(date +%Y%m%d_%H%M).json
+```
+
+Strips the flagged 405B-prompt-v1 annotations from the source records
+and writes the resulting sparse tree to `--output-root` (asserted
+disjoint from source). This output tree is the input to a re-run of
+s05 in single-file mode.
+
+### P3.4 — Re-run s05 on the sparse reinput tree
+
+This step is HPC-bound (it actually invokes the 405B LLM). Use the
+existing
+[`scripts/slurm/dataset/s05_generate_dataset_with_llm_v9_llama405b.sh`](../../scripts/slurm/dataset/s05_generate_dataset_with_llm_v9_llama405b.sh)
+(or your equivalent), pointing it at the reinput tree as input. The
+per-triple skip-resume logic in s05 ensures only triples missing a
+`Meta-Llama-3.1-405B_prompt_v1` entry get re-queried.
+
+### P3.5 — Merge corrected records back
+
+```bash
+python scripts/dataset/merge_reinput_into_dataset.py \
+    --source-root <your-output-tree>/llama405b_assessed \
+    --reinput-file <reinput-rerun-output>/.../delta_2099-01-01.jsonl \
+    --output-root <merged-tree>/llama405b_assessed
+```
+
+`hash_id`-keyed splice; whole-record replacement (the reinput record
+has the corrected `llm_assessment` plus all original fields). Asserts
+`--reinput-file` is outside `--source-root`. Source tree is never
+modified.
+
+### Iterate
+
+Run P3.1 again on the merged tree. If new clusters are flagged,
+repeat P3.1 → P3.5. For EMERGE the loop converged after 3 iterations
+(871 → 240 → 220 flagged triples), reaching a residual rate that we
+considered the natural floor for this LLM/infra combination.
+
+---
+
 ## Dataset statistics (Jupyter notebooks)
 
 Dataset statistics notebooks are in `src/stats/dataset/`.

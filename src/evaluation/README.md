@@ -34,7 +34,9 @@ The scoring behavior is controlled by `score_empty_predictions_as_zero` in the c
 
 The `cie_exact_match` metric computes **exact-match P/R/F1 on Wikidata QID triples**
 (set comparison, no cosine similarity). Only applies to models that produce QIDs
-(e.g. `relik-cie`).
+(e.g. `relik-cie`). The **recall component**, on the EXISTS and ADD operations where
+canonical-ID match is feasible at inference time, is what the paper reports as
+**Executable-R (E-R)** in Table 3.
 
 Enable in config:
 ```json

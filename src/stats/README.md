@@ -33,7 +33,7 @@ for how to run evaluations and produce these pkls).
 | Notebook | What it produces | Paper location |
 |----------|-----------------|----------------|
 | `tables_results.ipynb` | **Table 1**: Completeness (C) + G-BERTScore-R (G-R) for all models. **Table 2**: zero-shot vs ICL LaTeX table. Also a full C/P/R/F1 variant. | Main paper |
-| `table_cie_exact_match.ipynb` | **Table 3**: QID exact-match P/R/F1 for CIE models (set-based triple comparison) | Main paper |
+| `table_cie_exact_match.ipynb` | **Table 3**: Executable-R (E-R) — the recall component of `cie_exact_match` (set-based QID exact match), reported for ReLiK cIE on EXISTS + ADD where canonical-ID match is feasible at inference time. The notebook also shows full P/R/F1. | Main paper |
 | `figure_deltas_snapshots.ipynb` | **Main**: `plot_deltas_overlay_metrics_partial.pdf` + `plot_snapshots_overlay_metrics_partial.pdf` (G-R only, 3 TKGU ops). **Appendix**: full versions with C + G-R, all 5 TKGU ops | Main + Appendix |
 | `figure_zs_vs_icl.ipynb` | `zs_vs_icl.pdf`: bar chart comparing EDC+ zero-shot vs in-context learning with delta annotations | Main paper |
 | `appendix_table_qualitative_predictions.ipynb` | Qualitative analysis table: randomly selected passages with GT triples paired with best-matching predictions by BERTScore | Appendix |
