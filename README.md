@@ -18,8 +18,13 @@ conda create -n emerge python=3.10 -y && conda activate emerge
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 pip install -r requirements/core.txt
 
-# 2. Download the dataset
+# 2. Download the dataset (test set + human annotations, ~155 MB)
 ./scripts/download_data.sh
+# For benchmark runs, also fetch what each model needs:
+#   ./scripts/download_data.sh --indices   # +400 MB — required by EDC+, ReLiK
+#   ./scripts/download_data.sh --kg        # +3.7 GB — required by ReLiK cIE
+#   ./scripts/download_data.sh --corpus    # +2.3 GB — required to reproduce paper §4.3 stats
+# See src/benchmarks/README.md for each model's exact flag.
 
 # 3. Run evaluation (reproduces paper results)
 ./scripts/run/evaluate.sh

@@ -53,39 +53,50 @@ def main():
         logger.info(f'{k}: {v}')
     logger.info('=================================================')
 
+    # Locate the edc-tt2kg directory.
+    # In emerge-prod (public repo) it ships in-tree as this wrapper's sibling.
+    # The legacy stage / Snellius setup uses an external repo via
+    # EDC_REPO_PATH; we honour that override for backward compatibility.
+    WRAPPER_DIR = os.path.dirname(os.path.abspath(__file__))
+    IN_TREE_EDC_REPO = os.path.join(WRAPPER_DIR, 'edc_tt2kg')
+    edc_repo = os.environ.get('EDC_REPO_PATH', IN_TREE_EDC_REPO)
+    if not os.path.isfile(os.path.join(edc_repo, 's01_run_v3.py')):
+        raise RuntimeError(
+            f'Cannot find s01_run_v3.py at {edc_repo}. '
+            f'Either the in-tree edc_tt2kg/ is missing or EDC_REPO_PATH '
+            f'(currently {os.environ.get("EDC_REPO_PATH", "<unset>")}) '
+            f'points at the wrong directory.'
+        )
+
+    # Compute repo root. WRAPPER_DIR is <repo>/src/benchmarks/wrappers/edc_plus/
+    # so repo root is 4 levels up. Configs use repo-root-relative paths
+    # (e.g. ./data/indices/... and src/benchmarks/wrappers/edc_plus/edc_tt2kg/few_shot_examples/...)
+    # so the subprocess MUST run with cwd=REPO_ROOT for those to resolve.
+    REPO_ROOT = os.path.abspath(os.path.join(WRAPPER_DIR, '..', '..', '..', '..'))
+
     # Step 1: Run EDC prediction pipeline (s01_run_v3.py)
+    # Pass the script as an absolute path (so the cwd doesn't matter for finding
+    # s01_run_v3.py itself), and set cwd=REPO_ROOT so the relative paths inside
+    # the config resolve correctly.
     edc_cmd = [
-        sys.executable, '-u', 's01_run_v3.py',
+        sys.executable, '-u', os.path.join(edc_repo, 's01_run_v3.py'),
         '--config_file', args.edc_config,
         '--batch_size', str(args.batch_size),
         '--max_workers', str(args.max_workers),
     ]
 
-    logger.info(f'Running EDC prediction: {" ".join(edc_cmd)}')
-    # Run from the edc-tt2kg repo directory (relative paths in config depend on it)
-    edc_repo = os.environ.get('EDC_REPO_PATH')
-    if edc_repo is None:
-        # Fallback: assume edc-tt2kg is in PYTHONPATH
-        edc_repo = None
-        for p in sys.path:
-            if os.path.exists(os.path.join(p, 's01_run_v3.py')):
-                edc_repo = p
-                break
-    if edc_repo is None:
-        raise RuntimeError('Cannot find edc-tt2kg repo. Set EDC_REPO_PATH env var '
-                           'or ensure s01_run_v3.py is in PYTHONPATH.')
-
-    subprocess.run(edc_cmd, check=True, cwd=edc_repo)
+    logger.info(f'Running EDC prediction (cwd={REPO_ROOT}): {" ".join(edc_cmd)}')
+    subprocess.run(edc_cmd, check=True, cwd=REPO_ROOT)
     logger.info('EDC prediction finished.')
 
     # Step 2: Run postprocessing (optional)
     if args.postprocess_config:
         postprocess_cmd = [
-            sys.executable, '-u', 's02_postprocess_results_v2.py',
+            sys.executable, '-u', os.path.join(edc_repo, 's02_postprocess_results_v2.py'),
             '--config_file', args.postprocess_config,
         ]
-        logger.info(f'Running EDC postprocessing: {" ".join(postprocess_cmd)}')
-        subprocess.run(postprocess_cmd, check=True, cwd=edc_repo)
+        logger.info(f'Running EDC postprocessing (cwd={REPO_ROOT}): {" ".join(postprocess_cmd)}')
+        subprocess.run(postprocess_cmd, check=True, cwd=REPO_ROOT)
         logger.info('EDC postprocessing finished.')
 
     logger.info('EDC+ wrapper DONE.')

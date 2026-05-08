@@ -43,8 +43,10 @@ These models call external LLM APIs (Azure AI, Azure OpenAI, OpenAI) and run on 
 #### EDC+ (Extract, Define, Canonicalize)
 
 Three-stage LLM pipeline: Open IE extraction, schema definition, schema canonicalization.
-Based on the [EDC framework](https://arxiv.org/abs/2404.03868), adapted for EMERGE in the
-`edc-tt2kg` repository (external, referenced via absolute path in `run.sh`).
+Based on the [EDC framework](https://arxiv.org/abs/2404.03868), adapted for EMERGE in
+the `edc-tt2kg/` directory **bundled in-tree** at `src/benchmarks/wrappers/edc_plus/edc_tt2kg/`
+(no external clone needed — defaults to in-tree; set the `EDC_REPO_PATH` env var only
+if you want to point at an alternate checkout).
 
 | Paper name | Internal name | Backend LLM | Setting | API |
 |-----------|---------------|-------------|---------|-----|
@@ -117,101 +119,84 @@ Loads per-snapshot entity and relation indices for closed-IE evaluation.
 
 ## How to run
 
-All commands work on **any machine** with the `emerge` conda environment activated.
-Run from the repository root.
+The orchestrator (`run_benchmarks.py`) lives in the **`emerge`** conda env (per `requirements/core.txt`). It dispatches to a per-model wrapper that activates **its own** conda env (per `requirements/benchmarks/<model>.txt`). Both envs must exist before running.
 
-> **SLURM users:** Equivalent sbatch scripts are in `scripts/slurm/benchmarks/`.
+> **SLURM users:** equivalent sbatch scripts in `scripts/slurm/benchmarks/`.
 
-### LLM API models (KG-GEN, RAKG) — CPU only
+### Quick start: run EDC+ ZS GPT-5.1 from a fresh clone
 
-These models call external LLM APIs and do not need a GPU.
+End-to-end walkthrough on a fresh clone. **All commands run from the repository root.**
+
+#### 1. Set up the two conda envs
+
+```bash
+# Orchestrator env (also used for ReLiK)
+conda create -n emerge python=3.10 -y && conda activate emerge
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install -r requirements/core.txt
+
+# EDC+ wrapper env (run.sh activates this inside the subprocess)
+conda create -n edc python=3.9 -y && conda activate edc
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip install -r requirements/benchmarks/edc-plus.txt
+```
+
+#### 2. Download the data EDC+ needs
 
 ```bash
 conda activate emerge
-export PYTHONPATH="$PWD/src"
-
-# Set the required API key (see API key table below)
-export AZURE_OPENAI_API_KEY='your-key-here'
-
-python -u -m benchmarks.run_benchmarks \
-    --config_file config/benchmarks/s02_run_benchmarks/<model_config>/config.json \
-    2>&1 | tee logs/<model_name>.log
+./scripts/download_data.sh --indices    # ~155 MB eval set + ~400 MB indices
 ```
 
-Available configs:
-| Config directory | Model | API key needed |
-|-----------------|-------|----------------|
-| `20260116_kggen_gpt_5_1/` | KG-GEN GPT 5.1 | `AZURE_OPENAI_API_KEY` |
-| `20260114_kggen_mistral_large/` | KG-GEN Mistral Large | `AZURE_AI_API_KEY` |
-| `20260114_kggen_mistral_small/` | KG-GEN Mistral Small | `AZURE_AI_API_KEY` |
-| `20260114_rakg_mistral_large/` | RAKG Mistral Large | `AZURE_AI_API_KEY` |
-| `20260114_rakg_mistral_small/` | RAKG Mistral Small | `AZURE_AI_API_KEY` |
+EDC+ reads `data/evaluation_set/` (default) **and** `data/indices/relik_edc_relation_indexes/` (only with `--indices`). Skip `--indices` and you'll hit `AssertionError` at `s01_run_v3.py:82` — this was [issue #1](https://github.com/klimzaporojets/emerge/issues/1).
 
-### REBEL — requires GPU
+#### 3. Set the API key
 
 ```bash
-conda activate emerge
-export PYTHONPATH="$PWD/src"
-
-python -u -m benchmarks.run_benchmarks \
-    --config_file config/benchmarks/s02_run_benchmarks/20260114_rebel/config.json \
-    2>&1 | tee logs/rebel.log
+export OPENAI_API_KEY_MY='your-openai-key-here'
+# Note: edc_plus_zs_gpt_5_1 reads OPENAI_API_KEY_MY; the ICL configs read OPENAI_API_KEY.
+# See the per-config "Backend LLM" table above for which env var each variant uses.
 ```
 
-Requirements: 1 GPU, ~100GB RAM.
-
-### EDC+ — CPU only (API calls)
-
-EDC+ requires the external [EDC repository](https://github.com/bowen-zhang1/EDC)
-cloned locally. Update the path in `src/benchmarks/wrappers/edc_plus/run.sh`.
+#### 4. Run
 
 ```bash
-conda activate emerge
-export PYTHONPATH="$PWD/src"
-export OPENAI_API_KEY='your-key-here'  # or AZURE_AI_API_KEY for Mistral models
-
-python -u -m benchmarks.run_benchmarks \
-    --config_file config/benchmarks/s02_run_benchmarks/<edc_config>/config.json \
-    2>&1 | tee logs/<edc_model>.log
-```
-
-Available configs:
-| Config directory | Model | API key needed |
-|-----------------|-------|----------------|
-| `edc_plus_icl_gpt_5_1/` | EDC+ ICL GPT 5.1 | `OPENAI_API_KEY` |
-| `edc_plus_icl_mistral_large/` | EDC+ ICL Mistral Large | `AZURE_AI_API_KEY` |
-| `edc_plus_icl_mistral_small/` | EDC+ ICL Mistral Small | `AZURE_AI_API_KEY` |
-| `edc_plus_zs_gpt_5_1/` | EDC+ Zero-shot GPT 5.1 | `OPENAI_API_KEY` |
-| `edc_plus_zs_mistral_large/` | EDC+ Zero-shot Mistral Large | `AZURE_AI_API_KEY` |
-
-### ReLiK — requires GPU
-
-```bash
-conda activate emerge
+conda activate emerge   # orchestrator env; the wrapper subprocess switches to `edc`
 export PYTHONPATH="$PWD/src"
 
+mkdir -p logs
 python -u -m benchmarks.run_benchmarks \
-    --config_file config/benchmarks/s02_run_benchmarks/<relik_config>/config.json \
-    2>&1 | tee logs/<relik_model>.log
+    --config_file config/benchmarks/s02_run_benchmarks/edc_plus_zs_gpt_5_1/config.json \
+    2>&1 | tee logs/edc_zs_gpt_5_1.log
 ```
 
-Available configs: `relik_oie/`, `relik_cie/`
+#### 5. What success looks like
 
-Requirements: 1 GPU, ~64GB RAM. ReLiK cIE requires per-snapshot entity/relation indices.
+- Console: `args_value_is: {...}` (config loaded), per-delta `processing ...` lines
+- Output: 7 snapshots × 5 deltas = 35 JSONL files under `output/s02_run_benchmarks/edc_plus_zs_gpt_5_1/last_processed/snapshot_*-01-01/`, each with 100 instances
 
-## API key configuration
+**Common failures** (with fix):
+- `AssertionError` at `s01_run_v3.py:82` → forgot `--indices` in step 2
+- `aiohttp ClientResponseError: 401 Unauthorized` → API key env var unset or wrong name (check step 3)
+- `ModuleNotFoundError: openai` → the `edc` conda env isn't activated in the subprocess; check that step 1's `pip install -r requirements/benchmarks/edc-plus.txt` succeeded
 
-LLM API models require API keys set as environment variables before running:
+### Per-model differences (everything else)
 
-| Model | Environment variable | API |
-|-------|---------------------|-----|
-| KG-GEN (GPT-5.1) | `AZURE_OPENAI_API_KEY` | Azure OpenAI |
-| KG-GEN (Mistral) | `AZURE_AI_API_KEY` | Azure AI |
-| RAKG (Mistral) | `AZURE_AI_API_KEY` | Azure AI |
-| EDC+ (GPT-5.1) | `OPENAI_API_KEY` | OpenAI |
-| EDC+ (Mistral) | `AZURE_AI_API_KEY` | Azure AI |
+Same command shape as the EDC+ walkthrough; only these fields change. Replace `<config>` with the directory name shown.
 
-Set these in your shell before running sbatch, or add them to the sbatch script.
+| Model | Conda env (wrapper) | API key env var | `download_data.sh` flag | GPU |
+|---|---|---|---|---|
+| **EDC+ ICL GPT-5.1** (`edc_plus_icl_gpt_5_1`) | `edc` | `OPENAI_API_KEY` | `--indices` | — |
+| **EDC+ ICL Mistral L/S** (`edc_plus_icl_mistral_{large,small}`) | `edc` | `AZURE_AI_API_KEY` | `--indices` | — |
+| **EDC+ ZS Mistral L** (`edc_plus_zs_mistral_large`) | `edc` | `AZURE_AI_API_KEY` | `--indices` | — |
+| **KGGen GPT-5.1** (`20260116_kggen_gpt_5_1`) | `kggen-py312` | `AZURE_OPENAI_API_KEY` | (none beyond default) | — |
+| **KGGen Mistral L/S** (`20260114_kggen_mistral_{large,small}`) | `kggen-py312` | `AZURE_AI_API_KEY` | (none beyond default) | — |
+| **RAKG Mistral L/S** (`20260114_rakg_mistral_{large,small}`) | `rakg-py311` *plus* `git clone https://github.com/RUC-NLPIR/RAKG.git && export RAKG_REPO_PATH=$PWD/RAKG` | `AZURE_AI_API_KEY` | (none beyond default) | — |
+| **REBEL** (`20260114_rebel`) | `rebel-py311` | — (local model) | (none beyond default) | 1 × 16 GB+ VRAM, 100 GB RAM |
+| **ReLiK Open IE** (`relik_oie`) | `emerge` (same as orchestrator) | — | `--indices` | 1 × 16 GB+ VRAM, 64 GB RAM |
+| **ReLiK Closed IE** (`relik_cie`) | `emerge` | — | `--indices` *and* `--kg` (~22 GB after decompression) | 1 × 16 GB+ VRAM, 180 GB RAM |
+
+For each: `pip install -r requirements/benchmarks/<model>.txt` to populate the wrapper env (the file's header has the exact `conda create` command).
 
 ## Output format
 

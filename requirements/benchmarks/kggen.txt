@@ -2,9 +2,11 @@
 # Requires its own conda environment (Python 3.12)
 #
 # Setup:
-#   conda create -n kggen python=3.12
-#   conda activate kggen
+#   conda create -n kggen-py312 python=3.12
+#   conda activate kggen-py312
 #   pip install -r requirements/benchmarks/kggen.txt
+#
+# (Env name `kggen-py312` matches src/benchmarks/wrappers/kggen/run.sh)
 
 kg-gen>=0.4.0
 openai>=1.0

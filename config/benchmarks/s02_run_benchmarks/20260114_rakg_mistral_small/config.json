@@ -12,6 +12,7 @@
       "openai_embedding_model": "nf-text-embedding-ada-002",
       "max_workers": 8,
       "base_url": "https://ai-research-proxy.azurewebsites.net",
+      "base_url_embedding_model": "https://ai-research-proxy.azurewebsites.net",
       "batch_size": 200,
       "use_similarity": false
     }

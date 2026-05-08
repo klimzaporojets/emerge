@@ -3,12 +3,15 @@
 # Also requires the external RAKG repository: https://github.com/RUC-NLPIR/RAKG
 #
 # Setup:
-#   conda create -n rakg python=3.11
-#   conda activate rakg
+#   conda create -n rakg-py311 python=3.11
+#   conda activate rakg-py311
 #   git clone https://github.com/RUC-NLPIR/RAKG.git
+#   export RAKG_REPO_PATH=$PWD/RAKG     # required by src/benchmarks/wrappers/rakg/run.sh
 #   pip install -r requirements/benchmarks/rakg.txt
 #   # Also install RAKG's own requirements:
 #   pip install -r RAKG/requirements.txt
+#
+# (Env name `rakg-py311` matches src/benchmarks/wrappers/rakg/run.sh)
 
 openai>=1.0
 tqdm

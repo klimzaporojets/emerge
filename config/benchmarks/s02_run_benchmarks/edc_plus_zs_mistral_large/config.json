@@ -1,6 +1,6 @@
 {
-  "input_dataset_base_path": "",
-  "output_base_dir": "",
+  "input_dataset_base_path": "./data/evaluation_set/",
+  "output_base_dir": "./output/s02_run_benchmarks/edc_plus_zs_mistral_large/",
   "wrapper_root": "./src/benchmarks/wrappers/",
   "models": [
     {

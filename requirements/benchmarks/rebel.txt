@@ -3,10 +3,12 @@
 # GPU required (loads Babelscape/rebel-large model)
 #
 # Setup:
-#   conda create -n rebel python=3.11
-#   conda activate rebel
+#   conda create -n rebel-py311 python=3.11
+#   conda activate rebel-py311
 #   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 #   pip install -r requirements/benchmarks/rebel.txt
+#
+# (Env name `rebel-py311` matches src/benchmarks/wrappers/rebel/run.sh)
 
 transformers>=4.30
 tqdm

@@ -107,7 +107,14 @@ class ExperimentExecutor():
                 'relation_index_path': self.benchmark_model.relation_index_path
             }
 
-            texts_to_process[idx2]['predictions'].append(curr_prediction_json)
+            # `predictions` schema in data/README.md is `dict | model predictions
+            # keyed by model name`, but legacy / pre-merge inputs may have it as a
+            # list. Handle both — and create a dict if the field is missing.
+            preds = texts_to_process[idx2].setdefault('predictions', {})
+            if isinstance(preds, list):
+                preds.append(curr_prediction_json)
+            else:
+                preds[self.model_name] = curr_prediction_json
             output_file.write(json.dumps(texts_to_process[idx2], ensure_ascii=False) + '\n')
             output_file.flush()
 
