@@ -216,8 +216,15 @@ def main():
     print(f"[find_garbage_clusters] scanning {args.root} ...", file=sys.stderr)
     for snap_dir in sorted(args.root.glob("snapshot_*-01-01")):
         year = snap_dir.name.split("_")[1].split("-")[0]
-        la_dir = snap_dir / "llm_assessed"
-        if not la_dir.is_dir():
+        # Auto-detect layout: nested (snapshot_*/llm_assessed/delta_*.jsonl, the
+        # internal merged-tree layout) or flat (snapshot_*/delta_*.jsonl, what
+        # the public HF release / `download_data.sh --corpus` produces).
+        la_dir_nested = snap_dir / "llm_assessed"
+        if la_dir_nested.is_dir():
+            la_dir = la_dir_nested
+        elif snap_dir.is_dir():
+            la_dir = snap_dir
+        else:
             continue
         for delta_file in sorted(la_dir.glob(f"delta_{year}-*.jsonl")):
             delta_name = delta_file.name

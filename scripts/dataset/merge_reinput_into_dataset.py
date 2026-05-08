@@ -199,10 +199,24 @@ def main():
     corrections_index = build_corrections_index(args.reinput_file)
     print(f"[merge_reinput] indexed {len(corrections_index)} hash_ids from reinput file", file=sys.stderr)
 
-    delta_files = sorted(args.source_root.glob("snapshot_*-01-01/llm_assessed/delta_*.jsonl"))
+    # Auto-detect layout: nested (snapshot_*/llm_assessed/delta_*.jsonl, the
+    # internal merged-tree layout) or flat (snapshot_*/delta_*.jsonl, what
+    # the public HF release / `download_data.sh --corpus` produces).
+    delta_files_nested = sorted(args.source_root.glob("snapshot_*-01-01/llm_assessed/delta_*.jsonl"))
+    delta_files_flat = sorted(args.source_root.glob("snapshot_*-01-01/delta_*.jsonl"))
+    if delta_files_nested:
+        delta_files = delta_files_nested
+    elif delta_files_flat:
+        delta_files = delta_files_flat
+    else:
+        delta_files = []
     print(f"[merge_reinput] found {len(delta_files)} source delta files", file=sys.stderr)
     if not delta_files:
-        sys.exit(f"ERROR: no delta_*.jsonl files found under {args.source_root}/snapshot_*-01-01/llm_assessed/")
+        sys.exit(
+            f"ERROR: no delta_*.jsonl files found under {args.source_root} "
+            f"(tried both snapshot_*-01-01/llm_assessed/ nested layout "
+            f"and snapshot_*-01-01/ flat HF layout)"
+        )
 
     substituted_hash_ids = set()    # hash_ids actually used in substitutions
     multiply_used_hash_ids = set()  # hash_ids substituted into >1 source record (data integrity warning)

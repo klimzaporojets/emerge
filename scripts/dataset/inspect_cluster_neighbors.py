@@ -173,8 +173,14 @@ def fetch_records(root, targets):
         by_file[(year, delta_file)].add(line_idx)
     records = {}
     for (year, delta_file), wanted_lines in by_file.items():
-        delta_path = root / f"snapshot_{year}-01-01" / "llm_assessed" / delta_file
-        if not delta_path.is_file():
+        # Auto-detect layout: nested (llm_assessed/) or flat (HF corpus).
+        nested = root / f"snapshot_{year}-01-01" / "llm_assessed" / delta_file
+        flat = root / f"snapshot_{year}-01-01" / delta_file
+        if nested.is_file():
+            delta_path = nested
+        elif flat.is_file():
+            delta_path = flat
+        else:
             for ln in wanted_lines:
                 records[(year, delta_file, ln)] = None
             continue

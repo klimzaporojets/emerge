@@ -218,7 +218,15 @@ def main():
     n_files_missing = 0
 
     for (year, delta_file), line_set in sorted(flagged_by_file.items()):
-        rel_path = Path(f"snapshot_{year}-01-01") / "llm_assessed" / delta_file
+        # Auto-detect layout: nested (llm_assessed/) or flat (HF corpus).
+        rel_nested = Path(f"snapshot_{year}-01-01") / "llm_assessed" / delta_file
+        rel_flat = Path(f"snapshot_{year}-01-01") / delta_file
+        if (args.source_root / rel_nested).is_file():
+            rel_path = rel_nested
+        elif (args.source_root / rel_flat).is_file():
+            rel_path = rel_flat
+        else:
+            rel_path = rel_nested  # report the canonical "missing" path below
         src = args.source_root / rel_path
         dst = args.output_root / rel_path
         if not src.is_file():

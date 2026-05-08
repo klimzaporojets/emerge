@@ -50,6 +50,13 @@ operations induced by the passage. EMERGE defines five TKGU operations:
 The dataset is hosted on [HuggingFace Hub](https://huggingface.co/datasets/klimzaporojets/emerge-benchmark)
 and must be downloaded before use (see [Setup](#setup)).
 
+The released JSONL has been QA'd via an iterative re-query pipeline
+documented in [`src/dataset/README.md` Part 3](src/dataset/README.md);
+paper §4.3 / Table 8 / Datasheet K.2 statistics (608K Exists, 207K Add,
+149K Mint+Add, 220K Infer, 9.5K Deprecate, 1.19M total) are reproducible
+with `scripts/stats/compute_405bv1_dataset_stats.py` after running
+`./scripts/download_data.sh --corpus`.
+
 The test set contains 3,500 instances across 7 annual Wikidata snapshots (2019–2025).
 Each instance contains:
 
@@ -112,9 +119,21 @@ requirements/
     └── relik.txt               ReLiK (shares core env)
 
 scripts/
-├── download_data.sh            Download dataset from HuggingFace Hub
+├── download_data.sh            Download dataset from HuggingFace Hub (--kg, --indices, --corpus, --all)
+├── dataset/                    Garbage detect → reinput → merge chain (4 CLI tools, see src/dataset/README.md Part 3)
+├── stats/                      Paper §4.3 / Table 8 dataset-stat reproducibility (3 CLI tools, run on data/corpus/)
 ├── run/                        Non-SLURM entry points (evaluate, benchmarks, etc.)
-└── slurm/                      Optional SLURM sbatch scripts (for HPC clusters)
+├── slurm/                      Optional SLURM sbatch scripts (for HPC clusters)
+├── test_dataset_stats.sh       Lightweight smoke test for the dataset/stats path (CPU only, ~5 s)
+└── test_end_to_end.sh          Heavy benchmark-evaluation test (GPU + 180 GB RAM, designed for an HPC node)
+
+tests/                          Pytest suite for the dataset construction pipeline (CPU only, ~3 s)
+├── conftest.py
+├── test_s05_*.py               s05 prompt-builder regressions (mock + AST + signature audit)
+├── test_dataset_integrity.py   Released-data sanity checks (record count, hash uniqueness, schema)
+├── test_config_files.py        JSON validity + path hygiene on every config/**/*.json
+├── test_chain_scripts.py       Synthetic-tmp_path unit tests for the garbage-detect chain
+└── test_ported_scripts_argparse.py    Smoke test on each scripts/dataset/ + scripts/stats/ tool
 ```
 
 ## Requirements
@@ -277,14 +296,40 @@ See [`src/benchmarks/README.md`](src/benchmarks/README.md) for detailed per-mode
 | **Fixed** (correct) | `true` | Instances with no predictions scored as P=0/R=0/F1=0 |
 | **Legacy** | `false` | Instances with no predictions excluded from averages (reproduces original submission) |
 
+## Tests
+
+A lightweight pytest suite in `tests/` exercises the dataset construction
+pipeline (`src/dataset/emerge/`) and the chain CLI tools in
+`scripts/dataset/` and `scripts/stats/`. CPU only, no GPU, no network, no
+LLM API. Runs in ~3 s; data-dependent tests skip cleanly on a fresh clone.
+
+```bash
+pip install pytest                # one-time
+pytest tests/
+```
+
+A complementary shell smoke runner bundles the same checks plus a
+no-data-required argparse smoke and an optional paper-numbers
+reproducibility pass:
+
+```bash
+bash scripts/test_dataset_stats.sh             # ~5 s, no data needed
+bash scripts/test_dataset_stats.sh --with-data # +1 min: pulls 2.3 GB corpus and asserts
+                                               # paper §4.3 / Table 8 numbers reproduce
+```
+
+The heavier `bash scripts/test_end_to_end.sh` runs the **full benchmark
+evaluation** (requires GPU + 180 GB RAM, designed for an HPC node) and
+is not part of the routine test suite.
+
 ## Key documentation
 
 | File | What it covers |
 |------|---------------|
-| [`src/evaluation/README.md`](src/evaluation/README.md) | Evaluation pipeline: metrics, caching, scoring modes |
+| [`src/evaluation/README.md`](src/evaluation/README.md) | Evaluation pipeline: metrics, caching, scoring modes (incl. `cie_exact_match` ↔ Executable-R / E-R mapping) |
 | [`src/benchmarks/README.md`](src/benchmarks/README.md) | All 13 benchmark models: architectures, APIs, configs |
-| [`src/dataset/README.md`](src/dataset/README.md) | Full dataset creation pipeline (Wikidata + Wikipedia + EMERGE) |
-| [`src/stats/README.md`](src/stats/README.md) | Paper statistics: notebook inventory, data dependencies |
+| [`src/dataset/README.md`](src/dataset/README.md) | Full dataset creation pipeline (Wikidata + Wikipedia + EMERGE) — including **Part 3: Quality control of LLM annotations** (the detect → reinput → merge workflow exposed by `scripts/dataset/`) |
+| [`src/stats/README.md`](src/stats/README.md) | Paper statistics: notebook inventory (model evaluation), data dependencies. **Note**: `src/stats/` is notebooks for evaluation tables/figures; the CLI scripts in `scripts/stats/` are for **dataset** stat reproducibility (different artifacts despite the shared name). |
 
 ## Citation
 
