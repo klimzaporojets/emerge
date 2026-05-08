@@ -164,7 +164,7 @@ if __name__ == '__main__':
 
             if len(input_files_to_process) > 0 and input_file not in input_files_to_process:
                 logger.info(f'ignoring_the_following_file: {input_file}')
-                exit(0)
+                continue
 
             output_file_path = os.path.join(output_dir, input_file)
             # outfile = open(output_file_path, 'wt', encoding='utf-8')

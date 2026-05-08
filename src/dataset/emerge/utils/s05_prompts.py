@@ -95,9 +95,9 @@ def get_prompt_from_config(
         chunk_formatted_date: str,
         triples_string: str,
         prompt_template_content_name: str,
-        text_creation_date: str,
-        evaluation_window_start:str,
-        prompt_contents: Dict
+        prompt_contents: Dict,
+        text_creation_date: str = "",
+        evaluation_window_start: str = "",
 ):
     prompt_template_content = prompt_contents[prompt_template_content_name]
     assert '##chunk##' in prompt_template_content

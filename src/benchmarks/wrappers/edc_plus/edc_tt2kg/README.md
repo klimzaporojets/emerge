@@ -1,5 +1,26 @@
 # Extract, Define, Canonicalize: An LLM-based Framework for Knowledge Graph Construction
 
+> ## ⚠️ EMERGE users — read this first
+>
+> **This README is the upstream [EDC repository](https://github.com/CompVis/edc) README, copied verbatim.** It describes the upstream `datasets/tt2kg/{kgs/, passages/}` data layout, which **does not apply to EMERGE.**
+>
+> For EMERGE, the actual entry point is [`s01_run_v3.py`](s01_run_v3.py) in this directory, which reads from EMERGE's standard data layout produced by `./scripts/download_data.sh`:
+>
+> 1. **Download the data** from the repo root:
+>    ```bash
+>    ./scripts/download_data.sh --indices
+>    ```
+>    This fetches `data/indices/relik_edc_relation_indexes/` (~400 MB) which `s01_run_v3.py` hard-asserts. **Without `--indices` you'll get an `AssertionError` on `target_schema_path`** (this was [issue #1](https://github.com/klimzaporojets/emerge/issues/1)).
+> 2. The eval set passages already live at `data/evaluation_set/snapshot_*/delta_*.jsonl` after the default `./scripts/download_data.sh` (no extra flag needed).
+> 3. Run the wrapper through the standard EMERGE benchmark orchestrator:
+>    ```bash
+>    ./scripts/run/run_benchmark.sh config/benchmarks/s02_run_benchmarks/<edc-plus-config>/config.json
+>    ```
+>
+> See [`src/benchmarks/README.md`](../../README.md) and the top-level [`README.md`](../../../../README.md) for the full benchmark workflow. The remainder of this file is preserved verbatim from the upstream EDC repo for credit / context to the original authors.
+
+---
+
 ## Running with tt2kg on Snellius
 
 1. Create a conda environment with all the dependencies (this script can be used on a login node):
