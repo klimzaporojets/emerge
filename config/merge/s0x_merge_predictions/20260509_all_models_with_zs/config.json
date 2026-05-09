@@ -1,0 +1,106 @@
+{
+  "_help": "Public-clone-friendly variant of 20260324_all_models_with_zs/config.json: all paths repo-root-relative so the merge step runs from any clone location. Run from the repo root with `conda activate emerge`: `export PYTHONPATH=\"$PWD/src\" && python -u -m merge.s0x_merge_predictions --config_file config/merge/s0x_merge_predictions/20260509_all_models_with_zs/config.json`. The released `data/evaluation_set/` already contains LLM + human assessments and predictions from all 13 baseline models, so this config does NOT re-merge those; it only merges newly-produced wrapper outputs from `./output/s02_run_benchmarks/<dir>/`. **Delete entries from `input_other_datasets_paths` for any model you haven't re-run** — `merge_predictions_into_main_dataset` raises FileNotFoundError on missing input paths. The merged output lands at `output_merged_dataset_path`; point your evaluation config's `input_dataset_path` there before running `evaluate.sh`.",
+
+  "_input_main_dataset": "Released test set (all 13 baseline predictions + assessments already merged in). Replace only if you intentionally want to re-merge from raw inputs.",
+  "input_main_dataset_path": "./data/evaluation_set/",
+  "output_merged_dataset_path": "./output/s0x_merge_predictions/20260509_all_models_with_zs/",
+
+  "input_other_datasets_paths": [
+    {
+      "dataset_title": "edc-plus azure_ai/Mistral-small predictions",
+      "input_dataset_path": "./output/s02_run_benchmarks/edc_plus_icl_mistral_small/last_processed/",
+      "merge_predictions": true,
+      "predictions_model_name": "edc-plus-azure_ai/Mistral-small",
+      "predictions_model_type": "edc",
+      "canonicalize": false
+    },
+    {
+      "dataset_title": "edc-plus azure_ai/Mistral-Large-2411 predictions",
+      "input_dataset_path": "./output/s02_run_benchmarks/edc_plus_icl_mistral_large/last_processed/",
+      "merge_predictions": true,
+      "predictions_model_name": "edc-plus-azure_ai/Mistral-Large-2411",
+      "predictions_model_type": "edc",
+      "canonicalize": false
+    },
+    {
+      "dataset_title": "edc-plus open-ai/gpt-5.1 predictions (non-canonicalized)",
+      "input_dataset_path": "./output/s02_run_benchmarks/edc_plus_icl_gpt_5_1/last_processed/",
+      "merge_predictions": true,
+      "predictions_model_name": "edc-plus-open-ai/gpt-5.1/non-canonicalized",
+      "predictions_model_type": "edc",
+      "canonicalize": false
+    },
+    {
+      "dataset_title": "edc-plus zero-shot open-ai/GPT-5_1 predictions",
+      "input_dataset_path": "./output/s02_run_benchmarks/edc_plus_zs_gpt_5_1/last_processed/",
+      "merge_predictions": true,
+      "predictions_model_name": "edc-plus-zshot-open_ai/GPT-5_1",
+      "predictions_model_type": "edc",
+      "canonicalize": false
+    },
+    {
+      "dataset_title": "edc-plus zero-shot azure_ai/Mistral-Large-2411 predictions",
+      "input_dataset_path": "./output/s02_run_benchmarks/edc_plus_zs_mistral_large/last_processed/",
+      "merge_predictions": true,
+      "predictions_model_name": "edc-plus-zshot-azure_ai/Mistral-Large-2411",
+      "predictions_model_type": "edc",
+      "canonicalize": false
+    },
+    {
+      "dataset_title": "kg-gen azure_ai/Mistral-small predictions",
+      "input_dataset_path": "./output/s02_run_benchmarks/20260114_kggen_mistral_small/kggen_mistral_small/",
+      "merge_predictions": true,
+      "predictions_model_name": "kg-gen/azure_ai/Mistral-small",
+      "predictions_model_type": "kg-gen"
+    },
+    {
+      "dataset_title": "kg-gen azure_ai/Mistral-Large-2411 predictions",
+      "input_dataset_path": "./output/s02_run_benchmarks/20260114_kggen_mistral_large/kggen_mistral_large/",
+      "merge_predictions": true,
+      "predictions_model_name": "kg-gen/azure_ai/Mistral-Large-2411",
+      "predictions_model_type": "kg-gen"
+    },
+    {
+      "dataset_title": "kg-gen azure/gpt5.1 predictions",
+      "input_dataset_path": "./output/s02_run_benchmarks/20260116_kggen_gpt_5_1/kggen/",
+      "merge_predictions": true,
+      "predictions_model_name": "kg-gen/azure/gpt5.1",
+      "predictions_model_type": "kg-gen"
+    },
+    {
+      "dataset_title": "rakg azure_ai/Mistral-small predictions",
+      "input_dataset_path": "./output/s02_run_benchmarks/20260114_rakg_mistral_small/rakg_mistral_small/",
+      "merge_predictions": true,
+      "predictions_model_name": "rakg/azure_ai/Mistral-small",
+      "predictions_model_type": "rakg"
+    },
+    {
+      "dataset_title": "rakg azure_ai/Mistral-Large-2411 predictions",
+      "input_dataset_path": "./output/s02_run_benchmarks/20260114_rakg_mistral_large/rakg_mistral_large/",
+      "merge_predictions": true,
+      "predictions_model_name": "rakg/azure_ai/Mistral-Large-2411",
+      "predictions_model_type": "rakg"
+    },
+    {
+      "dataset_title": "rebel predictions",
+      "input_dataset_path": "./output/s02_run_benchmarks/20260114_rebel/rebel/",
+      "merge_predictions": true,
+      "predictions_model_name": "rebel",
+      "predictions_model_type": "rebel"
+    },
+    {
+      "dataset_title": "relik-oie predictions",
+      "input_dataset_path": "./output/s02_run_benchmarks/relik_oie/relik-open_ie-large-rel-embeddings/results/",
+      "merge_predictions": true,
+      "predictions_model_name": "relik-oie",
+      "predictions_model_type": "relik"
+    },
+    {
+      "dataset_title": "relik-cie predictions",
+      "input_dataset_path": "./output/s02_run_benchmarks/relik_cie/relik-cie-large-rel-embeddings/results/",
+      "merge_predictions": true,
+      "predictions_model_name": "relik-cie",
+      "predictions_model_type": "relik"
+    }
+  ]
+}

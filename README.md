@@ -294,6 +294,56 @@ Run `./scripts/run/run_benchmark.sh --help` for the full list of available confi
 and required environments.
 See [`src/benchmarks/README.md`](src/benchmarks/README.md) for detailed per-model instructions.
 
+> **Heads-up on `relik_cie`**: re-running ReLiK Closed IE additionally requires a
+> per-snapshot Wikipedia entity index that is **not** part of `download_data.sh`.
+> Building it via `scripts/slurm/dataset/s08_extract_relik_dictionary.sh` needs
+> ~80 CPUs, 128 GB RAM, and up to 48 h of wall-clock against an English Wikipedia
+> history dump. The released `data/evaluation_set/` already contains the
+> `relik-cie` predictions, so evaluating ReLiK Closed IE against the paper numbers
+> works without this index — re-generation only. See
+> [`src/benchmarks/README.md`](src/benchmarks/README.md#note-relik-closed-ie-entity-index-heavy)
+> for the full breakdown.
+
+## Evaluating new benchmark predictions
+
+Wrappers write their predictions under `./output/s02_run_benchmarks/<config_dir>/`
+with model-local names (e.g., the KGGen wrapper writes `kg-gen-gpt-5.1`, while the
+canonical key the evaluator expects is `kg-gen/azure/gpt5.1`). Before evaluation,
+the **merge step** (`src/merge/s0x_merge_predictions.py`) reads each wrapper's raw
+output, normalises the model name to its canonical form, and writes a unified
+dataset that the evaluator consumes. Pipeline:
+
+```
+wrapper → merge → evaluate
+```
+
+Skipping merge → the evaluator silently filters out non-canonical names and
+reports **0 results** for your re-run model.
+
+```bash
+conda activate emerge
+export PYTHONPATH="$PWD/src"
+
+# 1. Re-run one or more wrappers (see "Running benchmark models" above).
+
+# 2. Merge re-run predictions into the released main dataset.
+#    The config has a `_help` field at the top documenting the field semantics.
+#    Delete entries from `input_other_datasets_paths` for any model you did NOT
+#    re-run — merge raises FileNotFoundError on missing wrapper output paths.
+python -u -m merge.s0x_merge_predictions \
+    --config_file config/merge/s0x_merge_predictions/20260509_all_models_with_zs/config.json
+# → writes ./output/s0x_merge_predictions/20260509_all_models_with_zs/
+
+# 3. Evaluate. Copy a config under config/evaluation/s0x_evaluate_predictions/
+#    and change `input_dataset_path` to the merge output above before running.
+./scripts/run/evaluate.sh path/to/your/evaluation_config.json
+```
+
+Reproducing the released paper numbers does **not** require the merge step —
+`./scripts/run/evaluate.sh` reads the released `data/evaluation_set/` directly,
+which already contains predictions from all 13 baseline models. Merge is only
+needed when you want to evaluate **new** predictions you re-ran.
+
 ## Two scoring modes
 
 | Mode | `score_empty_predictions_as_zero` | Description |

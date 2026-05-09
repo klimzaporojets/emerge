@@ -10,7 +10,7 @@
       "name": "relik-cie-large",
       "config_name": "relik-ie/relik-cie-large",
       "cache_dir": "./output/cache/",
-      "entity_index_base_path": "/path/to/storage/wikipedia-processing/output/experiments/s08_extract_relik_index/20250506_slurm/indexes-e5-small-v2-wikipedia-matryoshka/",
+      "entity_index_base_path": "./data/indices/relik_entity_index/",
       "relation_index_base_path": "./data/indices/relik_edc_relation_indexes/",
       "entity_index_precision": "16",
       "relation_index_precision": "16",

@@ -194,9 +194,36 @@ Same command shape as the EDC+ walkthrough; only these fields change. Replace `<
 | **RAKG Mistral L/S** (`20260114_rakg_mistral_{large,small}`) | `rakg-py311` *plus* `git clone https://github.com/RUC-NLPIR/RAKG.git && export RAKG_REPO_PATH=$PWD/RAKG` | `AZURE_AI_API_KEY` | (none beyond default) | — |
 | **REBEL** (`20260114_rebel`) | `rebel-py311` | — (local model) | (none beyond default) | 1 × 16 GB+ VRAM, 100 GB RAM |
 | **ReLiK Open IE** (`relik_oie`) | `emerge` (same as orchestrator) | — | `--indices` | 1 × 16 GB+ VRAM, 64 GB RAM |
-| **ReLiK Closed IE** (`relik_cie`) | `emerge` | — | `--indices` *and* `--kg` (~22 GB after decompression) | 1 × 16 GB+ VRAM, 180 GB RAM |
+| **ReLiK Closed IE** (`relik_cie`) | `emerge` | — | `--indices` *and* `--kg` (~22 GB after decompression) **and** the per-snapshot entity index (see note below) | 1 × 16 GB+ VRAM, 180 GB RAM |
 
 For each: `pip install -r requirements/benchmarks/<model>.txt` to populate the wrapper env (the file's header has the exact `conda create` command).
+
+#### Note: ReLiK Closed IE entity index (heavy)
+
+Re-running `relik_cie` requires a per-snapshot Wikipedia entity index (used by ReLiK
+for entity linking) under `./data/indices/relik_entity_index/<YYYY>-01-01/` for each
+of the 7 snapshot years 2019–2025. **This index is not part of the standard dataset
+download** — `download_data.sh --indices` only ships the *relation* indexes
+(`./data/indices/relik_edc_relation_indexes/`). Two ways to obtain the entity index:
+
+1. **Build it yourself** by running `scripts/slurm/dataset/s08_extract_relik_dictionary.sh`
+   against an English Wikipedia dump. Per the SLURM header that script needs:
+   - **CPU**: 80 cores
+   - **RAM (build)**: 128 GB
+   - **Wall-clock**: up to 48 h
+   - **Disk**: tens of GB output (per-snapshot dense vector indexes; exact size
+     depends on Wikipedia dump version) — point its `output_dir` at
+     `./data/indices/relik_entity_index/` so `relik_cie/relik_config.json` finds it.
+   - **Input**: an English Wikipedia history dump (~hundreds of GB).
+2. **Skip re-running and use the released predictions instead.** The released
+   `data/evaluation_set/` already contains the `relik-cie` predictions used in the
+   paper. `./scripts/run/evaluate.sh` reads them directly — you only need an entity
+   index if you want to **re-generate** ReLiK cIE outputs from scratch (e.g., on a
+   different Wikipedia snapshot or with different ReLiK weights).
+
+At inference time, **loaded** entity indexes contribute to the 180 GB RAM figure for
+`relik_cie` above (the index sits in memory alongside the KG snapshot for correct
+Exists-vs-Add disambiguation).
 
 ## Output format
 
