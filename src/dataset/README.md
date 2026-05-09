@@ -3,14 +3,95 @@
 This module contains the complete pipeline for creating the EMERGE dataset, from raw
 Wikidata/Wikipedia dumps to the final 3,500-instance evaluation set used in the paper.
 
-> **Note on dataset creation:** The dataset creation pipeline processes raw Wikidata and
-> Wikipedia history dumps (~TB scale). These raw dumps are stored on our compute
-> infrastructure and are too large to include in this repository. The complete data and
-> instructions for full pipeline reproduction will be provided in the public
-> (non-anonymous) release. The evaluation dataset itself (3,500 instances) is included
-> in `data/evaluation_set/` and is also available as supplementary material on OpenReview.
-> The configuration files in `config/dataset/` contain placeholder paths (`/path/to/...`)
-> that would need to be adapted to your local data paths.
+> **Status of this pipeline:** The complete EMERGE construction pipeline — *every*
+> stage from raw Wikidata/Wikipedia dump processing through LLM assessment, deduplication,
+> human annotation, and quality control — is shipped here for **transparency**. The whole
+> chain is the EMERGE contribution. What's *not* in the repo are the **inputs** (raw
+> history dumps ~TB; Llama 405B model weights) and the **HPC infrastructure** the heavy
+> stages assume (multi-H100 SLURM cluster running TGI inside Apptainer). Reviewers using
+> or evaluating against the released `data/evaluation_set/` do NOT need to run any of
+> these stages.
+>
+> ### Pipeline stages (code in repo, every stage)
+>
+> All stages below have full Python/Java code in `src/dataset/`, SLURM submitters in
+> `scripts/slurm/`, and configs (placeholder paths) in `config/dataset/`. Listed in
+> execution order:
+>
+> - **WD s01** — Wikidata triple extraction from raw 7z dump:
+>   `src/dataset/wikidata/java/wikidata/MainConcurrentWikidata.java` (Java);
+>   SLURM `scripts/slurm/wikidata/s01_*.sh`.
+> - **WD s02–s03** — Normalize entities/redirects, build per-triple deltas, extract
+>   KG snapshots: `src/dataset/wikidata/python/{s02_normalize_history_graph,s02_normalize_entity_creation_date,s03_get_kg_snapshot,s03_get_deltas}.py`;
+>   SLURM `scripts/slurm/wikidata/s02_*.sh`, `s03_*.sh`.
+> - **WP s01** — Wikipedia title-change + hyperlink history extraction from raw XML:
+>   `src/dataset/wikipedia/{s01_history_links_extraction,s01_extract_title_changes}.py`;
+>   SLURM `scripts/slurm/wikipedia/s01_*.sh`.
+> - **WP s02–s03** — Wikipedia normalize + entity-description extraction at snapshot
+>   timestamps: `src/dataset/wikipedia/{s02_normalize_entity_creation_date,s02b_normalize_history_graph,s03_extract_entity_descriptions}.py`;
+>   SLURM `scripts/slurm/wikipedia/s02_*.sh`.
+> - **emerge s03–s04** — Match WP passages with WD deltas → filter for KG-relevant
+>   snippets: `src/dataset/emerge/{s03_obtain_textual_delta_snippets_v8,s04_find_interesting_snippets_v3}.py`.
+> - **s05 LLM assessment (Llama 8B + Llama 405B, prompts v1):**
+>   - Python runner: `src/dataset/emerge/s05_generate_dataset_with_llm_v8.py`
+>   - SLURM 405B submitter: `scripts/slurm/dataset/s05_generate_dataset_with_llm_v9_llama405b.sh`
+>   - SLURM 8B variant: `scripts/slurm/dataset/s05_generate_dataset_with_llm_v9_llama8b.sh`
+>   - Fault-tolerant TGI/Apptainer restart loop: `scripts/slurm/dataset/s05_restart_apptainer_llama400b_v5.sh`
+>   - Prompt templates: `src/dataset/emerge/prompts/prompts_v1/` (single/multi assert + deprecate)
+>   - Configs: `config/dataset/emerge/s05_generate_dataset_with_llm/{20251216_v8_llama_405b_v1, 20260502_v8_llama_405b_v1_complete_dataset}/`
+> - **s06b/s07/s07b/s07c** — Reformat → dedup → 35K subsample → 3.5K subsample:
+>   `src/dataset/emerge/{s06b_refactor_final_format,s07_reduce_duplicates_v6,s07b_subsample_dataset,s07c_verify_duplicates}.py`.
+> - **s08** — Extract ReLiK entity index from Wikipedia:
+>   `src/dataset/emerge/s08_*.py`; SLURM `scripts/slurm/dataset/s08_extract_relik_dictionary.sh`.
+> - **s09** — Human annotation + agreement statistics:
+>   `src/dataset/emerge/s09{a,b,c,d,e}_*.py`.
+> - **Part 3 — Garbage QA / quality control of LLM annotations:**
+>   `scripts/dataset/{find_garbage_clusters,build_reinput_for_garbage,merge_reinput_into_dataset,inspect_cluster_neighbors}.py`.
+>   See the Part 3 section below.
+>
+> ### What you can practically execute (no HPC, no Llama serving)
+>
+> The released artifacts only include certain checkpoints in the chain — not the raw
+> dumps and not s04 output. So **practically**, on a regular workstation, the
+> reviewer-runnable subset is:
+>
+> - **Part 3 garbage QA** on `data/corpus/` (downloaded via
+>   `./scripts/download_data.sh --corpus`). Validated reproduces the paper's
+>   220-flagged-triples residual (0.0113%).
+> - **Paper §4.3 / Table 8 statistics** via `scripts/stats/*.py` on `data/corpus/`.
+>   Reproduces the 608K / 207K / 149K / 220K / 9.5K / 1.19M headline numbers.
+> - **Annotation agreement** on `data/human_annotation/` via
+>   `./scripts/run/annotation_agreement.sh`.
+> - **Benchmark re-run** of any of the 13 baselines on `data/evaluation_set/` (most
+>   need API keys or GPU; `relik_cie` additionally needs the entity index — see top
+>   README and `src/benchmarks/README.md`).
+> - **Full evaluation** (`./scripts/run/evaluate.sh`) against `data/evaluation_set/`
+>   to reproduce paper numbers.
+>
+> ### What you cannot realistically run as a reviewer
+>
+> - **WD s01–s03 / WP s01–s03**: needs raw history dumps from
+>   [dumps.wikimedia.org](https://dumps.wikimedia.org/) — specifically the
+>   `wikidatawiki-YYYYMMDD-pages-meta-history*.7z` and
+>   `enwiki-YYYYMMDD-pages-meta-history*.7z` series. Hundreds of GB to TB; days of
+>   processing on an HPC node.
+> - **emerge s03–s04**: depends on WD/WP s01–s03 outputs, which we don't
+>   redistribute.
+> - **s05 LLM assessment**: requires Llama 405B served via TGI inside Apptainer on a
+>   multi-H100 SLURM cluster. **Note:** `data/corpus/` is the **post-s05** 1.19M
+>   LLM-labelled corpus — already past this stage, so it can't be used as input to
+>   re-run s05. To run s05 you'd need the s04-output candidate set (~1.19M unlabelled
+>   snippets), which we don't redistribute.
+> - **s06b–s09**: depends on s05 output; while `data/corpus/` is post-s05, none of
+>   s06b–s09 has been smoke-tested for public use against it.
+>
+> **Configs are placeholders:** every JSON under `config/dataset/` uses
+> `/path/to/storage/...` strings as a structural template. Rewriting them for your
+> environment is the gating step before running anything beyond the reviewer-runnable
+> subset above.
+>
+> See the top-level README's "Dataset construction pipeline" section for the per-stage
+> status matrix at-a-glance.
 
 > **Note on internal naming:** The codebase uses different identifiers for TKGU operations:
 > Exists = `x-triples`, Add = `e-triples`, Mint+Add = `ee-triples`,

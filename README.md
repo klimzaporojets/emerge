@@ -85,6 +85,64 @@ Each instance contains:
 | ReLiK RE | Local neural (Open IE) | sapienzanlp/relik-relation-extraction-nyt-large |
 | ReLiK cIE | Local neural (Closed IE) | sapienzanlp/relik-cie-large |
 
+## Dataset construction pipeline
+
+The released `data/evaluation_set/` is the **frozen final artifact** of the pipeline
+below. **Using or evaluating against the dataset does NOT require running any of these
+stages** — `download_data.sh` + `evaluate.sh` is sufficient. The construction code is
+shipped here for **transparency**, not as one-click reproduction; full from-scratch
+reconstruction is a research-level effort.
+
+```
+Raw Wikidata dumps  ──→  [WD s01–s03]  ──→  KG snapshots + per-triple deltas
+                                                      │
+Raw Wikipedia dumps ──→  [WP s01–s03]  ──→  Entity descriptions + hyperlink history
+                                                      │
+                                                      ▼
+                              [s03] Match textual passages ↔ KG-change deltas
+                                                      │
+                              [s04] Filter for KG-relevant snippets
+                                                      │
+                              [s05] LLM assessment (Llama 8B + Llama 405B w/ TGI)
+                                                      │
+                              [s06b → s07 → s07b] Reformat → dedup → 35K → 3.5K
+                                                      │
+                              [s09] Human annotation + agreement statistics
+                                                      │
+                              [Part 3] Quality control of LLM annotations  ◀── extension
+                                                      │
+                                                      ▼
+                                          data/evaluation_set/   (released)
+```
+
+| Stage | Code in repo | Configs | Reviewer can run? | What's needed otherwise |
+|---|:-:|:-:|:-:|---|
+| Raw Wikipedia/Wikidata dump download | — | — | — | Fetch from [dumps.wikimedia.org](https://dumps.wikimedia.org/); ~hundreds of GB to TB |
+| WD s01 (Java triple extraction) | ✅ `src/dataset/wikidata/` | placeholder | ❌ | Raw 7z dump + Java tooling |
+| WD s02–03 / WP s01–03 (normalize, snapshots, hyperlinks) | ✅ `src/dataset/{wikidata,wikipedia}/` | placeholder | ❌ | s01 outputs; SLURM hardware |
+| s03 textual delta snippets | ✅ `src/dataset/emerge/s03_*.py` | placeholder | ❌ | WD/WP outputs |
+| s04 find interesting snippets | ✅ `src/dataset/emerge/s04_*.py` | placeholder | ❌ | s03 outputs |
+| **s05 LLM annotation (Llama 8B + 405B, prompts v1)** | ✅ `src/dataset/emerge/s05_*.py` + `src/dataset/emerge/prompts/prompts_v1/` + `scripts/slurm/dataset/s05_*` | placeholder | ❌ | Llama 405B model + multi-H100 cluster + TGI inside Apptainer; **also note: the released `data/corpus/` is the post-s05 1.19M-instance output, so even with infra you'd need the s04-output candidate set (not redistributed) as input** |
+| s06b/s07/s07b reformat/dedup/subsample | ✅ `src/dataset/emerge/{s06b,s07,s07b,s07c}_*.py` | placeholder | ❌ | s05 outputs |
+| s09 human annotation + stats | ✅ `src/dataset/emerge/s09{a,b,c,d,e}_*.py` | partial (`s09e_*` is functional) | partial | `data/human_annotation/` (in `download_data.sh`); annotators for new annotation rounds |
+| **Part 3 — Quality control of LLM annotations** | ✅ `scripts/dataset/` (4 CLI tools) | functional | **✅** | Runs on `data/corpus/` (`download_data.sh --corpus`); reproduces the **220-flagged-triples (0.0113%)** residual from the paper |
+| **Paper §4.3 / Table 8 statistics** | ✅ `scripts/stats/` (3 CLI tools) | functional | **✅** | Runs on `data/corpus/`; reproduces 608K / 207K / 149K / 220K / 9.5K / 1.19M headline numbers |
+
+**Why most stages aren't reviewer-runnable end-to-end:**
+
+- **Storage scale.** The English Wikipedia history dump alone is hundreds of GB compressed; full Wikidata is similar. We don't redistribute these dumps via this repo or the HF dataset — they're public on [dumps.wikimedia.org](https://dumps.wikimedia.org/) for anyone who wants to attempt full reproduction.
+- **LLM serving.** s05 is designed around Llama 405B served via TGI inside Apptainer on a multi-H100 SLURM cluster. The `scripts/slurm/dataset/s05_*` scripts document exactly how, but a single-machine reviewer setup cannot host the model.
+- **Configs are placeholders.** All `config/dataset/...` JSONs use `/path/to/storage/...` strings as a structural template. Anyone running these stages must rewrite them for their own dump downloads + intermediate outputs.
+
+**What's reproducible by reviewers right now**, on a regular workstation:
+- The two ✅ rows above (Part 3 garbage QA + paper §4.3 stats) — both fully runnable, both reproduce documented paper numbers.
+- All 12 of 13 baseline benchmarks (the 13th, `relik_cie`, additionally requires the entity index — see the heads-up under "Running benchmark models").
+- The full `evaluate.sh` paper-results pipeline against the released `data/evaluation_set/`.
+
+**Possible future additions** (not blocking; signaling direction): dump-download convenience script, uploads of more intermediate outputs (`data/corpus/` already covers part of this), and a single-node Llama-8B-only variant of s05 for low-resource users.
+
+For per-step details + config field semantics, see [`src/dataset/README.md`](src/dataset/README.md).
+
 ## Project structure
 
 ```
