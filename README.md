@@ -14,8 +14,12 @@ graphs from textual evidence.
 # 1. Clone and set up
 git clone https://github.com/klimzaporojets/emerge.git
 cd emerge
-conda create -n emerge python=3.10 -y && conda activate emerge
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+conda create -n emerge python=3.12 -y && conda activate emerge
+# PyTorch — default install (CPU on most systems). For GPU, pin the CUDA-matching
+# build first per https://pytorch.org/ (e.g. `pip install torch torchvision torchaudio
+# --index-url https://download.pytorch.org/whl/cu121` for CUDA 12.1) BEFORE the
+# core.txt install below.
+pip install torch torchvision torchaudio
 pip install -r requirements/core.txt
 
 # 2. Download the dataset (test set + human annotations, ~155 MB)
@@ -211,11 +215,14 @@ tests/                          Pytest suite for the dataset construction pipeli
 ### Step 1: Create conda environment
 
 ```bash
-conda create -n emerge python=3.10
+conda create -n emerge python=3.12
 conda activate emerge
 
-# PyTorch (adjust CUDA version to match your system; see https://pytorch.org)
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# PyTorch — default install (CPU on most systems). For GPU, pin the CUDA-matching
+# build first per https://pytorch.org/ (e.g. `pip install torch torchvision torchaudio
+# --index-url https://download.pytorch.org/whl/cu121` for CUDA 12.1) BEFORE the
+# core.txt install below; pip will then see torch as already-satisfied.
+pip install torch torchvision torchaudio
 
 # Core dependencies (evaluation, statistics, merge)
 pip install -r requirements/core.txt
