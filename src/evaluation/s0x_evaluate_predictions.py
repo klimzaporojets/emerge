@@ -121,6 +121,15 @@ def main():
                     continue
                 logger.info(f'loading {fname}')
                 curr_snapshot_path = os.path.join(base, fname)
+                if not os.path.exists(curr_snapshot_path):
+                    logger.warning(
+                        f'KG snapshot file not found: {curr_snapshot_path} — '
+                        f'proceeding with empty snapshot. relik-cie Exists scoring '
+                        f'will be approximate (predictions roll into Add). Run '
+                        f'./scripts/download_data.sh --kg for full reproducibility.'
+                    )
+                    snapshot_to_triples[snap] = triples
+                    continue
                 with open(curr_snapshot_path, 'r', encoding='utf-8') as f:
                     for line in tqdm(f):
                         # split only first 3 columns, ignoring labels

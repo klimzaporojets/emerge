@@ -32,6 +32,9 @@ pip install -r requirements/core.txt
 
 # 3. Run evaluation (reproduces paper results)
 ./scripts/run/evaluate.sh
+# Without --kg downloaded, evaluate.sh emits a warning and runs anyway:
+# 12 of 13 models score correctly; only relik-cie's Exists row is approximate.
+# Download --kg + re-run (same command) for full relik-cie Exists scoring.
 
 # 4. View results in notebooks (saved outputs included — no re-execution needed)
 jupyter lab src/stats/
