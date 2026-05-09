@@ -160,7 +160,10 @@ def run_kggen(
         'max_tokens': int(max_tokens)
     }
 
-    logger.info(f'Initializing KGGen with params kg_init_params: {kg_init_params}')
+    logger.info(
+        f'Initializing KGGen with params kg_init_params: '
+        f'{ {k: ("***" if k == "api_key" else v) for k, v in kg_init_params.items()} }'
+    )
     kg = KGGen(
         **kg_init_params
     )

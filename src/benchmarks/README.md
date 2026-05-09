@@ -200,10 +200,18 @@ For each: `pip install -r requirements/benchmarks/<model>.txt` to populate the w
 
 ## Output format
 
-All models produce per-instance predictions that are written to the output directory
-specified in each config. These outputs are then combined by the merge step
-(`src/merge/s0x_merge_predictions.py`) into the unified dataset format that the
-evaluation pipeline reads.
+All models produce per-instance predictions in their model-specific output directory.
+Each wrapper writes its own local model name into the output (e.g., the KGGen wrapper
+writes `kg-gen-gpt-5.1`; the canonical name evaluation expects is `kg-gen/azure/gpt5.1`).
+
+> **⚠️ The merge step is mandatory before evaluation.** Pipeline:
+> `wrapper → merge → evaluation`.
+>
+> `src/merge/s0x_merge_predictions.py` reads each wrapper's raw output, maps it
+> to the canonical model name (declared in the merge config), and writes a
+> unified `predictions[<canonical_name>]` dict that evaluation reads.
+> Running evaluation directly on raw wrapper output makes evaluation silently
+> filter out the non-canonical names and report **0 results**.
 
 ## Logging
 

@@ -57,7 +57,16 @@ def save_batch_predictions(
             'model_config_name': model_config_name,
         }
 
-        instance['parsed_instance']['predictions'].append(prediction_json)
+        # `predictions` is a dict (model name → prediction) per data/README.md
+        # schema, but legacy / pre-merge inputs may have it as a list. Handle
+        # both. The merge step (src/merge/s0x_merge_predictions.py) overwrites
+        # this dict key with the canonical model name from the merge config,
+        # so the wrapper-side name used here only matters for crash avoidance.
+        preds = instance['parsed_instance'].setdefault('predictions', {})
+        if isinstance(preds, list):
+            preds.append(prediction_json)
+        else:
+            preds[model_name] = prediction_json
         predicted_instances_to_save.append(instance)
 
     logger.info(
