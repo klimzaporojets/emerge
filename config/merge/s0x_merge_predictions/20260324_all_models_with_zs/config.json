@@ -1,4 +1,5 @@
 {
+  "_obsolete_signpost": "*** USE config/merge/s0x_merge_predictions/20260509_all_models_with_zs/config.json INSTEAD. *** This file is kept as a historical record of the original Snellius paths used for the paper-original merge run; the absolute /path/to/storage/... values are non-functional on a fresh clone. The 20260509_* sibling config has the same semantics with repo-root-relative paths and no LLM/human-assessment entries (those are already merged into the released data/evaluation_set/).",
   "_input_main_dataset": "most likely the complete dataset, but can also be the subsampled dataset or any other TO which all the others will merge",
   "input_main_dataset_path": "/path/to/storage/wikipedia-processing/output/experiments/s07_subsample_dataset/20251203_tiny/",
   "output_merged_dataset_path": "/path/to/storage/emerge/output/experiments/s0x_merge_predictions/20260324_all_models_with_zs/",
