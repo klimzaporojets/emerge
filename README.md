@@ -30,10 +30,20 @@ pip install -r requirements/core.txt
 #   ./scripts/download_data.sh --corpus    # +2.3 GB — required to reproduce paper §4.3 stats
 # See src/benchmarks/README.md for each model's exact flag.
 
-# 3. Run evaluation (reproduces paper results)
+# 3. Run evaluation (reproduces paper results) — REQUIRES GPU
+# Hardware: 1× GPU with 16 GB+ VRAM, ~8 GB system RAM (measured: 3-4 GB peak
+# without --kg snapshots; allocate 8-16 GB for headroom).
+# Wall-clock: depends on the entity_coverage / BERTScore phase, which scales
+# with each model's prediction count. Allocate generously (4+ hours) on first
+# run; subsequent runs benefit from per-metric caching.
+# With --kg snapshots loaded: + ~150 GB RAM (the eval currently keeps all 7
+# yearly snapshots in memory simultaneously; a future refactor to load one
+# snapshot at a time would drop the requirement to ~50 GB).
+# On SLURM (without --kg): `salloc -p gpu -t 6:00:00 --gpus=1 --mem=16G`.
+# On SLURM (with --kg):    `salloc -p gpu -t 8:00:00 --gpus=1 --mem=192G`.
 ./scripts/run/evaluate.sh
-# Without --kg downloaded, evaluate.sh emits a warning and runs anyway:
-# 12 of 13 models score correctly; only relik-cie's Exists row is approximate.
+# Without --kg downloaded, evaluate.sh emits a warning per snapshot year and runs
+# anyway: 12 of 13 models score correctly; only relik-cie's Exists row is approximate.
 # Download --kg + re-run (same command) for full relik-cie Exists scoring.
 
 # 4. View results in notebooks (saved outputs included — no re-execution needed)
@@ -96,9 +106,8 @@ Each instance contains:
 
 The released `data/evaluation_set/` is the **frozen final artifact** of the pipeline
 below. **Using or evaluating against the dataset does NOT require running any of these
-stages** — `download_data.sh` + `evaluate.sh` is sufficient. The construction code is
-shipped here for **transparency**, not as one-click reproduction; full from-scratch
-reconstruction is a research-level effort.
+steps** — `download_data.sh` + `evaluate.sh` is sufficient. The construction code is
+shipped here for **transparency**.
 
 ```
 Raw Wikidata dumps  ──→  [WD s01–s03]  ──→  KG snapshots + per-triple deltas
@@ -122,7 +131,32 @@ Raw Wikipedia dumps ──→  [WP s01–s03]  ──→  Entity descriptions + 
                                           data/evaluation_set/   (released)
 ```
 
-| Stage | Code in repo | Configs | Reviewer can run? | What's needed otherwise |
+The code for every pipeline step is in this repo. **Some steps are not directly
+executable in this release**, however, because they require inputs or
+infrastructure we don't ship publicly:
+
+- **Raw dump scale.** The English Wikipedia and Wikidata history dumps are
+  ~TB-scale — too large to redistribute via this repo or the HF dataset.
+  Fetch yourself from [dumps.wikimedia.org](https://dumps.wikimedia.org/),
+  specifically the `wikidatawiki-YYYYMMDD-pages-meta-history*.7z` and
+  `enwiki-YYYYMMDD-pages-meta-history*.7z` series.
+- **Llama 405B serving.** Step `s05` (LLM assessment) is designed around Llama
+  405B served via TGI inside Apptainer on a multi-H100 SLURM cluster
+  (see `scripts/slurm/dataset/s05_*.sh`). A single-node setup cannot host the
+  model.
+- **Configs are placeholders.** Every JSON under `config/dataset/` uses
+  `/path/to/storage/...` placeholder paths; rewriting them for your environment
+  is the gating step.
+- **Intermediate outputs not yet redistributed.** Only the final
+  `data/evaluation_set/` and the post-LLM `data/corpus/` are shipped — not the
+  intermediate state between WD/WP processing and the LLM-judged corpus, which
+  s05 would need as input.
+
+These gaps are **deferred to future versions** as we add convenience tooling
+(dump-download script, more intermediate-output uploads, possibly a
+single-node Llama-8B variant of s05 for low-resource users).
+
+| Pipeline step | Code in repo | Configs | Executable in this release? | What's needed otherwise |
 |---|:-:|:-:|:-:|---|
 | Raw Wikipedia/Wikidata dump download | — | — | — | Fetch from [dumps.wikimedia.org](https://dumps.wikimedia.org/); ~hundreds of GB to TB |
 | WD s01 (Java triple extraction) | ✅ `src/dataset/wikidata/` | placeholder | ❌ | Raw 7z dump + Java tooling |
@@ -135,18 +169,11 @@ Raw Wikipedia dumps ──→  [WP s01–s03]  ──→  Entity descriptions + 
 | **Part 3 — Quality control of LLM annotations** | ✅ `scripts/dataset/` (4 CLI tools) | functional | **✅** | Runs on `data/corpus/` (`download_data.sh --corpus`); reproduces the **220-flagged-triples (0.0113%)** residual from the paper |
 | **Paper §4.3 / Table 8 statistics** | ✅ `scripts/stats/` (3 CLI tools) | functional | **✅** | Runs on `data/corpus/`; reproduces 608K / 207K / 149K / 220K / 9.5K / 1.19M headline numbers |
 
-**Why most stages aren't reviewer-runnable end-to-end:**
+**What you can run right now**, on a regular workstation:
 
-- **Storage scale.** The English Wikipedia history dump alone is hundreds of GB compressed; full Wikidata is similar. We don't redistribute these dumps via this repo or the HF dataset — they're public on [dumps.wikimedia.org](https://dumps.wikimedia.org/) for anyone who wants to attempt full reproduction.
-- **LLM serving.** s05 is designed around Llama 405B served via TGI inside Apptainer on a multi-H100 SLURM cluster. The `scripts/slurm/dataset/s05_*` scripts document exactly how, but a single-machine reviewer setup cannot host the model.
-- **Configs are placeholders.** All `config/dataset/...` JSONs use `/path/to/storage/...` strings as a structural template. Anyone running these stages must rewrite them for their own dump downloads + intermediate outputs.
-
-**What's reproducible by reviewers right now**, on a regular workstation:
-- The two ✅ rows above (Part 3 garbage QA + paper §4.3 stats) — both fully runnable, both reproduce documented paper numbers.
+- The ✅ rows above (Part 3 garbage QA + paper §4.3 stats) — both fully runnable, both reproduce documented paper numbers.
 - All 12 of 13 baseline benchmarks (the 13th, `relik_cie`, additionally requires the entity index — see the heads-up under "Running benchmark models").
 - The full `evaluate.sh` paper-results pipeline against the released `data/evaluation_set/`.
-
-**Possible future additions** (not blocking; signaling direction): dump-download convenience script, uploads of more intermediate outputs (`data/corpus/` already covers part of this), and a single-node Llama-8B-only variant of s05 for low-resource users.
 
 For per-step details + config field semantics, see [`src/dataset/README.md`](src/dataset/README.md).
 

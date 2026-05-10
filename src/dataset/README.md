@@ -8,8 +8,8 @@ Wikidata/Wikipedia dumps to the final 3,500-instance evaluation set used in the 
 > human annotation, and quality control — is shipped here for **transparency**. The whole
 > chain is the EMERGE contribution. What's *not* in the repo are the **inputs** (raw
 > history dumps ~TB; Llama 405B model weights) and the **HPC infrastructure** the heavy
-> stages assume (multi-H100 SLURM cluster running TGI inside Apptainer). Reviewers using
-> or evaluating against the released `data/evaluation_set/` do NOT need to run any of
+> stages assume (multi-H100 SLURM cluster running TGI inside Apptainer). Users
+> working with the released `data/evaluation_set/` do NOT need to run any of
 > these stages.
 >
 > ### Pipeline stages (code in repo, every stage)
@@ -53,7 +53,7 @@ Wikidata/Wikipedia dumps to the final 3,500-instance evaluation set used in the 
 >
 > The released artifacts only include certain checkpoints in the chain — not the raw
 > dumps and not s04 output. So **practically**, on a regular workstation, the
-> reviewer-runnable subset is:
+> runnable subset on a regular workstation is:
 >
 > - **Part 3 garbage QA** on `data/corpus/` (downloaded via
 >   `./scripts/download_data.sh --corpus`). Validated reproduces the paper's
@@ -68,7 +68,7 @@ Wikidata/Wikipedia dumps to the final 3,500-instance evaluation set used in the 
 > - **Full evaluation** (`./scripts/run/evaluate.sh`) against `data/evaluation_set/`
 >   to reproduce paper numbers.
 >
-> ### What you cannot realistically run as a reviewer
+> ### What is not directly executable from this release
 >
 > - **WD s01–s03 / WP s01–s03**: needs raw history dumps from
 >   [dumps.wikimedia.org](https://dumps.wikimedia.org/) — specifically the
@@ -87,7 +87,7 @@ Wikidata/Wikipedia dumps to the final 3,500-instance evaluation set used in the 
 >
 > **Configs are placeholders:** every JSON under `config/dataset/` uses
 > `/path/to/storage/...` strings as a structural template. Rewriting them for your
-> environment is the gating step before running anything beyond the reviewer-runnable
+> environment is the gating step before running anything beyond the runnable
 > subset above.
 >
 > See the top-level README's "Dataset construction pipeline" section for the per-stage
@@ -838,7 +838,7 @@ The four CLI tools in `scripts/dataset/` implement this loop:
 | `build_reinput_for_garbage.py` | P3.3 | Generic CLI: takes a `--source-root` annotation tree + the cluster JSONL → writes a sparse reinput tree where flagged triples have their 405B-prompt-v1 entries stripped. The output tree is the **input** to a second s05 run that re-queries just those triples. |
 | `merge_reinput_into_dataset.py` | P3.5 | Generic CLI: takes the original `--source-root` and the corrected `--reinput-file` (output of the second s05 run on the sparse tree) → splices corrected records back into a NEW merged tree by `hash_id`. Source tree never modified. |
 
-A reviewer running their own LLM annotation pipeline (any LLM, any
+A user running their own LLM annotation pipeline (any LLM, any
 infra) can chain these to reach a similar level of QA on their own
 output. The example paths in the docstrings are abstract placeholders
 (`<your-output-tree>`, `<reinput-tree>`); a runnable end-to-end
