@@ -15,40 +15,29 @@ graphs from textual evidence.
 git clone https://github.com/klimzaporojets/emerge.git
 cd emerge
 conda create -n emerge python=3.12 -y && conda activate emerge
-# PyTorch — default install (CPU on most systems). For GPU, pin the CUDA-matching
-# build first per https://pytorch.org/ (e.g. `pip install torch torchvision torchaudio
-# --index-url https://download.pytorch.org/whl/cu121` for CUDA 12.1) BEFORE the
-# core.txt install below.
 pip install torch torchvision torchaudio
 pip install -r requirements/core.txt
 
-# 2. Download the dataset (test set + human annotations, ~155 MB)
+# 2. Download the dataset (~155 MB)
 ./scripts/download_data.sh
-# For benchmark runs, also fetch what each model needs:
-#   ./scripts/download_data.sh --indices   # +400 MB — required by EDC+, ReLiK
-#   ./scripts/download_data.sh --kg        # +3.7 GB — required by ReLiK cIE
-#   ./scripts/download_data.sh --corpus    # +2.3 GB — required to reproduce paper §4.3 stats
-# See src/benchmarks/README.md for each model's exact flag.
+# Optional — for correct relik-cie scoring in step 3 (to identify Exists vs.
+# Add TKGU operations), also download KG snapshots:
+# ./scripts/download_data.sh --kg     # +22 GB after decompression
 
-# 3. Run evaluation (reproduces paper results) — REQUIRES GPU
-# Hardware: 1× GPU with 16 GB+ VRAM, ~8 GB system RAM (measured: 3-4 GB peak
-# without --kg snapshots; allocate 8-16 GB for headroom).
-# Wall-clock: depends on the entity_coverage / BERTScore phase, which scales
-# with each model's prediction count. Allocate generously (4+ hours) on first
-# run; subsequent runs benefit from per-metric caching.
-# With --kg snapshots loaded: + ~150 GB RAM (the eval currently keeps all 7
-# yearly snapshots in memory simultaneously; a future refactor to load one
-# snapshot at a time would drop the requirement to ~50 GB).
-# On SLURM (without --kg): `salloc -p gpu -t 6:00:00 --gpus=1 --mem=16G`.
-# On SLURM (with --kg):    `salloc -p gpu -t 8:00:00 --gpus=1 --mem=192G`.
+# 3. Reproduce paper evaluation (requires 1× GPU)
 ./scripts/run/evaluate.sh
-# Without --kg downloaded, evaluate.sh emits a warning per snapshot year and runs
-# anyway: 12 of 13 models score correctly; only relik-cie's Exists row is approximate.
-# Download --kg + re-run (same command) for full relik-cie Exists scoring.
 
 # 4. View results in notebooks (saved outputs included — no re-execution needed)
 jupyter lab src/stats/
 ```
+
+Notes:
+- **GPU users**: pin a CUDA-matching `torch` wheel (see https://pytorch.org/) BEFORE step 1's `core.txt` install — e.g. `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121` for CUDA 12.1.
+- **Optional downloads** beyond the default test set:
+  - `./scripts/download_data.sh --indices` (+400 MB) — relation indexes used by EDC+ and ReLiK
+  - `./scripts/download_data.sh --corpus` (+2.4 GB) — 1.19M-instance corpus used by Part 3 garbage QA + paper §4.3 statistics
+  - `./scripts/download_data.sh --kg` (+22 GB after decompression) — KG snapshots, only needed for correct `relik-cie` scoring (see [Reproducing paper results](#reproducing-paper-results))
+- **Step 3 hardware + time**: see the [Reproducing paper results](#reproducing-paper-results) section for full details (RAM/GPU/runtime, plus what happens if KG snapshots are not present on disk).
 
 ---
 
@@ -290,7 +279,7 @@ data/
     └── solved_disagreements.jsonl
 ```
 
-To also download KG snapshots (~22GB, needed only for relik-cie Exists evaluation):
+To also download KG snapshots (~22 GB, needed only to score relik-cie — without them, `evaluate.sh` skips relik-cie entirely and prints a NOTE pointing here):
 
 ```bash
 ./scripts/download_data.sh --kg

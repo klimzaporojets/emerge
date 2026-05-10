@@ -130,13 +130,20 @@ For cached re-runs (`load_results_from_cache: true`), no GPU is needed.
 | `20260324_all_models_with_zs_fixed_with_kg/` | Fixed (correct) | Yes | **Recommended.** All 13 models including zero-shot, correct scoring |
 | `20260324_all_models_with_zs_legacy_with_kg/` | Legacy | Yes | All 13 models, reproduces original submission numbers |
 
-**Without KG snapshots** (`snapshot_year_to_kg_file: null`): faster to run (~32GB RAM), but CIE models
-like `relik-cie` cannot distinguish Exists from Add operations — all predictions go to
-Add. Sufficient for all models except `relik-cie` Exists operations.
+**Without KG snapshots** (`snapshot_year_to_kg_file: null`, or any of the per-year
+files missing from `./data/kg_snapshots/`): much lighter on RAM (~3-4 GB system RAM
+measured). The eval **automatically skips relik-cie scoring** in this mode — its
+predictions cannot be classified as Exists vs Add without the KG, so any score
+would be invalid. relik-cie is omitted from the output table; a NOTE is printed
+after the tables explaining how to enable relik-cie scoring (download KG snapshots,
+clear the cache, re-run). Open IE models — KGGen, RAKG, REBEL, ReLiK RE, EDC+ in
+all variants — score correctly without KG snapshots, since they don't depend on
+the snapshot for operation classification.
 
-**With KG snapshots** (`20260324_*_with_kg`): loads KG snapshot TSVs into memory (~22GB
-per snapshot, ~154GB total for 7 years). Required for correct `relik-cie` Exists
-evaluation. Needs 180G+ RAM.
+**With KG snapshots** (`20260324_*_with_kg`): loads KG snapshot TSVs into memory (~22 GB
+per snapshot, ~154 GB total for 7 years; the eval currently keeps all 7 in memory
+simultaneously). Required for correct `relik-cie` scoring (both Exists and Add).
+Needs ~180 GB system RAM.
 
 ---
 

@@ -119,17 +119,15 @@ def main():
                 if fname is None:
                     snapshot_to_triples[snap] = triples
                     continue
-                logger.info(f'loading {fname}')
                 curr_snapshot_path = os.path.join(base, fname)
                 if not os.path.exists(curr_snapshot_path):
                     logger.warning(
-                        f'KG snapshot file not found: {curr_snapshot_path} — '
-                        f'proceeding with empty snapshot. relik-cie Exists scoring '
-                        f'will be approximate (predictions roll into Add). Run '
-                        f'./scripts/download_data.sh --kg for full reproducibility.'
+                        f'KG snapshot file not found: {curr_snapshot_path}. '
+                        f'Proceeding with empty snapshot for {snap}.'
                     )
                     snapshot_to_triples[snap] = triples
                     continue
+                logger.info(f'loading {fname}')
                 with open(curr_snapshot_path, 'r', encoding='utf-8') as f:
                     for line in tqdm(f):
                         # split only first 3 columns, ignoring labels
@@ -137,6 +135,38 @@ def main():
                         h, r, t = line.split('\t', 3)[:3]
                         triples.add((h, r, t))
                 snapshot_to_triples[snap] = triples
+
+            # If any KG snapshot is missing, relik-cie predictions cannot be
+            # classified as Exists vs Add → relik-cie scores would be invalid.
+            # Skip relik-cie entirely (don't compute, don't cache wrong values).
+            num_loaded = sum(1 for t in snapshot_to_triples.values() if len(t) > 0)
+            num_total = len(snapshot_to_triples)
+            models_list = getattr(arguments_main, 'models_to_report', None) or []
+            if num_loaded < num_total and 'relik-cie' in models_list:
+                logger.warning('=' * 72)
+                logger.warning(
+                    f'KG snapshots loaded: {num_loaded} of {num_total}.'
+                )
+                logger.warning(
+                    'Skipping relik-cie scoring — without all KG snapshots, '
+                    'relik-cie predictions cannot be classified as Exists vs '
+                    'Add, so scores would be invalid. The relik-cie row will '
+                    'be absent from the output.'
+                )
+                logger.warning('')
+                logger.warning('To include relik-cie:')
+                logger.warning(
+                    '  1. Download KG snapshots: ./scripts/download_data.sh --kg'
+                )
+                logger.warning(
+                    f'  2. Clear stale cache: rm -rf {arguments_main.cache_path}'
+                )
+                logger.warning('  3. Re-run: ./scripts/run/evaluate.sh')
+                logger.warning('=' * 72)
+                arguments_main.models_to_report = [
+                    m for m in models_list if m != 'relik-cie'
+                ]
+                arguments_main._kg_skipped_relik_cie = True
 
         evaluation_orchestrator: EvaluationOrchestrator = EvaluationOrchestrator(
             config=arguments_main,
@@ -260,6 +290,26 @@ def main():
         )
 
     logger.info('end_adding_completeness_metric')
+
+    # Final post-table notice if relik-cie was skipped due to missing KG snapshots.
+    if getattr(arguments_main, '_kg_skipped_relik_cie', False):
+        logger.info('')
+        logger.info('=' * 72)
+        logger.info(
+            f'NOTE: relik-cie not calculated — KG snapshots not found in '
+            f'{arguments_main.kg_snapshots_path}'
+        )
+        logger.info('')
+        logger.info(
+            'To include relik-cie in the results table, download the KG '
+            'snapshots and re-run:'
+        )
+        logger.info('  ./scripts/download_data.sh --kg')
+        logger.info(
+            f'  rm -rf {arguments_main.cache_path}    # clear stale cache'
+        )
+        logger.info('  ./scripts/run/evaluate.sh')
+        logger.info('=' * 72)
 
     logger.info('END_MAIN_BYE_BYE')
 

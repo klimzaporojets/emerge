@@ -193,7 +193,7 @@ Same command shape as the EDC+ walkthrough; only these fields change. Replace `<
 | **KGGen Mistral L/S** (`20260114_kggen_mistral_{large,small}`) | `kggen-py312` | `AZURE_AI_API_KEY` | (none beyond default) | — |
 | **RAKG Mistral L/S** (`20260114_rakg_mistral_{large,small}`) | `rakg-py311` *plus* `git clone https://github.com/RUC-NLPIR/RAKG.git && export RAKG_REPO_PATH=$PWD/RAKG` | `AZURE_AI_API_KEY` | (none beyond default) | — |
 | **REBEL** (`20260114_rebel`) | `rebel-py311` | — (local model) | (none beyond default) | 1 × 16 GB+ VRAM, 100 GB RAM |
-| **ReLiK Open IE** (`relik_oie`) | `emerge` (same as orchestrator) | — | `--indices` | 1 × 16 GB+ VRAM, 64 GB RAM |
+| **ReLiK RE** (`relik_oie`) | `emerge` (same as orchestrator) | — | `--indices` | 1 × 16 GB+ VRAM, 64 GB RAM |
 | **ReLiK Closed IE** (`relik_cie`) | `emerge` | — | `--indices` *and* `--kg` (~22 GB after decompression) **and** the per-snapshot entity index (see note below) | 1 × 16 GB+ VRAM, 180 GB RAM |
 
 For each: `pip install -r requirements/benchmarks/<model>.txt` to populate the wrapper env (the file's header has the exact `conda create` command).
