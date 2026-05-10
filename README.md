@@ -98,71 +98,117 @@ below. **Using or evaluating against the dataset does NOT require running any of
 steps** — `download_data.sh` + `evaluate.sh` is sufficient. The construction code is
 shipped here for **transparency**.
 
+Each `s0x` label below is a pipeline-step identifier; code lives under `src/dataset/{wikidata,wikipedia,emerge}/<step>_*.py` and SLURM submitters in `scripts/slurm/{wikidata,wikipedia,dataset}/<step>_*.sh`. See [`src/dataset/README.md`](src/dataset/README.md) for per-step execution details + config field semantics.
+
 ```
-Raw Wikidata dumps  ──→  [WD s01–s03]  ──→  KG snapshots + per-triple deltas
-                                                      │
-Raw Wikipedia dumps ──→  [WP s01–s03]  ──→  Entity descriptions + hyperlink history
-                                                      │
-                                                      ▼
-                              [s03] Match textual passages ↔ KG-change deltas
-                                                      │
-                              [s04] Filter for KG-relevant snippets
-                                                      │
-                              [s05] LLM assessment (Llama 8B + Llama 405B w/ TGI)
-                                                      │
-                              [s06b → s07 → s07b] Reformat → dedup → 35K → 3.5K
-                                                      │
-                              [s09] Human annotation + agreement statistics
-                                                      │
-                              [Part 3] Quality control of LLM annotations  ◀── extension
-                                                      │
-                                                      ▼
-                                          data/evaluation_set/   (released)
+Raw Wikidata + Wikipedia dumps  (~TB, fetch from dumps.wikimedia.org — not in repo)
+                                                       │
+                                                       ▼
+                  [WD s01–s03 / WP s01–s03]
+                  Wikidata triple history → KG snapshots + per-triple deltas
+                  Wikipedia history → entity descriptions + hyperlinks + title changes
+                                                       │
+                                                       ▼
+                  [emerge s03 / s04]
+                  Match passages ↔ KG-change deltas, filter for KG-relevant snippets
+                                                       │
+                                                       ▼
+                  ┌────────────────────────────────────────────────────────────────────┐
+                  │  [s05]   LLM annotation (Llama 8B / 405B w/ TGI, prompts v1)        │
+                  │    ↑                                                       ↓        │
+                  │    └──── iterative annotation refinement of likely-incorrect ◀┘     │
+                  │          annotations (`find_garbage_clusters.py`)                   │
+                  └────────────────────────────────────────────────────────────────────┘
+                                                       │
+                                                       ▼
+                  [s07]   Global dedup using `llm_assessment` ranking
+                          (Jaccard ≤ 0.50, edit-dist ≥ 0.20)
+                                                       │
+                                                       ├──────►  data/corpus/   (released)
+                                                       │
+                                                       ▼
+                  [s07b]  Build the 3,500-instance test set: subsample (100 per
+                          delta, ≥ 40 per d/ee_kg/e/ee operation type), reformat
+                          to final schema, verify
+                                                       │
+                                                       ▼
+                  [s09]   Human annotation (subset, for inter-annotator agreement)
+                                                       │
+                                                       ▼
+                                          data/evaluation_set/   (released, 3,500)
 ```
 
-The code for every pipeline step is in this repo. **Some steps are not directly
-executable in this release**, however, because they require inputs or
-infrastructure we don't ship publicly:
+### What's in this repo for each step of the pipeline above
 
-- **Raw dump scale.** The English Wikipedia and Wikidata history dumps are
-  ~TB-scale — too large to redistribute via this repo or the HF dataset.
-  Fetch yourself from [dumps.wikimedia.org](https://dumps.wikimedia.org/),
-  specifically the `wikidatawiki-YYYYMMDD-pages-meta-history*.7z` and
-  `enwiki-YYYYMMDD-pages-meta-history*.7z` series.
-- **Llama 405B serving.** Step `s05` (LLM assessment) is designed around Llama
-  405B served via TGI inside Apptainer on a multi-H100 SLURM cluster
-  (see `scripts/slurm/dataset/s05_*.sh`). A single-node setup cannot host the
-  model.
-- **Configs are placeholders.** Every JSON under `config/dataset/` uses
-  `/path/to/storage/...` placeholder paths; rewriting them for your environment
-  is the gating step.
-- **Intermediate outputs not yet redistributed.** Only the final
-  `data/evaluation_set/` and the post-LLM `data/corpus/` are shipped — not the
-  intermediate state between WD/WP processing and the LLM-judged corpus, which
-  s05 would need as input.
+Code for every step is shipped. **The pipeline is designed for iterative LLM
+annotation** — s05's output schema equals its input schema, so you can re-run
+s05 on either of the two released artifacts with whatever LLM you can serve:
 
-These gaps are **deferred to future versions** as we add convenience tooling
-(dump-download script, more intermediate-output uploads, possibly a
-single-node Llama-8B variant of s05 for low-resource users).
+- `data/evaluation_set/` (3,500-instance test set), or
+- `data/corpus/` (1.19M-instance full corpus, downloaded via `./scripts/download_data.sh --corpus`)
 
-| Pipeline step | Code in repo | Configs | Executable in this release? | What's needed otherwise |
-|---|:-:|:-:|:-:|---|
-| Raw Wikipedia/Wikidata dump download | — | — | — | Fetch from [dumps.wikimedia.org](https://dumps.wikimedia.org/); ~hundreds of GB to TB |
-| WD s01 (Java triple extraction) | ✅ `src/dataset/wikidata/` | placeholder | ❌ | Raw 7z dump + Java tooling |
-| WD s02–03 / WP s01–03 (normalize, snapshots, hyperlinks) | ✅ `src/dataset/{wikidata,wikipedia}/` | placeholder | ❌ | s01 outputs; SLURM hardware |
-| s03 textual delta snippets | ✅ `src/dataset/emerge/s03_*.py` | placeholder | ❌ | WD/WP outputs |
-| s04 find interesting snippets | ✅ `src/dataset/emerge/s04_*.py` | placeholder | ❌ | s03 outputs |
-| **s05 LLM annotation (Llama 8B + 405B, prompts v1)** | ✅ `src/dataset/emerge/s05_*.py` + `src/dataset/emerge/prompts/prompts_v1/` + `scripts/slurm/dataset/s05_*` | placeholder | ❌ | Llama 405B model + multi-H100 cluster + TGI inside Apptainer; **also note: the released `data/corpus/` is the post-s05 1.19M-instance output, so even with infra you'd need the s04-output candidate set (not redistributed) as input** |
-| s06b/s07/s07b reformat/dedup/subsample | ✅ `src/dataset/emerge/{s06b,s07,s07b,s07c}_*.py` | placeholder | ❌ | s05 outputs |
-| s09 human annotation + stats | ✅ `src/dataset/emerge/s09{a,b,c,d,e}_*.py` | partial (`s09e_*` is functional) | partial | `data/human_annotation/` (in `download_data.sh`); annotators for new annotation rounds |
-| **Part 3 — Quality control of LLM annotations** | ✅ `scripts/dataset/` (4 CLI tools) | functional | **✅** | Runs on `data/corpus/` (`download_data.sh --corpus`); reproduces the **220-flagged-triples (0.0113%)** residual from the paper |
-| **Paper §4.3 / Table 8 statistics** | ✅ `scripts/stats/` (3 CLI tools) | functional | **✅** | Runs on `data/corpus/`; reproduces 608K / 207K / 149K / 220K / 9.5K / 1.19M headline numbers |
+> Both releases already include the paper's `Meta-Llama-3.1-405B-Instruct-GPTQ-INT4`
+> assessments — re-running s05 is only needed if you want to benchmark a
+> different LLM (or re-query specific triples, as Part 3 garbage QA does).
 
-**What you can run right now**, on a regular workstation:
+Per-step status:
 
-- The ✅ rows above (Part 3 garbage QA + paper §4.3 stats) — both fully runnable, both reproduce documented paper numbers.
-- All 12 of 13 baseline benchmarks (the 13th, `relik_cie`, additionally requires the entity index — see the heads-up under "Running benchmark models").
-- The full `evaluate.sh` paper-results pipeline against the released `data/evaluation_set/`.
+- **s05 — LLM assessment (Llama 8B + Llama 405B, prompts v1)** ✅ runnable
+  on released artifacts. Shipped: Python runner
+  `src/dataset/emerge/s05_generate_dataset_with_llm_v8.py`, SLURM sbatch
+  scripts for both `_llama8b.sh` (1× H100) and `_llama405b.sh` (4× H100)
+  in `scripts/slurm/dataset/`, fault-tolerant TGI/Apptainer restart loop
+  (`s05_restart_apptainer_llama400b_v5.sh`), prompt templates in
+  `src/dataset/emerge/prompts/prompts_v1/`, and a runnable config
+  `config/dataset/emerge/s05_generate_dataset_with_llm/20260510_s05_runnable_on_released/`
+  pointing at `./data/evaluation_set/` by default. You provide: TGI
+  Apptainer container, Llama weights from HuggingFace (auto-pulled by
+  TGI), and 3 environment-specific paths in the SLURM script (repo dir,
+  data dir for HF cache, `.sif` location).
+- **Part 3 — Quality control of LLM annotations** ✅ — `scripts/dataset/`
+  (4 CLI tools, functional configs). Runs on `data/corpus/`, reproduces
+  the paper's **220 flagged-triples (0.0113 %)** QA residual.
+- **Paper §4.3 / Table 8 statistics** ✅ — `scripts/stats/` (3 CLI tools,
+  functional configs). Runs on `data/corpus/`, reproduces
+  608K / 207K / 149K / 220K / 9.5K / 1.19M headline numbers.
+- **s09 human annotation + agreement statistics** ✅ for the agreement-stats
+  step — `src/dataset/emerge/s09{a,b,c,d,e}_*.py`. Released
+  `data/human_annotation/` ships the human-judged JSONL, so
+  `./scripts/run/annotation_agreement.sh` works out of the box. Generating
+  new annotations requires annotators.
+- **WD s01–s03 / WP s01–s03 / emerge s03 / s04** — code shipped
+  (`src/dataset/{wikidata,wikipedia}/`, `src/dataset/emerge/{s03,s04}_*.py`),
+  SLURM submitters in `scripts/slurm/{wikidata,wikipedia,dataset}/`. Configs
+  use `/path/to/...` placeholders for raw-dump and intermediate-output
+  locations.
+- **s06b → s07 → s07b → s07c** (reformat → dedup → subsample to 35K → 3.5K)
+  — `src/dataset/emerge/{s06b,s07,s07b,s07c}_*.py`. Placeholder configs;
+  depend on s05 outputs.
+
+### What's NOT yet in the repo (deferred to future releases)
+
+The raw Wikidata + Wikipedia history dumps (~TB total) are too large to
+redistribute via this repo or HuggingFace; fetch from
+[dumps.wikimedia.org](https://dumps.wikimedia.org/) — specifically the
+`wikidatawiki-YYYYMMDD-pages-meta-history*.7z` and
+`enwiki-YYYYMMDD-pages-meta-history*.7z` series. Their downstream
+intermediates (WD/WP s01–s03 outputs, emerge s03/s04 outputs that lead up
+to `data/corpus/`) aren't shipped either, so re-creating `data/corpus/`
+from scratch requires running WD/WP/s03/s04 yourself. **We plan to
+progressively include more of these intermediates in future releases**,
+along with a dump-download convenience script.
+
+### What you can run right now on a regular workstation
+
+- **s05 LLM assessment** ✅ — re-annotate `data/evaluation_set/` or
+  `data/corpus/` with any LLM you can serve via TGI (4× H100 for Llama 405B;
+  1× H100 for Llama 8B). Use the runnable config at
+  `config/dataset/emerge/s05_generate_dataset_with_llm/20260510_s05_runnable_on_released/`.
+- **Part 3 garbage QA** + **paper §4.3 / Table 8 statistics** — see above.
+- **All 12 baseline benchmarks** on `data/evaluation_set/` (`relik_cie` needs
+  an additional entity index — see "Running benchmark models").
+- The full **`evaluate.sh` paper-results pipeline** against
+  `data/evaluation_set/` — reproduces the paper's main results table.
 
 For per-step details + config field semantics, see [`src/dataset/README.md`](src/dataset/README.md).
 

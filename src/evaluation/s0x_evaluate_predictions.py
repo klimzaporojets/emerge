@@ -166,6 +166,42 @@ def main():
                 arguments_main.models_to_report = [
                     m for m in models_list if m != 'relik-cie'
                 ]
+                # `models_to_report` only controls final table rendering. The
+                # preloader + metric loops use `models_to_evaluate` to decide
+                # what to LOAD AND COMPUTE, so we must filter that too — otherwise
+                # the eval wastes ~10 min computing metrics for relik-cie whose
+                # results we'll discard. Plus the cie_exact_match metric has its
+                # own per-metric models_to_report list that drives the QID table.
+                models_eval = getattr(arguments_main, 'models_to_evaluate', None) or []
+                if 'relik-cie' in models_eval:
+                    arguments_main.models_to_evaluate = [
+                        m for m in models_eval if m != 'relik-cie'
+                    ]
+                cie_cfg = arguments_main.metrics_to_calculate.get('cie_exact_match', {})
+                if isinstance(cie_cfg, dict):
+                    cie_models_list = cie_cfg.get('models_to_report', []) or []
+                    if 'relik-cie' in cie_models_list:
+                        cie_cfg['models_to_report'] = [
+                            m for m in cie_models_list if m != 'relik-cie'
+                        ]
+                # Belt-and-suspenders: also drop any relik-cie rows from the
+                # preloaded cache. The preloader concatenates new results into
+                # `existing.df_*` (preloader_emerge.py:657+), so without this
+                # scrub, stale relik-cie rows from a previous run (when this
+                # auto-skip code wasn't yet deployed) would leak through into
+                # the rendered tables.
+                if cached is not None:
+                    for df_attr in (
+                        'df_predictions_cie_and_gt',
+                        'df_predictions_open_ie',
+                        'df_metrics_cie',
+                        'df_metrics_open_ie',
+                        'df_instances',
+                        'df_metrics_additional_triple_stats',
+                    ):
+                        df = getattr(cached, df_attr, None)
+                        if df is not None and hasattr(df, 'columns') and 'model' in df.columns:
+                            setattr(cached, df_attr, df[df['model'] != 'relik-cie'].copy())
                 arguments_main._kg_skipped_relik_cie = True
 
         evaluation_orchestrator: EvaluationOrchestrator = EvaluationOrchestrator(
@@ -259,35 +295,36 @@ def main():
 
     # QID Exact-Match table (separate, only for QID-capable models)
     if 'cie_exact_match' in arguments_main.metrics_to_calculate:
-        cie_qid_spec = pd.DataFrame([
-            {'metric': 'cie-precision', 'evaluator_model': 'exact_match', 'alias': 'P', 'group': 'QID', 'multiply_by_100': True},
-            {'metric': 'cie-recall', 'evaluator_model': 'exact_match', 'alias': 'R', 'group': 'QID', 'multiply_by_100': True},
-            {'metric': 'cie-f1', 'evaluator_model': 'exact_match', 'alias': 'F1', 'group': 'QID', 'multiply_by_100': True},
-        ])
-
-        agg_qid, _ = make_agg_and_agg_open(
-            df_wiki_metrics_cie=wiki_eval_result.df_metrics_cie,
-            df_metrics_open_ie=wiki_eval_result.df_metrics_open_ie,
-            metrics_to_report=cie_qid_spec,
-            groupby_cols=['tkgu_type', 'model', 'metric', 'evaluator_model']
-        )
-        empty_agg_open = pd.DataFrame(columns=agg_qid.columns)
-        agg_qid_all = make_agg_all(agg_qid, empty_agg_open)
-
         cie_exact_match_config = arguments_main.metrics_to_calculate['cie_exact_match']
         if 'models_to_report' in cie_exact_match_config:
             cie_models = cie_exact_match_config['models_to_report']
         else:
             cie_models = allowed_models_table1
 
-        logger.info('\n\n=== QID Exact-Match Metrics (P / R / F1) ===')
-        make_metrics_cli_table(
-            agg_all=agg_qid_all,
-            spec=cie_qid_spec,
-            allowed_models=cie_models,
-            model_name_map=model_name_to_latex,
-            show_aliases=['P', 'R', 'F1'],
-        )
+        if cie_models:  # skip entire QID block if auto-skip emptied the model list
+            cie_qid_spec = pd.DataFrame([
+                {'metric': 'cie-precision', 'evaluator_model': 'exact_match', 'alias': 'P', 'group': 'QID', 'multiply_by_100': True},
+                {'metric': 'cie-recall', 'evaluator_model': 'exact_match', 'alias': 'R', 'group': 'QID', 'multiply_by_100': True},
+                {'metric': 'cie-f1', 'evaluator_model': 'exact_match', 'alias': 'F1', 'group': 'QID', 'multiply_by_100': True},
+            ])
+
+            agg_qid, _ = make_agg_and_agg_open(
+                df_wiki_metrics_cie=wiki_eval_result.df_metrics_cie,
+                df_metrics_open_ie=wiki_eval_result.df_metrics_open_ie,
+                metrics_to_report=cie_qid_spec,
+                groupby_cols=['tkgu_type', 'model', 'metric', 'evaluator_model']
+            )
+            empty_agg_open = pd.DataFrame(columns=agg_qid.columns)
+            agg_qid_all = make_agg_all(agg_qid, empty_agg_open)
+
+            logger.info('\n\n=== QID Exact-Match Metrics (P / R / F1) ===')
+            make_metrics_cli_table(
+                agg_all=agg_qid_all,
+                spec=cie_qid_spec,
+                allowed_models=cie_models,
+                model_name_map=model_name_to_latex,
+                show_aliases=['P', 'R', 'F1'],
+            )
 
     logger.info('end_adding_completeness_metric')
 
