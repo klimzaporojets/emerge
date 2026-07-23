@@ -151,7 +151,8 @@ def main():
                     'Skipping relik-cie scoring — without all KG snapshots, '
                     'relik-cie predictions cannot be classified as Exists vs '
                     'Add, so scores would be invalid. The relik-cie row will '
-                    'be absent from the output.'
+                    'appear in the output tables with "--" cells '
+                    '(intentionally not computed).'
                 )
                 logger.warning('')
                 logger.warning('To include relik-cie:')
@@ -163,27 +164,20 @@ def main():
                 )
                 logger.warning('  3. Re-run: ./scripts/run/evaluate.sh')
                 logger.warning('=' * 72)
-                arguments_main.models_to_report = [
-                    m for m in models_list if m != 'relik-cie'
-                ]
-                # `models_to_report` only controls final table rendering. The
-                # preloader + metric loops use `models_to_evaluate` to decide
-                # what to LOAD AND COMPUTE, so we must filter that too — otherwise
-                # the eval wastes ~10 min computing metrics for relik-cie whose
-                # results we'll discard. Plus the cie_exact_match metric has its
-                # own per-metric models_to_report list that drives the QID table.
+                # Filter relik-cie ONLY from `models_to_evaluate` (which drives
+                # the preloader + metric loops at preloader_emerge.py:38, :276).
+                # This skips ~10 min of compute we'd discard. We INTENTIONALLY
+                # keep relik-cie in `models_to_report` and in the cie_exact_match
+                # metric's `models_to_report`: that way the final tables reindex
+                # to include a relik-cie row, but with no underlying data, so
+                # pandas renders the row as "--" (intentionally not computed).
+                # The renderer's NaN→"--" behaviour is at evaluation/misc/utils.py
+                # lines 272-273 and 293.
                 models_eval = getattr(arguments_main, 'models_to_evaluate', None) or []
                 if 'relik-cie' in models_eval:
                     arguments_main.models_to_evaluate = [
                         m for m in models_eval if m != 'relik-cie'
                     ]
-                cie_cfg = arguments_main.metrics_to_calculate.get('cie_exact_match', {})
-                if isinstance(cie_cfg, dict):
-                    cie_models_list = cie_cfg.get('models_to_report', []) or []
-                    if 'relik-cie' in cie_models_list:
-                        cie_cfg['models_to_report'] = [
-                            m for m in cie_models_list if m != 'relik-cie'
-                        ]
                 # Belt-and-suspenders: also drop any relik-cie rows from the
                 # preloaded cache. The preloader concatenates new results into
                 # `existing.df_*` (preloader_emerge.py:657+), so without this
@@ -292,6 +286,11 @@ def main():
         model_name_map=model_name_to_latex,  # same dict, just different param name
         show_aliases=['C', 'R', 'P', 'F1'],
     )
+    if getattr(arguments_main, '_kg_skipped_relik_cie', False):
+        logger.info(
+            '   ^^ ReLiK cIE shown as "--" because KG snapshots are not '
+            'present in ./data/kg_snapshots/ — see NOTE at end of run.'
+        )
 
     # QID Exact-Match table (separate, only for QID-capable models)
     if 'cie_exact_match' in arguments_main.metrics_to_calculate:
@@ -325,6 +324,12 @@ def main():
                 model_name_map=model_name_to_latex,
                 show_aliases=['P', 'R', 'F1'],
             )
+            if getattr(arguments_main, '_kg_skipped_relik_cie', False):
+                logger.info(
+                    '   ^^ ReLiK cIE shown as "--" because KG snapshots are '
+                    'not present in ./data/kg_snapshots/ — see NOTE at end '
+                    'of run.'
+                )
 
     logger.info('end_adding_completeness_metric')
 

@@ -16,7 +16,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
-if [ ! -f "data/annotation/solved_disagreements.jsonl" ]; then
+if [ ! -f "data/human_annotation/solved_disagreements.jsonl" ]; then
     echo "Error: annotation data not found. Run ./scripts/download_data.sh first."
     exit 1
 fi

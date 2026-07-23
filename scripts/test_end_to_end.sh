@@ -64,7 +64,7 @@ bash ./scripts/download_data.sh
 echo "Verifying evaluation_set..."
 ls "$DATA_DIR/evaluation_set/snapshot_2024-01-01/" | head -5
 echo "Verifying annotation..."
-ls "$DATA_DIR/annotation/solved_disagreements.jsonl"
+ls "$DATA_DIR/human_annotation/solved_disagreements.jsonl"
 
 # ---- Step 4: Download KG snapshots ----
 echo ""

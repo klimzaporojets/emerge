@@ -1,6 +1,6 @@
 {
   "input_annotation_paths": [
-    "./data/annotation/"
+    "./data/human_annotation/"
   ],
   "tkgu_operations_to_check": [
     "x-triples",

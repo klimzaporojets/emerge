@@ -113,7 +113,7 @@ All paths below are on HPC cluster. Each notebook has configurable path variable
   can be viewed without these files.
 
 **Annotation data** (used by annotation agreement table):
-- Included in this repository at `data/annotation/solved_disagreements.jsonl`
+- Included in this repository at `data/human_annotation/solved_disagreements.jsonl`
 - Also used by `s09e_annotation_stats_for_paper.py`.
 
 **KG snapshot TSVs** (used by per-snapshot table for triples + relation types):
