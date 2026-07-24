@@ -1,0 +1,34 @@
+{
+  "_comment": "Local few-sample GATHER using ReLiK's OWN pre-built index (retriever #1). Same as ../20260724_local_fewshot but retriever.which='relik'. Needs `download_data.sh --indices` + the 2019 entity index rsync + the relik lib. See rebuttal_baseline.md.",
+
+  "eval_set_dir": "data/evaluation_set",
+  "output_dir": "output/kg_context/20260724_local_fewshot_relik",
+
+  "sample": {
+    "years": ["2019"],
+    "operations": ["ee-kg-triples", "d-triples"],
+    "n_instances": 6,
+    "hash_ids": [],
+    "seed": 13
+  },
+
+  "retrieve_top_k": 32,
+  "retriever": {
+    "which": "relik",
+    "config_name": "relik-ie/relik-cie-large",
+    "device": "cpu",
+    "cache_dir": "output/cache",
+    "entity_index_base_path": "data/indices/relik_entity_index",
+    "relation_index_base_path": "data/indices/relik_edc_relation_indexes",
+    "precision": "16"
+  },
+
+  "kg_lookup": {
+    "enabled": false,
+    "scope": "anchors",
+    "snapshot_dir": "/home/klim/work/mnt/data/projects/msca-kgs/wikidata_kg_snapshots",
+    "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
+  },
+  "snapshot_dir": "/home/klim/work/mnt/data/projects/msca-kgs/wikidata_kg_snapshots",
+  "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
+}

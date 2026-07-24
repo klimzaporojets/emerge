@@ -8,13 +8,19 @@
 #   ./scripts/download_data.sh --corpus           # also downloads the full 233K-record corpus (~2.3GB)
 #   ./scripts/download_data.sh --all              # downloads everything
 #
+#   EMERGE_DATA_DIR=/path ./scripts/download_data.sh --kg   # download to a custom dir (e.g. /projects on HPC)
+#
 # Requires: pip install huggingface_hub
 
 set -euo pipefail
 
 # ---- Configuration ----
+# Download target defaults to <repo>/data, but can be redirected with the
+# EMERGE_DATA_DIR env var (e.g. to project/scratch storage on an HPC cluster,
+# when the home quota is too small for the ~22 GB KG snapshots):
+#   EMERGE_DATA_DIR=/projects/.../data ./scripts/download_data.sh --kg
 HF_REPO="klimzaporojets/emerge-benchmark"
-DATA_DIR="$(cd "$(dirname "$0")/.." && pwd)/data"
+DATA_DIR="${EMERGE_DATA_DIR:-$(cd "$(dirname "$0")/.." && pwd)/data}"
 
 # ---- Parse arguments ----
 DOWNLOAD_KG=false

@@ -1,0 +1,32 @@
+{
+  "_comment": "Local few-sample GATHER of KG-context components (rebuttal Task 1). CPU only. AUGMENT emits ONE component file per passage (raw passage + kg_context = kg_rag_*/oracle_* lists with scores); conditions (kg_rag/only_oracle/oracle_pieces/oracle_triples, k, ...) are composed at experiment time by compose_block/GENERATE. See rebuttal_baseline.md CONDITION LADDER + EXPERIMENT_SPACE.",
+
+  "eval_set_dir": "data/evaluation_set",
+  "output_dir": "output/kg_context/20260724_local_fewshot",
+
+  "sample": {
+    "years": ["2019", "2024"],
+    "operations": ["ee-kg-triples", "d-triples"],
+    "n_instances": 8,
+    "hash_ids": [],
+    "seed": 13
+  },
+
+  "retrieve_top_k": 32,
+  "retriever": {
+    "which": "mpnet_index",
+    "encoder": "sentence-transformers/all-mpnet-base-v2",
+    "device": "cpu",
+    "index_dir_template": "data/kg_context_index/mpnet_dev/{year}"
+  },
+
+  "kg_lookup": {
+    "enabled": false,
+    "scope": "anchors",
+    "_note": "OFF for the core (no snapshot scan). Set true to also gather lookup_triples (existing edges among all oracle entities/relations); then snapshot_dir + snapshot_file_template are required.",
+    "snapshot_dir": "/home/klim/work/mnt/data/projects/msca-kgs/wikidata_kg_snapshots",
+    "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
+  },
+  "snapshot_dir": "/home/klim/work/mnt/data/projects/msca-kgs/wikidata_kg_snapshots",
+  "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
+}
