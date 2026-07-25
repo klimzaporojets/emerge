@@ -1,0 +1,10 @@
+Return ONLY a JSON array — no prose, no markdown, no code fences. Each element is one knowledge-graph update:
+{"operation": "<EXISTS | ADD | MINT_ADD | INFER | DEPRECATE>",
+ "head":     {"label": "<entity name>", "id": "<Q-id, or the literal string MINTED if this entity is newly minted>"},
+ "relation": {"label": "<relation name>", "id": "<P-id>"},
+ "tail":     {"label": "<entity name>", "id": "<Q-id, or the literal string MINTED if this entity is newly minted>"}}
+Rules:
+- Use ONLY relation ids (P...) that appear in the KG context section; never invent a relation or use one not listed.
+- For EXISTS / DEPRECATE, copy the head / relation / tail ids verbatim from the listed existing triples.
+- Give the listed candidate id for any entity already in the KG; set "id" to the literal string "MINTED" ONLY for an entity you MINT.
+- Do not repeat the same triple. Return [] if the passage yields no updates.

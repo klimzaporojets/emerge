@@ -52,10 +52,10 @@ def gold_pieces(gold_triple: dict) -> dict:
     entities. Returns {entities:{qid:label}, relation:(pid,label), triple:(h,r,t)|None}.
     """
     h, r, t = gold_triple["triple"]
-    hl, rl, tl = (gold_triple.get("triple_labels") or [None, None, None])
-    ops = gold_triple.get("tkgu_operations") or []
-    emerging_head = gold_triple.get("emerging_head", False)
-    emerging_tail = gold_triple.get("emerging_tail", False)
+    hl, rl, tl = (gold_triple["triple_labels"] or [None, None, None])
+    ops = gold_triple["tkgu_operations"] or []
+    emerging_head = gold_triple["emerging_head"]   # required — missing must NOT silently default to False
+    emerging_tail = gold_triple["emerging_tail"]
 
     entities: dict[str, str | None] = {}
     if not emerging_head:
@@ -78,8 +78,8 @@ def instance_gold_details(instance: dict, target_ops: set[str]) -> dict:
     triples: list[tuple[str, str, str]] = []
     ops_present: set[str] = set()
     gold_list: list[dict] = []
-    for idx, gt in enumerate(instance.get("tkgu_triples", [])):
-        gops = set(gt.get("tkgu_operations") or [])
+    for idx, gt in enumerate(instance["tkgu_triples"]):
+        gops = set(gt["tkgu_operations"] or [])
         if target_ops and not (gops & target_ops):
             continue
         gp = gold_pieces(gt)
@@ -90,10 +90,10 @@ def instance_gold_details(instance: dict, target_ops: set[str]) -> dict:
             triples.append(gp["triple"])
         ops_present |= gops
         h, r, t = gt["triple"]
-        hl, rl, tl = (gt.get("triple_labels") or [None, None, None])
+        hl, rl, tl = (gt["triple_labels"] or [None, None, None])
         ent_records = [
-            {"qid": h, "label": hl, "role": "head", "emerging": bool(gt.get("emerging_head", False))},
-            {"qid": t, "label": tl, "role": "tail", "emerging": bool(gt.get("emerging_tail", False))},
+            {"qid": h, "label": hl, "role": "head", "emerging": bool(gt["emerging_head"])},
+            {"qid": t, "label": tl, "role": "tail", "emerging": bool(gt["emerging_tail"])},
         ]
         # ONE oracle_gold entry PER operation -> a single, unambiguous `op` per entry
         ops_for_entries = sorted(gops & target_ops) if target_ops else sorted(gops)
@@ -122,17 +122,24 @@ def build_kg_block(
     anchor_label: str | None,
     entities: list[tuple[str, str | None]],
     relations: list[tuple[str, str | None]],
-    existing_triples: list[tuple[str, str, str]] | None = None,
+    include_entities: bool,          # config-flow: REQUIRED (no defaults)
+    include_relations: bool,
+    include_instruction: bool,
+    existing_triples: list[tuple[str, str, str]] | None = None,   # optional
+    instruction: str | None = None,
 ) -> str:
-    lines = ["", "KG context (from the current knowledge graph snapshot).",
-             SELECT_MINT_INSTRUCTION, ""]
-    lines.append("Candidate relation types:")
-    lines += _fmt(relations)
-    lines.append("Candidate existing KG entities:")
-    lines += _fmt(entities)
+    lines = ["", "##KG CONTEXT## (from the current knowledge-graph snapshot)"]
+    if include_instruction:
+        lines.append(instruction or SELECT_MINT_INSTRUCTION)  # per-op template, else the generic default
+    lines.append("")
+    if include_relations:
+        lines.append("Candidate relation types:")
+        lines += _fmt(relations)
+    if include_entities:
+        lines.append("Candidate existing KG entities:")
+        lines += _fmt(entities)
     if existing_triples:
-        anc = anchor_label or "the anchor entity"
-        lines.append(f'Existing KG triples of "{anc}":')
+        lines.append("Existing KG triples (each element as `label (ID)` — use the IDs in your answer):")
         for (a, r, t) in existing_triples:
             lines.append(f"  - ({a}, {r}, {t})")
     return "\n".join(lines)
@@ -145,6 +152,9 @@ def _dedup_keep_order(pairs: list[tuple[str, str | None]]) -> list[tuple[str, st
             seen.add(cid)
             out.append((cid, lbl))
     return out
+
+
+INFER_PATTERN_CAP = 6   # Infer Design A: max real (X,P,Q) pattern edges per gold INFER triple (hub guard)
 
 
 def gather_components(
@@ -195,12 +205,53 @@ def gather_components(
     gold_ent_ids = {e["qid"] for e in oracle_entities if not e["emerging"]}
     gold_rel_ids = {r["pid"] for r in oracle_relations}
 
-    # OPTIONAL lookup: existing KG edges among all oracle entities via all oracle relations
+    # OPTIONAL lookup (needs a loaded KGLookup): the REAL existing KG edges to show the model.
     lookup_triples = None
+    kg_rag_triples = None
+    infer_pattern_triples = None
     if kg is not None:
         all_ent = {e["qid"] for e in oracle_entities if e["qid"]}
         all_rel = {r["pid"] for r in oracle_relations}
         lookup_triples = kg.existing_among(all_ent, all_rel, anchor=anchor_qid)
+
+        # kg_rag_triples = real existing edges AMONG the retrieved entities (pairwise, + anchor) via the
+        # retrieved relations. The gold/relevant edges connect the passage's entities TO EACH OTHER (not
+        # just the anchor), so we scan every retrieved entity's out-edges -> needs each one's adjacency,
+        # i.e. a WHOLE-snapshot KGLookup load (kg_lookup.scope='whole').
+        kg_rag_triples, seen_kt = [], set()
+        ents = ret_ent | {anchor_qid}
+        for e1 in ents:
+            for (r, t) in kg.out_edges.get(e1, ()):
+                if r in ret_rel and t in ents and t != e1 and (e1, r, t) not in seen_kt:  # skip self-loops
+                    seen_kt.add((e1, r, t))
+                    kg_rag_triples.append({"triple_qids": [e1, r, t],
+                                           "triple_labels": [kg.label(e1), kg.label(r), kg.label(t)]})
+
+        # Infer Design A (oracle grounding): real KG edges that share the gold INFER relation P with the
+        # NOT-in-text existing entity Q -> other entities that link the SAME way. Direction follows Q's role
+        # in the gold triple (Q as tail -> in_edges(Q) via P; Q as head -> out_edges(Q) via P). Skips the
+        # minted entity and self-loops; capped per gold triple (hub guard). REAL edges + snapshot labels only.
+        infer_pattern_triples, seen_ip = [], set()
+        for g in gold_list:
+            if g["op"] != "ee-kg-triples":
+                continue
+            hq, pid, tq = g["triple_qids"]
+            minted = {e["qid"] for e in g["entities"] if e["emerging"]}
+            for e in g["entities"]:
+                q = e["qid"]
+                if e["emerging"] or not q:
+                    continue
+                n = 0
+                edges = ((r, x, [x, r, q]) for (r, x) in kg.in_edges.get(q, ())) if q == tq else \
+                        ((r, y, [q, r, y]) for (r, y) in kg.out_edges.get(q, ())) if q == hq else iter(())
+                for (r, other, trip) in edges:
+                    if r == pid and other != q and other not in minted and tuple(trip) not in seen_ip:
+                        seen_ip.add(tuple(trip))
+                        infer_pattern_triples.append({"triple_qids": trip, "gold_triple_idx": g["gold_triple_idx"],
+                            "triple_labels": [kg.label(trip[0]), kg.label(trip[1]), kg.label(trip[2])]})
+                        n += 1
+                        if n >= INFER_PATTERN_CAP:
+                            break
 
     return {
         "retriever": retriever,
@@ -212,28 +263,75 @@ def gather_components(
         "oracle_entities": oracle_entities,
         "oracle_relations": oracle_relations,
         "oracle_triples": oracle_triples,
+        "kg_rag_triples": kg_rag_triples,  # None unless KGLookup provided; real edges among retrieved ents/rels
         "lookup_triples": lookup_triples,  # None unless KGLookup was provided
+        "infer_pattern_triples": infer_pattern_triples,  # Infer Design A: real (X,P,Q) edges sharing gold rel+target Q
         "gold_retrieved": {"entities": bool(gold_ent_ids & ret_ent),
                            "relation": bool(gold_rel_ids & ret_rel)},
     }
 
 
-def compose_block(
-    kgc: dict, condition: str = "oracle_pieces", k: int = 16, seed: int = 0, shuffle: bool = True
-) -> str:
-    """Build a KG-context block from gathered `kg_context` components for ONE experiment
-    config -- this is the experiment-time composer (GENERATE calls it, then appends to the
-    passage). condition: 'kg_rag' | 'only_oracle' | 'oracle_pieces' | 'oracle_triples'.
-    k = total candidates per pool (entities:k, relations:k). Candidates ordered by retriever
-    score; for oracle_pieces, gold + top distractors to k, shuffled (position bias) if `shuffle`.
-    """
-    import random
+def _effective_triples(kgc: dict, source: str, op_match, max_kg_rag: int = -1) -> tuple[list, list, list]:
+    """qid-annotated (h,r,t) triple tuples for `source` in {'oracle','kg_rag','both'}, plus their
+    (id,label) entities/relations. oracle = gold existing edges (op-filtered); kg_rag = edges among
+    the retrieved ents/rels (KG-LOOKUP); both = UNION (dedup by (h,r,t) label). Elements annotated
+    `label (ID)` so the model can emit canonical QIDs/PIDs (Executable-R).
+    `max_kg_rag` caps ONLY the KG-RAG lookup triples (blow-up guard): 0 -> none (oracle-only),
+    N>0 -> first N, negative -> unlimited. Oracle ground-truth triples are always kept in full."""
+    # drop self-loops (head QID == tail QID, e.g. `United States (Q30) country (P17) United States (Q30)`) --
+    # meaningless as candidates. Defensive filter here so current components render clean without a re-gather.
+    _noloop = lambda ts: [t for t in ts if t["triple_qids"][0] != t["triple_qids"][2]]
+    ot = _noloop([t for t in kgc["oracle_triples"] if op_match(t)])
+    kt = _noloop(kgc["kg_rag_triples"] or [])
+    if max_kg_rag >= 0:
+        kt = kt[:max_kg_rag]
+    if source == "oracle":
+        src = ot
+    elif source == "kg_rag":
+        src = kt
+    else:  # both -> union, dedup by (h,r,t) QID tuple (robust: same edge appears ONCE even if the
+           # oracle source and the KG-LOOKUP source render its labels slightly differently).
+        src, seen = [], set()
+        for t in ot + kt:
+            key = tuple(t["triple_qids"])
+            if key not in seen:
+                seen.add(key)
+                src.append(t)
+    tri, ents, rels = [], [], []
+    for td in src:
+        q, l = td["triple_qids"], td["triple_labels"]
+        tri.append((f"{l[0]} ({q[0]})", f"{l[1]} ({q[1]})", f"{l[2]} ({q[2]})"))
+        ents += [(q[0], l[0]), (q[2], l[2])]
+        rels.append((q[1], l[1]))
+    return tri, ents, rels
 
+
+_TRIPLE_COND = {"oracle_triples": "oracle", "kg_rag_triples": "kg_rag", "both_triples": "both"}
+
+
+def select_candidates(
+    kgc: dict, condition: str, k: int, seed: int, order: str, max_triples: int,
+    op: str | None = None, include_triples: str | None = None,
+) -> tuple[list, list, list]:
+    """Pick the (entities, relations, triples) to show for ONE condition -- the single source of truth
+    for both the legacy block builder and the on-disk template renderer. entities [(qid,label)],
+    relations [(pid,label)], triples [(head'label (ID)', rel'label (ID)', tail'label (ID)')].
+    condition: text_only | kg_rag | only_oracle | oracle_pieces | oracle_triples | kg_rag_triples | both_triples.
+    `order='shuffle'` re-shuffles oracle_pieces (position-bias check). `op` -> that operation's gold pieces
+    only (kg_rag pools are op-agnostic). max_triples: -1 unlimited / 0 none / N first-N (kg_rag lookup only)."""
+    import random
+    if condition == "text_only":
+        return [], [], []
+
+    def _op_match(x) -> bool:
+        return op is None or x["op"] == op
+
+    shuffle = (order == "shuffle")
     ents_pool = kgc["kg_rag_entities"]
     rels_pool = kgc["kg_rag_relations"]
-    gold_ents = [(e["qid"], e["label"]) for e in kgc["oracle_entities"] if not e["emerging"]]
-    gold_rels = [(r["pid"], r["label"]) for r in kgc["oracle_relations"]]
-    triples = None
+    gold_ents = [(e["qid"], e["label"]) for e in kgc["oracle_entities"] if not e["emerging"] and _op_match(e)]
+    gold_rels = [(r["pid"], r["label"]) for r in kgc["oracle_relations"] if _op_match(r)]
+    triples: list = []
 
     if condition == "kg_rag":
         entities = [(e["qid"], e["label"]) for e in ents_pool[:k]]
@@ -251,12 +349,157 @@ def compose_block(
             rng = random.Random(seed)
             rng.shuffle(entities)
             rng.shuffle(relations)
-    elif condition == "oracle_triples":
-        entities, relations = list(gold_ents), list(gold_rels)
-        triples = [tuple(t["triple_labels"]) for t in kgc["oracle_triples"]]
+    elif condition in _TRIPLE_COND:
+        # effective REAL KG triples (Exists/Deprecate). source = oracle | kg_rag | both(union).
+        source = _TRIPLE_COND[condition]
+        triples, t_ents, t_rels = _effective_triples(kgc, source, _op_match, max_kg_rag=max_triples)
+        if source == "kg_rag":
+            entities, relations = _dedup_keep_order(t_ents), _dedup_keep_order(t_rels)  # retrieved only, no gold leak
+        else:  # oracle / both include the gold pieces
+            entities = _dedup_keep_order(list(gold_ents) + t_ents)
+            relations = _dedup_keep_order(list(gold_rels) + t_rels)
     else:
         raise ValueError(f"unknown condition: {condition}")
-    return build_kg_block(kgc.get("anchor_label"), entities, relations, triples)
+
+    # `include_triples`: ALSO show existing triples on top of a PIECES condition (Add/Mint/Infer, and
+    # unified) -> the prompt has candidates AND real KG edges as CONTEXT. Op-AGNOSTIC (the oracle edges
+    # are the instance's Exists/Deprecate triples, not this op's gold). `max_triples` caps the count.
+    if include_triples and condition not in _TRIPLE_COND:
+        extra_tri, extra_e, extra_r = _effective_triples(kgc, include_triples, lambda _x: True,
+                                                         max_kg_rag=max_triples)
+        triples = (triples or []) + extra_tri
+        entities = _dedup_keep_order(entities + extra_e)
+        relations = _dedup_keep_order(relations + extra_r)
+    return entities, relations, triples
+
+
+def compose_block(
+    kgc: dict, condition: str, k: int, seed: int, order: str,
+    include_entities: bool, include_relations: bool, include_instruction: bool, max_triples: int,
+    op: str | None = None, instruction: str | None = None, include_triples: str | None = None,
+) -> str:
+    """[kept for the AUGMENT inspect-preview] assemble the KG-context block string from the selected
+    candidates. 'text_only' returns ''. Template rendering uses `template_fields` + `fill_template`."""
+    if condition == "text_only":
+        return ""
+    entities, relations, triples = select_candidates(kgc, condition, k, seed, order, max_triples,
+                                                      op=op, include_triples=include_triples)
+    return build_kg_block(
+        kgc["anchor_label"], entities, relations,
+        include_entities=include_entities, include_relations=include_relations,
+        include_instruction=include_instruction, existing_triples=triples, instruction=instruction)
+
+
+# ---- on-disk prompt templates (src/kg_context/prompt_templates_kg_aware/): load + fill placeholders ----
+def _section(header: str, pairs: list) -> str:
+    return (header + "\n" + "\n".join(_fmt(pairs))) if pairs else ""
+
+
+def _triples_section(triples: list) -> str:
+    if not triples:
+        return ""
+    head = "Existing KG triples (each element as `label (ID)` — use the IDs in your answer):"
+    return head + "\n" + "\n".join(f"  - ({a}, {r}, {t})" for (a, r, t) in triples)
+
+
+def _default_fields(
+    kgc: dict, condition: str, k: int, seed: int, order: str,
+    include_entities: bool, include_relations: bool, max_triples: int,
+    op: str | None = None, include_triples: str | None = None,
+) -> dict:
+    """Generic placeholder strings (each '' when absent -> empty sections vanish in `fill_template`).
+    Keys: relation_types, entities, existing_triples, kg_context. Used by every op that has no special
+    builder in OP_FIELD_BUILDERS."""
+    entities, relations, triples = select_candidates(kgc, condition, k, seed, order, max_triples,
+                                                      op=op, include_triples=include_triples)
+    rt = _section("Candidate relation types:", relations) if include_relations else ""
+    en = _section("Candidate existing KG entities:", entities) if include_entities else ""
+    tr = _triples_section(triples)
+    kg = "\n".join(x for x in ["##KG CONTEXT## (from the current knowledge-graph snapshot)", rt, en, tr] if x)
+    return {"relation_types": rt, "entities": en, "existing_triples": tr, "kg_context": kg}
+
+
+def _infer_fields(
+    kgc: dict, condition: str, k: int, seed: int, order: str,
+    include_entities: bool, include_relations: bool, max_triples: int,
+    op: str | None = None, include_triples: str | None = None,
+) -> dict:
+    """Infer field builder = generic fields PLUS `{pattern_examples}` (Design A). Pattern edges are the
+    instance's real (X,P,Q) edges sharing the gold INFER relation+target Q (gathered as
+    `infer_pattern_triples`). Shown ONLY for the ORACLE conditions (only_oracle/oracle_pieces) -- the
+    gold-grounded upper-bound signal; empty (section drops) for kg_rag/text_only."""
+    f = _default_fields(kgc, condition, k, seed, order, include_entities, include_relations, max_triples,
+                        op=op, include_triples=include_triples)
+    pats = kgc["infer_pattern_triples"] if "infer_pattern_triples" in kgc else None
+    if condition in ("only_oracle", "oracle_pieces") and pats:
+        head = ("Relevant KG patterns for INFER (real existing edges that use a candidate relation with a "
+                "candidate KG entity — the NEW in-text entity most likely links the SAME way):")
+        rows = [f"  - ({tl[0]} ({q[0]}), {tl[1]} ({q[1]}), {tl[2]} ({q[2]}))"
+                for t in pats for q, tl in [(t["triple_qids"], t["triple_labels"])]]
+        f["pattern_examples"] = head + "\n" + "\n".join(rows)
+    else:
+        f["pattern_examples"] = ""
+    return f
+
+
+# op_label -> field builder. Ops NOT listed here fall back to `_default_fields`. Register an op's OWN
+# builder when it needs DIFFERENT fields / logic than the generic set -- e.g. Infer adds relation-pattern
+# demos ({pattern_examples}), Mint+Add may want its own entity handling, etc. A per-op template may then
+# reference op-specific placeholders; `fill_template` HARD-FAILS if the op's builder doesn't provide a
+# placeholder the template uses (so a missing per-op field is caught, not silent).
+OP_FIELD_BUILDERS: dict = {"infer": _infer_fields}
+
+
+def template_fields(
+    op_label: str, kgc: dict, condition: str, k: int, seed: int, order: str,
+    include_entities: bool, include_relations: bool, max_triples: int,
+    op: str | None = None, include_triples: str | None = None,
+) -> dict:
+    """Dispatch to op_label's field builder (default: `_default_fields`) -> {placeholder: rendered str}."""
+    builder = OP_FIELD_BUILDERS[op_label] if op_label in OP_FIELD_BUILDERS else _default_fields
+    return builder(kgc, condition, k, seed, order, include_entities, include_relations, max_triples,
+                   op=op, include_triples=include_triples)
+
+
+def _tidy(text: str) -> str:
+    """Drop any '##SECTION##' header whose body (up to the next '##' header / EOF) is empty, then
+    collapse blank-line runs. Lets a template list all sections; the absent ones disappear cleanly."""
+    import re
+    is_hdr = lambda s: re.match(r"^##.+?##", s.strip()) is not None
+    lines = text.split("\n")
+    keep, i = [], 0
+    while i < len(lines):
+        if is_hdr(lines[i]):
+            j, body = i + 1, False
+            while j < len(lines) and not is_hdr(lines[j]):
+                if lines[j].strip():
+                    body = True
+                j += 1
+            if not body:
+                i = j
+                continue
+        keep.append(lines[i])
+        i += 1
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(keep)).strip() + "\n"
+
+
+def fill_template(template: str, passage: str, fields: dict, output_format: str,
+                  few_shot_examples: str = "") -> str:
+    """Substitute {passage}, {output_format}, {few_shot_examples}, and every key of `fields` (the op's
+    placeholders) into the template, then tidy empty sections. HARD-FAILS if the template still references a
+    {placeholder} the op's field builder did not provide -- a template asking for a field it doesn't compute
+    is a bug. `few_shot_examples` empty -> the ##EXAMPLES## section auto-drops (zero-shot)."""
+    import re
+    subs = {"passage": passage, "output_format": output_format,
+            "few_shot_examples": few_shot_examples, **fields}
+    out = template
+    for key, val in subs.items():
+        out = out.replace("{" + key + "}", val)
+    leftover = sorted(set(re.findall(r"\{([A-Za-z_][A-Za-z0-9_]*)\}", out)))
+    if leftover:
+        raise KeyError(f"template has unfilled placeholder(s) {leftover} not provided by this op's field "
+                       f"builder (available: {sorted(subs)}). Register an OP_FIELD_BUILDERS entry or fix the template.")
+    return _tidy(out)
 
 
 def attach_components(instance: dict, kg_context: dict) -> dict:

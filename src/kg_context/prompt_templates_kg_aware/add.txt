@@ -1,0 +1,16 @@
+##TASK##
+ADD. From the knowledge explicitly or implicitly contained in the passage, return ONE OR MORE NEW facts (triples NOT already in the KG) between two entities that BOTH already exist in the KG. Return a triple only if it can be directly or indirectly inferred from the passage — i.e. the text explicitly or implicitly states or implies it (the text may provide only hints). Use common sense, but rely ONLY on knowledge that can be inferred from the text above, not outside knowledge. You may ONLY use a relation type listed in the KG context below (never invent one) and must give each entity's listed candidate ID. Any existing KG triples shown are the CURRENT graph state — the fact you return must NOT already be one of them.
+
+##EXAMPLES##
+{few_shot_examples}
+
+##PASSAGE##
+{passage}
+
+##KG CONTEXT##
+{relation_types}
+{entities}
+{existing_triples}
+
+##OUTPUT FORMAT##
+{output_format}

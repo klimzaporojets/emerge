@@ -1,0 +1,16 @@
+##TASK##
+EXISTS. The triples listed below are CANDIDATE edges that already exist in the knowledge graph and were retrieved as possibly relevant to this passage — they are NOT guaranteed to be about it, and some may involve entities the text never refers to. Return each candidate triple that can be directly or indirectly inferred from the passage — i.e. the text explicitly or implicitly states or implies it (the text may provide only hints). Use common sense, but rely ONLY on knowledge that can be inferred from the text above, not outside knowledge. Choose only from the listed candidate triples and use their exact IDs; do NOT invent or alter relations or entities.
+
+##EXAMPLES##
+{few_shot_examples}
+
+##PASSAGE##
+{passage}
+
+##KG CONTEXT##
+{relation_types}
+{entities}
+{existing_triples}
+
+##OUTPUT FORMAT##
+{output_format}

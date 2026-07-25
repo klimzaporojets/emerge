@@ -1,0 +1,24 @@
+{
+  "input_dataset_base_path": "./data/evaluation_set/",
+  "output_base_dir": "./output/s02_run_benchmarks/kg_prompt_gpt_5_1/",
+  "wrapper_root": "./src/benchmarks/wrappers/",
+  "models": [
+    {
+      "name": "kg_prompt",
+      "output_path": "kg_prompt",
+      "cache_path": "./output/caches/kg-prompt/kg_prompt_cache_gpt5_1.jsonl",
+      "model": "azure/gpt-5.1",
+      "temperature": 1.0,
+      "max_workers": 16,
+      "base_url": "https://ai-research-proxy.azurewebsites.net",
+      "batch_size": 200,
+      "max_tokens": 16000,
+      "backend": "http",
+      "mode": "completion",
+      "api_version": "v1",
+      "api_key_env": "OPENAI_API_KEY",
+      "model_max_context": null,
+      "authorization_header_type": null
+    }
+  ]
+}

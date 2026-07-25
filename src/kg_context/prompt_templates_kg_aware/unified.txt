@@ -1,0 +1,16 @@
+##TASK##
+Update the knowledge graph from the passage using the KG context below (candidate entities and relation types with IDs, and existing KG triples with IDs). You may ONLY use relation types listed in the KG context below (never invent one); give an entity's candidate ID when it is already in the KG, and MINT (set its id to the literal string "MINTED") any entity the passage introduces that is not in the KG. Return every applicable update: (EXISTS) a listed existing triple the passage still supports; (DEPRECATE) a listed existing triple the passage indicates is no longer valid; (ADD) a NEW triple between two entities that BOTH already exist in the KG and are BOTH mentioned in the passage; (MINT+ADD) a NEW triple where both entities are mentioned in the passage and at least one is newly minted; (INFER) a NEW triple linking a minted entity that IS mentioned in the passage to an existing KG entity that is NOT mentioned in the passage (identify it from the KG context below) via an inferred relation. For ADD / MINT+ADD / INFER the triple must be NEW (not already among the listed existing triples). Return a fact only if it can be directly or indirectly inferred from the passage (explicitly or implicitly stated or implied — the text may provide only hints); use common sense but rely ONLY on knowledge that can be inferred from the text above, not outside knowledge. There may be several of each kind, or none.
+
+##EXAMPLES##
+{few_shot_examples}
+
+##PASSAGE##
+{passage}
+
+##KG CONTEXT##
+{relation_types}
+{entities}
+{existing_triples}
+
+##OUTPUT FORMAT##
+{output_format}

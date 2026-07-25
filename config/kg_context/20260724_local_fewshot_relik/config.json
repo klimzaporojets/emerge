@@ -1,18 +1,18 @@
 {
-  "_comment": "Local few-sample GATHER using ReLiK's OWN pre-built index (retriever #1). Same as ../20260724_local_fewshot but retriever.which='relik'. Needs `download_data.sh --indices` + the 2019 entity index rsync + the relik lib. See rebuttal_baseline.md.",
+  "_comment": "Local few-sample GATHER using ReLiK's OWN pre-built index (retriever #1, RETRIEVER-ONLY, reader skipped). Same as ../20260724_local_fewshot but retriever.which='relik'. Covers BOTH 2019 + 2024 -- the runner loads each year's entity+relation index ONE AT A TIME (peak RAM = 1 year's index), so both years are fine. Needs `download_data.sh --indices` (relation) + both entity indexes at data/indices/relik_entity_index/{2019-01-01,2024-01-01} + the relik lib (env `relik`). See rebuttal_baseline.md.",
 
   "eval_set_dir": "data/evaluation_set",
   "output_dir": "output/kg_context/20260724_local_fewshot_relik",
 
   "sample": {
-    "years": ["2019"],
+    "years": ["2019", "2024"],
     "operations": ["ee-kg-triples", "d-triples"],
-    "n_instances": 6,
+    "n_instances": 10,
     "hash_ids": [],
     "seed": 13
   },
 
-  "retrieve_top_k": 32,
+  "retrieve_top_k": 64,
   "retriever": {
     "which": "relik",
     "config_name": "relik-ie/relik-cie-large",

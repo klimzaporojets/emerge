@@ -105,7 +105,7 @@ class KGLookup:
         out: list[tuple[str, str, str]] = []
         for e1 in ents:
             for (r, t) in self.out_edges.get(e1, ()):
-                if r in rels and t in ents:
+                if r in rels and t in ents and t != e1:   # skip self-loops (head == tail)
                     out.append((self.label(e1), self.label(r), self.label(t)))
         return out
 

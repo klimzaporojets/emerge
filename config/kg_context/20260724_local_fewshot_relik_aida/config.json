@@ -1,0 +1,35 @@
+{
+  "_comment": "AIDA ENTITY-INDEX ABLATION of ../20260724_local_fewshot_relik. Entity retriever = `sapienzanlp/relik-entity-linking-large` (e5-base-v2, 768-dim) over the AIDA index (relik-retriever-e5-base-v2-aida-blink-encoder); RELATIONS stay native (relik-cie-large, e5-small). Only the entity side changes -> clean native-vs-AIDA coverage comparison. 2019-only (that's the AIDA index we rsync locally; full sweep = Snellius, all years). Needs: data/indices/relik_entity_index_aida/2019-01-01 (see rebuttal_baseline.md AIDA rsync). Env: `relik`. RelikCandidateRetriever loads entity+relation as SEPARATE reader-less models when entity_config_name != config_name.",
+
+  "eval_set_dir": "data/evaluation_set",
+  "output_dir": "output/kg_context/20260724_local_fewshot_relik_aida",
+
+  "sample": {
+    "years": ["2019"],
+    "operations": ["ee-kg-triples", "d-triples"],
+    "n_instances": 10,
+    "hash_ids": [],
+    "seed": 13
+  },
+
+  "retrieve_top_k": 64,
+  "retriever": {
+    "which": "relik",
+    "config_name": "relik-ie/relik-cie-large",
+    "entity_config_name": "sapienzanlp/relik-entity-linking-large",
+    "device": "cpu",
+    "cache_dir": "output/cache",
+    "entity_index_base_path": "data/indices/relik_entity_index_aida",
+    "relation_index_base_path": "data/indices/relik_edc_relation_indexes",
+    "precision": "16"
+  },
+
+  "kg_lookup": {
+    "enabled": false,
+    "scope": "anchors",
+    "snapshot_dir": "/home/klim/work/mnt/data/projects/msca-kgs/wikidata_kg_snapshots",
+    "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
+  },
+  "snapshot_dir": "/home/klim/work/mnt/data/projects/msca-kgs/wikidata_kg_snapshots",
+  "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
+}

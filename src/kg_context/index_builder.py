@@ -120,12 +120,13 @@ def main() -> None:
     ap.add_argument("--snapshot", required=True)
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--kind", choices=["entities", "relations", "both"], default="both")
-    ap.add_argument("--encoder", default="sentence-transformers/all-mpnet-base-v2")
+    # content-affecting args are REQUIRED (no silent default that changes what/how-many gets embedded)
+    ap.add_argument("--encoder", required=True, help="e.g. sentence-transformers/all-mpnet-base-v2")
     ap.add_argument("--device", default="cpu", help="cpu | cuda")
     ap.add_argument("--batch-size", type=int, default=256)
-    ap.add_argument("--top-n", type=int, default=-1,
+    ap.add_argument("--top-n", type=int, required=True,
                     help="-1 = ALL entities; N>0 = a uniform RANDOM sample of N distinct entities (DEV index)")
-    ap.add_argument("--seed", type=int, default=0, help="random-sample seed for --top-n")
+    ap.add_argument("--seed", type=int, required=True, help="random-sample seed for --top-n")
     args = ap.parse_args()
 
     print(f"extracting vocab from {args.snapshot} (kind={args.kind}, top_n={args.top_n}, seed={args.seed}) ...")

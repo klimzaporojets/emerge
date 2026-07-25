@@ -1,0 +1,21 @@
+{
+  "_comment": "COMPOSE_KG_PROMPT — ONLY-ORACLE variant. condition=only_oracle => the block shows ALL gold pieces and NOTHING else: every non-emerging oracle entity + every oracle relation (emerging ends are omitted on purpose — the model must MINT those). k is IGNORED for only_oracle (no distractors, no truncation). This is the retrieval-perfect ceiling. Change `component_dir` to the _aida output to run it on that index.",
+
+  "component_dir": "output/kg_context/20260724_local_fewshot_relik",
+  "output_dir": "output/kg_prompts/20260725_only_oracle",
+
+  "compose": {
+    "conditions": ["only_oracle"],
+    "k": [8],
+    "order": "score",
+    "include_entities": true,
+    "include_relations": true,
+    "include_instruction": true,
+    "seed": 13
+  },
+
+  "predict": {
+    "baselines": ["kggen", "edc_plus"],
+    "llm": "gpt-5.1"
+  }
+}

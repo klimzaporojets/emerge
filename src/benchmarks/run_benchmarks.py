@@ -9,6 +9,7 @@ from pathlib import Path
 
 from benchmarks.configs.experiment import ExperimentConfig
 from benchmarks.configs.kggen import KGGenConfig
+from benchmarks.configs.kg_prompt import KGPromptConfig
 from benchmarks.configs.rakg import RAKGConfig
 from benchmarks.configs.rebel import REBELConfig
 from benchmarks.model_runner import ModelRunner
@@ -81,6 +82,30 @@ def main():
                     '--batch-size', str(cfg.batch_size),
                     '--cache-path', str(cfg.cache_path),
                     '--max-tokens', str(cfg.max_tokens)
+                ],
+            )
+        elif curr_model == 'kg_prompt':
+            cfg = KGPromptConfig(**arguments_to_pass)
+            output_dir = os.path.join(arguments_main.output_base_dir, cfg.output_path)
+            os.makedirs(output_dir, exist_ok=True)
+            runner.run(
+                model_name='kg_prompt',
+                args=[
+                    '--input', arguments_main.input_dataset_base_path,
+                    '--output', output_dir,
+                    '--model', cfg.model,
+                    '--temperature', str(cfg.temperature),
+                    '--max-workers', str(cfg.max_workers),
+                    '--base-url', str(cfg.base_url),
+                    '--batch-size', str(cfg.batch_size),
+                    '--cache-path', str(cfg.cache_path),
+                    '--max-tokens', str(cfg.max_tokens),
+                    '--backend', str(cfg.backend),
+                    '--mode', str(cfg.mode),
+                    '--api-version', str(cfg.api_version),
+                    '--api-key-env', str(cfg.api_key_env),
+                    '--model-max-context', str(cfg.model_max_context),
+                    '--authorization-header-type', str(cfg.authorization_header_type),
                 ],
             )
         elif curr_model == 'rebel':
