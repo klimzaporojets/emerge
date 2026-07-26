@@ -283,6 +283,19 @@ def _effective_triples(kgc: dict, source: str, op_match, max_kg_rag: int = -1) -
     _noloop = lambda ts: [t for t in ts if t["triple_qids"][0] != t["triple_qids"][2]]
     ot = _noloop([t for t in kgc["oracle_triples"] if op_match(t)])
     kt = _noloop(kgc["kg_rag_triples"] or [])
+    # RANK kg_rag candidate triples by the retriever's confidence in their pieces BEFORE capping, so the
+    # top-`max_kg_rag` are the highest-confidence edges (not an arbitrary first-N). Score(h,r,t) = the SUM
+    # of the retriever score of the head entity + the relation type + the tail entity (from the kg_rag
+    # pools; a piece absent from its pool contributes 0). Additive per-passage ranking -> the edges whose
+    # ends AND relation the retriever surfaced most confidently come first.
+    e_score = {e["qid"]: e.get("score", 0.0) for e in kgc["kg_rag_entities"]}
+    r_score = {r["pid"]: r.get("score", 0.0) for r in kgc["kg_rag_relations"]}
+
+    def _triple_score(t: dict) -> float:
+        h, r, tl = t["triple_qids"]
+        return e_score.get(h, 0.0) + r_score.get(r, 0.0) + e_score.get(tl, 0.0)
+
+    kt = sorted(kt, key=_triple_score, reverse=True)
     if max_kg_rag >= 0:
         kt = kt[:max_kg_rag]
     if source == "oracle":
@@ -326,7 +339,6 @@ def select_candidates(
     def _op_match(x) -> bool:
         return op is None or x["op"] == op
 
-    shuffle = (order == "shuffle")
     ents_pool = kgc["kg_rag_entities"]
     rels_pool = kgc["kg_rag_relations"]
     gold_ents = [(e["qid"], e["label"]) for e in kgc["oracle_entities"] if not e["emerging"] and _op_match(e)]
@@ -345,10 +357,6 @@ def select_candidates(
         distr_r = [(r["pid"], r["label"]) for r in rels_pool if r["pid"] not in gold_rid]
         entities = _dedup_keep_order(gold_ents + distr_e[: max(0, k - len(gold_ents))])
         relations = _dedup_keep_order(gold_rels + distr_r[: max(0, k - len(gold_rels))])
-        if shuffle:
-            rng = random.Random(seed)
-            rng.shuffle(entities)
-            rng.shuffle(relations)
     elif condition in _TRIPLE_COND:
         # effective REAL KG triples (Exists/Deprecate). source = oracle | kg_rag | both(union).
         source = _TRIPLE_COND[condition]
@@ -370,6 +378,15 @@ def select_candidates(
         triples = (triples or []) + extra_tri
         entities = _dedup_keep_order(entities + extra_e)
         relations = _dedup_keep_order(relations + extra_r)
+    # SHUFFLE the 'both' (oracle+kg_rag) conditions so the oracle (correct) pieces are NOT positionally
+    # distinguishable from the kg_rag distractors -> the LLM can't guess the answer by order. Shuffles
+    # entities, relations AND triples. Deterministic (seeded). Also honored when order=='shuffle'
+    # (explicit position-bias probe). oracle-only / kg_rag-only keep their meaningful order (gold / score).
+    if order == "shuffle" or condition in ("both_triples", "oracle_pieces"):
+        rng = random.Random(seed)
+        rng.shuffle(entities)
+        rng.shuffle(relations)
+        rng.shuffle(triples)
     return entities, relations, triples
 
 
@@ -415,6 +432,13 @@ def _default_fields(
     rt = _section("Candidate relation types:", relations) if include_relations else ""
     en = _section("Candidate existing KG entities:", entities) if include_entities else ""
     tr = _triples_section(triples)
+    # Negative / empty-KG case (e.g. an oracle prompt for an op this instance does NOT have): nothing was
+    # retrieved. Emit an EXPLICIT notice so the ##KG CONTEXT## section survives `_tidy` instead of vanishing
+    # and leaving the task text ("choose from the triples listed below") pointing at nothing. The correct
+    # answer here is [] -- this is the hallucination/negative test. EXCLUDE `text_only`: that condition shows
+    # NO KG context BY DESIGN (the no-KG baseline), so its section must stay absent, not carry a notice.
+    if condition != "text_only" and not (rt or en or tr):
+        tr = "NO CANDIDATE TRIPLES OR ENTITIES WERE FOUND IN THE KG FOR THIS PASSAGE."
     kg = "\n".join(x for x in ["##KG CONTEXT## (from the current knowledge-graph snapshot)", rt, en, tr] if x)
     return {"relation_types": rt, "entities": en, "existing_triples": tr, "kg_context": kg}
 
@@ -432,8 +456,9 @@ def _infer_fields(
                         op=op, include_triples=include_triples)
     pats = kgc["infer_pattern_triples"] if "infer_pattern_triples" in kgc else None
     if condition in ("only_oracle", "oracle_pieces") and pats:
-        head = ("Relevant KG patterns for INFER (real existing edges that use a candidate relation with a "
-                "candidate KG entity — the NEW in-text entity most likely links the SAME way):")
+        head = ("For this particular passage, here are some closely-related examples that can help you (real "
+                "existing KG edges that use a candidate relation with a candidate KG entity — the NEW in-text "
+                "entity most likely links the SAME way as these):")
         rows = [f"  - ({tl[0]} ({q[0]}), {tl[1]} ({q[1]}), {tl[2]} ({q[2]}))"
                 for t in pats for q, tl in [(t["triple_qids"], t["triple_labels"])]]
         f["pattern_examples"] = head + "\n" + "\n".join(rows)

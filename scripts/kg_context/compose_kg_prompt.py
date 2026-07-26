@@ -29,13 +29,20 @@ import sys
 
 from kg_context import augment as A
 
+try:
+    from tqdm import tqdm
+except Exception:
+    def tqdm(*a, **k):
+        return a[0] if a else None
+
 OP_LABEL = {
     "x-triples": "exists", "e-triples": "add", "ee-triples": "mint_add",
     "ee-kg-triples": "infer", "d-triples": "deprecate",
 }
 ALL_OPS = list(OP_LABEL)
 EXISTING_EDGE_OPS = {"x-triples", "d-triples"}
-K_DEPENDENT = {"kg_rag", "oracle_pieces"}
+K_DEPENDENT = {"kg_rag", "oracle_pieces"}          # sweep `k` (candidate-pool depth) -> tag `<cond>_k<k>`
+TRIPLE_N_SWEEP = {"kg_rag_triples", "both_triples"}  # sweep `max_triples` (kg-rag lookup depth) -> tag `<cond>_n<n>`
 # REQUIRED compose keys — must be present (global compose or per_operation override) or HARD FAIL.
 # ('instruction', 'existing_triples' are OPTIONAL feature toggles, handled separately.)
 _REQUIRED_COMPOSE = ("conditions", "k", "order", "include_entities", "include_relations",
@@ -55,6 +62,21 @@ def load_templates(template_dir: str) -> tuple[dict, str]:
     with open(os.path.join(template_dir, "output_format.txt")) as f:
         output_format = f.read().strip()
     return templates, output_format
+
+
+# The operation enum in output_format.txt lists all five ops; a per-op prompt should ONLY offer its own op.
+_OP_ENUM = "<EXISTS | ADD | MINT_ADD | INFER | DEPRECATE>"
+
+def op_output_format(output_format: str, op_label: str) -> str:
+    """Narrow the operation enum to the single op for a per-op prompt; unified ('all') keeps all five.
+    HARD FAIL if the enum sentinel isn't present (catches a renamed output_format.txt instead of silently
+    emitting the full 5-way enum)."""
+    if op_label == "all":
+        return output_format
+    if _OP_ENUM not in output_format:
+        raise ValueError(f"output_format.txt no longer contains the operation enum {_OP_ENUM!r}; "
+                         f"cannot narrow it to op '{op_label}'. Fix op_output_format / output_format.txt.")
+    return output_format.replace(_OP_ENUM, op_label.upper())   # exists->EXISTS, mint_add->MINT_ADD, ...
 
 
 # few-shot pools: one file per op_label in `template_dir` (few_shot_<label>.txt), examples separated by this
@@ -87,8 +109,33 @@ def _tag(condition: str, k: int) -> str:
     return f"{condition}_k{k}" if condition in K_DEPENDENT else condition
 
 
+LLM_405B_V1 = "Meta-Llama-3.1-405B_prompt_v1"
+
+
+def op_405b_supported(tkgu_triple: dict, op: str) -> bool:
+    """405B Rule-C support verdict for ONE (gold triple, op). A TKGU op is GROUND TRUTH only if
+    Meta-Llama-3.1-405B_prompt_v1 assessed it text-supported — THIS IS WHAT TABLE 3 SCORES, so we must
+    neither predict nor oracle a 405B-false op. d-triples use the `triple_deprecation` verdict, every
+    other op the `triple_assertion` verdict. Missing verdict -> NOT supported (excluded). Direct dict
+    access on the assessment schema (hard-fail if malformed; no silent defaults)."""
+    prompt_type = "triple_deprecation" if op == "d-triples" else "triple_assertion"
+    for a in tkgu_triple["llm_assessment"]:
+        if a["llm_name"] == LLM_405B_V1 and a["llm_prompt_type"] == prompt_type:
+            return a["llm_assessment"] is True
+    return False
+
+
+def supported_op_keys(inst: dict) -> set[tuple[int, str]]:
+    """{(gold_triple_idx, op)} for every (tkgu_triple, op) that is 405B-supported — the single source of
+    truth for both the with-gold op set (instance_ops) and the oracle-content filter (driver)."""
+    return {(idx, o) for idx, gt in enumerate(inst["tkgu_triples"])
+            for o in (gt["tkgu_operations"] or []) if op_405b_supported(gt, o)}
+
+
 def instance_ops(inst: dict) -> set[str]:
-    return {o for gt in inst["tkgu_triples"] for o in (gt["tkgu_operations"] or [])}
+    """The ops for which this instance has a 405B-SUPPORTED gold (Rule-C). 405B-false ops are EXCLUDED,
+    so per_op_all_instances=False never spends a prediction on a non-text-supported op."""
+    return {o for (_, o) in supported_op_keys(inst)}
 
 
 def _resolved_cfg(compose: dict, op: str | None) -> dict:
@@ -122,26 +169,37 @@ def unified_compose_cfg(compose: dict) -> dict:
     return _resolved_cfg(compose, None)
 
 
-def expand_points(cfg: dict) -> list[tuple[str, int, str]]:
+def expand_points(cfg: dict) -> list[tuple[str, int, int, str]]:
+    """Yield (condition, k, max_triples, tag). K_DEPENDENT conds sweep `k` (candidate-pool depth) -> `<cond>_k<k>`;
+    TRIPLE_N_SWEEP conds (kg_rag_triples/both_triples) sweep `max_triples` (kg-rag lookup depth) -> `<cond>_n<n>`;
+    all others are a single point at the default `max_triples`."""
     out, seen = [], set()
+    dflt = int(cfg["max_triples"])
     for cond in cfg["conditions"]:
         if cond in K_DEPENDENT:
             for k in cfg["k"]:
-                out.append((cond, int(k), _tag(cond, k)))
+                out.append((cond, int(k), dflt, _tag(cond, k)))
+        elif cond in TRIPLE_N_SWEEP:      # reuse the `k` list as the max_triples sweep (per-op configurable)
+            for n in cfg["k"]:
+                out.append((cond, int(n), int(n), f"{cond}_n{n}"))
         else:
             tag = _tag(cond, 0)
             if tag not in seen:
                 seen.add(tag)
-                out.append((cond, int(cfg["k"][0]), tag))
+                out.append((cond, int(cfg["k"][0]), dflt, tag))
     return out
 
 
-def _emit(inst, kgc, rel, out_dir, mode, op, cond, k, c, counts, templates, output_format, few_shot):
-    """Render one instance's KG-aware prompt from the op's on-disk template and append it to its eval-set."""
+def _emit(inst, kgc, rel, out_dir, mode, op, cond, k, mtri, tag, c, counts, templates, output_format, few_shot,
+          allow_empty=False):
+    """Render one instance's KG-aware prompt from the op's on-disk template and append it to its eval-set.
+    `mtri` = this point's max_triples (swept for TRIPLE_N_SWEEP conds, else the default); `tag` = point tag.
+    `allow_empty` (per_op_all_instances): emit oracle_triples even with NO gold for this op (empty KG context ->
+    the negative/hallucination case: 'should return []') instead of skipping."""
     if cond == "oracle_triples":
         if op is not None and op not in EXISTING_EDGE_OPS:
             return
-        if not any((op is None or t["op"] == op) for t in kgc["oracle_triples"]):
+        if not allow_empty and not any((op is None or t["op"] == op) for t in kgc["oracle_triples"]):
             return
     # existing-triples CONTEXT on top of a PIECES condition (Add/Mint/Infer, unified). Source matches the
     # condition: kg_rag->kg_rag edges, oracle_pieces/only_oracle->oracle edges. UNIFIED always shows them;
@@ -160,7 +218,7 @@ def _emit(inst, kgc, rel, out_dir, mode, op, cond, k, c, counts, templates, outp
     fields = A.template_fields(
         op_label, kgc, condition=cond, k=k, seed=c["seed"], order=c["order"],
         include_entities=c["include_entities"], include_relations=c["include_relations"],
-        max_triples=c["max_triples"], op=op, include_triples=inc_tri)
+        max_triples=mtri, op=op, include_triples=inc_tri)
     new = copy.deepcopy(inst)
     new.pop("kg_context", None)
     # Keep `passage` PRISTINE; the model-facing input goes in `prompt`, rendered from the op's template
@@ -168,14 +226,14 @@ def _emit(inst, kgc, rel, out_dir, mode, op, cond, k, c, counts, templates, outp
     # `passage` stays canonical and its stored `hash_id` keeps the scoring join intact.
     new["passage"] = inst["passage"]
     fs = few_shot[op_label] if few_shot is not None else ""   # first-N examples for this op (or zero-shot)
-    new["prompt"] = A.fill_template(templates[op_label], inst["passage"], fields, output_format, fs)
+    new["prompt"] = A.fill_template(templates[op_label], inst["passage"],
+                                    fields, op_output_format(output_format, op_label), fs)
     new["kg_context_composed"] = {
         "prompt_mode": mode, "operation": op, "op_label": op_label,
-        "condition": cond, "k": k, "order": c["order"],
+        "condition": cond, "k": k, "max_triples": mtri, "order": c["order"],
         "include_entities": c["include_entities"], "include_relations": c["include_relations"],
         "template": TEMPLATE_FILE[op_label], "gold_retrieved": kgc["gold_retrieved"],
     }
-    tag = _tag(cond, k)
     if mode == "per_op":
         sub, key = os.path.join("per_op", op_label, tag), f"per_op/{op_label}/{tag}"
     else:
@@ -209,6 +267,8 @@ def main() -> None:
 
     modes = compose["prompt_modes"]          # required (hard fail if absent) — no silent default
     operations = compose["operations"]       # required
+    per_op_all = compose["per_op_all_instances"]  # required; True = emit EVERY op for EVERY instance (negative/
+    #                                               hallucination case incl. ops the instance lacks); False = only ops it has
     for op in operations:
         if op not in OP_LABEL:
             raise ValueError(f"compose.operations has unknown op '{op}' (expected one of {list(OP_LABEL)})")
@@ -227,12 +287,14 @@ def main() -> None:
     print(f"COMPOSE_KG_PROMPT: {len(files)} component files | modes={modes} | "
           f"ops={[OP_LABEL[o] for o in operations]}", flush=True)
     if "unified" in modes:
-        print(f"  unified <- {[t for _, _, t in uni_points]}", flush=True)
+        print(f"  unified <- {[t for *_, t in uni_points]}", flush=True)
     if "per_op" in modes:
         for op in operations:
-            print(f"  per_op/{OP_LABEL[op]:9} <- {[t for _, _, t in op_points[op]]}", flush=True)
+            print(f"  per_op/{OP_LABEL[op]:9} <- {[t for *_, t in op_points[op]]}", flush=True)
 
     counts: dict[str, int] = {}
+    total_inst = sum(1 for fp in files for ln in open(fp) if ln.strip())   # for the progress bar / ETA
+    bar = tqdm(total=total_inst, desc="compose", unit="inst")
     for fp in files:
         rel = os.path.relpath(fp, comp_dir)
         with open(fp) as f:
@@ -241,30 +303,42 @@ def main() -> None:
                 if not line:
                     continue
                 inst = json.loads(line)
+                bar.update(1)
+                bar.set_postfix(prompts=sum(counts.values()), refresh=False)
                 kgc = inst["kg_context"]
-                inst_ops = instance_ops(inst) & set(operations)
+                # 405B-SUPPORT FILTER (Rule-C, see op_405b_supported): keep ONLY oracle pieces whose source
+                # gold op is text-supported by Meta-Llama-3.1-405B (what Table 3 scores) -> drops 405B-false
+                # golds from every oracle-based condition (only_oracle/oracle_pieces/both/oracle_triples).
+                # kg_rag_* pools are retrieval-only (no gold) and left untouched.
+                supported = supported_op_keys(inst)
+                for _k in ("oracle_entities", "oracle_relations", "oracle_triples"):
+                    kgc[_k] = [x for x in kgc[_k] if (x["gold_triple_idx"], x["op"]) in supported]
+                inst_ops = {o for (_, o) in supported} & set(operations)
                 if not inst_ops:
                     continue
                 if "unified" in modes:
-                    for (cond, k, _t) in uni_points:
-                        _emit(inst, kgc, rel, out_dir, "unified", None, cond, k, uni_cfg, counts,
+                    for (cond, k, mtri, tag) in uni_points:
+                        _emit(inst, kgc, rel, out_dir, "unified", None, cond, k, mtri, tag, uni_cfg, counts,
                               templates, output_format, few_shot)
                 if "per_op" in modes:
-                    for op in inst_ops:
-                        for (cond, k, _t) in op_points[op]:
-                            _emit(inst, kgc, rel, out_dir, "per_op", op, cond, k, op_cfg[op], counts,
-                                  templates, output_format, few_shot)
+                    for op in operations:                        # all configured ops (per_op_all) or only the
+                        if not per_op_all and op not in inst_ops:  # instance's own ops
+                            continue
+                        for (cond, k, mtri, tag) in op_points[op]:
+                            _emit(inst, kgc, rel, out_dir, "per_op", op, cond, k, mtri, tag, op_cfg[op], counts,
+                                  templates, output_format, few_shot, allow_empty=per_op_all)
+    bar.close()
 
     points = []
     if "unified" in modes:
-        points += [{"mode": "unified", "operation": None, "condition": c, "k": k,
+        points += [{"mode": "unified", "operation": None, "condition": c, "k": k, "max_triples": mtri,
                     "tag": f"unified/{t}", "input_dir": os.path.join(out_dir, "unified", t)}
-                   for (c, k, t) in uni_points]
+                   for (c, k, mtri, t) in uni_points]
     if "per_op" in modes:
         points += [{"mode": "per_op", "operation": op, "op_label": OP_LABEL[op], "condition": c, "k": k,
-                    "tag": f"per_op/{OP_LABEL[op]}/{t}",
+                    "max_triples": mtri, "tag": f"per_op/{OP_LABEL[op]}/{t}",
                     "input_dir": os.path.join(out_dir, "per_op", OP_LABEL[op], t)}
-                   for op in operations for (c, k, t) in op_points[op]]
+                   for op in operations for (c, k, mtri, t) in op_points[op]]
     manifest = {"component_dir": comp_dir, "template_dir": cfg["template_dir"], "prompt_modes": modes,
                 "operations": operations, "compose": compose, "predict": cfg["predict"],
                 "points": points, "counts": counts}

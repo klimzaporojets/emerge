@@ -18,10 +18,31 @@ Reuses `benchmarks.run_benchmarks` UNCHANGED (CLI overrides input/output). Run i
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import os
 import subprocess
 import sys
+import tempfile
+
+
+def _filtered_evalset(src_dir: str, allow: set, dst_dir: str) -> int:
+    """Copy src_dir's eval-set (snapshot_*/delta_*.jsonl) into dst_dir keeping ONLY instances whose
+    hash_id is in `allow`, preserving the dir structure so the wrapper reads it exactly like the full
+    set. Returns #instances kept. Used by --hash-ids to run a SUBSET (e.g. 350) now; a later full run
+    (no --hash-ids, SAME predict dir) skips these via obtain_already_predicted_hash_ids -> no LLM re-call."""
+    kept = 0
+    for fp in glob.glob(os.path.join(src_dir, "**", "*.jsonl"), recursive=True):
+        rel = os.path.relpath(fp, src_dir)
+        out = os.path.join(dst_dir, rel)
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        with open(fp) as fin, open(out, "w") as fout:
+            for line in fin:
+                line = line.strip()
+                if line and json.loads(line).get("hash_id") in allow:
+                    fout.write(line + "\n")
+                    kept += 1
+    return kept
 
 # (baseline, llm) -> run_benchmarks config. gpt-5.1 = strongest baseline in the paper. Extend as needed.
 # kg_prompt = our KG-conditioned baseline: its wrapper reads the composed `prompt` field VERBATIM
@@ -45,7 +66,17 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", required=True, help="the COMPOSE_KG_PROMPT config (has output_dir + predict block)")
     ap.add_argument("--dry-run", action="store_true", help="print the run_benchmarks commands, do not execute")
+    ap.add_argument("--hash-ids", help="file with hash_ids (one per line): predict ONLY these instances "
+                    "(SUBSET run, e.g. 350). Re-run later WITHOUT it (same config -> same predict dir) to fill "
+                    "the rest; the wrapper skips these via the shared output, so NO LLM re-call for the subset.")
     args = ap.parse_args()
+
+    allow_ids: set | None = None
+    if args.hash_ids:
+        with open(args.hash_ids) as f:
+            allow_ids = {ln.strip() for ln in f if ln.strip()}
+        print(f"PREDICT_TRIPLES: SUBSET mode — restricting to {len(allow_ids)} hash_ids from {args.hash_ids}", flush=True)
+    _tmp = tempfile.mkdtemp(prefix="predict_subset_") if allow_ids else None
 
     cfg = json.load(open(args.config))
     out_root = cfg["output_dir"]
@@ -71,6 +102,10 @@ def main() -> None:
         # kg_prompt reads the composed `prompt` field directly, so point run_benchmarks straight at the
         # eval-set dir — no passage rewriting / throwaway model-input dir needed.
         model_in = p["input_dir"]
+        if allow_ids is not None:   # SUBSET run: filter this point's eval-set to the allow-list (temp dir)
+            model_in = os.path.join(_tmp, p["tag"])
+            kept = _filtered_evalset(p["input_dir"], allow_ids, model_in)
+            print(f"  [{p['tag']}] subset: {kept} instance(s) match the hash-id allow-list", flush=True)
         for bl in baselines:
             base_cfg = overrides[bl] if bl in overrides else BASELINE_CONFIGS.get((bl, llm))  # registry lookup handled below
             if not base_cfg:

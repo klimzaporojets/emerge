@@ -1,0 +1,44 @@
+{
+  "_comment": "AUGMENT_KG_CONTEXT — ALL 5 TKGU operations, native ReLiK retriever (relik-cie-large e5-small). First complete iteration. 2019+2024, subprocess-per-year. n_instances=32 (configurable). retrieve_top_k=64. kg_lookup OFF (kg_rag_triples/pattern_examples deferred to the next refinement). Output feeds COMPOSE_KG_PROMPT (config 20260725_compose_ladder).",
+  "eval_set_dir": "/projects/0/prjs1103/projects/emerge-stage/hf_repro/data/evaluation_set",
+  "output_dir": "output/kg_context/20260726_coverage_native",
+  "sample": {
+    "years": [
+      "2019",
+      "2020",
+      "2021",
+      "2022",
+      "2023",
+      "2024",
+      "2025"
+    ],
+    "operations": [
+      "x-triples",
+      "e-triples",
+      "ee-triples",
+      "ee-kg-triples",
+      "d-triples"
+    ],
+    "n_instances": 10000,
+    "seed": 42,
+    "hash_ids": []
+  },
+  "retrieve_top_k": 124,
+  "retriever": {
+    "which": "relik",
+    "config_name": "relik-ie/relik-cie-large",
+    "device": "cuda",
+    "cache_dir": "output/cache",
+    "entity_index_base_path": "/projects/0/prjs1103/projects/wiki-temp/wikipedia-temp/output/experiments/s08_extract_relik_index/20250910_snellius/indexes-e5-small-v2-wikipedia-matryoshka",
+    "relation_index_base_path": "/projects/0/prjs1103/projects/wiki-temp/wikipedia-temp/output/experiments/s08_extract_relik_index/20260726_snapshot_scoped/indexes-e5-small-v2-wikipedia-relations",
+    "precision": "16"
+  },
+  "kg_lookup": {
+    "enabled": true,
+    "scope": "whole",
+    "snapshot_dir": "/projects/0/prjs1103/projects/emerge-stage/hf_repro/data/kg_snapshots",
+    "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
+  },
+  "snapshot_dir": "/projects/0/prjs1103/projects/emerge-stage/hf_repro/data/kg_snapshots",
+  "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
+}

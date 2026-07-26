@@ -21,11 +21,7 @@
       "only_oracle"
     ],
     "k": [
-      4,
-      8,
-      16,
-      32,
-      64
+      16
     ],
     "order": "score",
     "include_entities": true,
@@ -93,15 +89,22 @@
         }
       }
     },
-    "few_shot_n": 5
+    "few_shot_n": 5,
+    "per_op_all_instances": true
   },
   "predict": {
     "baselines": [
-      "kggen",
-      "edc_plus"
+      "kg_prompt"
     ],
     "llm": "gpt-5.1",
-    "points": null,
+    "points": [
+      "per_op/exists/oracle_triples",
+      "per_op/deprecate/oracle_triples",
+      "per_op/add/only_oracle",
+      "per_op/mint_add/only_oracle",
+      "per_op/infer/only_oracle",
+      "unified/only_oracle"
+    ],
     "base_configs": {}
   },
   "template_dir": "src/kg_context/prompt_templates_kg_aware"

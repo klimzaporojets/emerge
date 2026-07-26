@@ -166,8 +166,15 @@ class RelikCandidateRetriever:
             ent_model = Relik.from_pretrained(
                 entity_config_name, device=device, index=_span_idx(entity_index_path),
                 reader=None, cache_dir=cache_dir)
+            # `config_name` (relik-cie-large) is a task=BOTH model, so relik's load_index REQUIRES a SPAN
+            # index too (task drives it, and BOTH loads span+triplet) even though we only use TRIPLET here.
+            # Passing triplet-only -> `KeyError: TaskType.SPAN`. Point the SPAN slot at the RELATION index as
+            # a harmless, never-queried placeholder (valid dir, ~18 MB) instead of loading the 10 GB native
+            # entity index we don't need. We then take ONLY _retriever[TaskType.TRIPLET] (the real relation
+            # retriever, linked to relation_index_path). Verified against relik utils.load_index (task=BOTH).
             rel_model = Relik.from_pretrained(
-                config_name, device=device, index=_trip_idx(relation_index_path),
+                config_name, device=device,
+                index={**_span_idx(relation_index_path), **_trip_idx(relation_index_path)},
                 reader=None, cache_dir=cache_dir)
             self._span = ent_model._retriever[TaskType.SPAN]
             self._rel = rel_model._retriever[TaskType.TRIPLET]

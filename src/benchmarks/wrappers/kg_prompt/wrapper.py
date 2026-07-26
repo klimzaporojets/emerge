@@ -196,6 +196,17 @@ def parse_response_to_prediction(text: str) -> Prediction:
         if not isinstance(element, dict):
             logger.warning(f'skipping non-dict array element: {element!r}')
             continue
+        # Robustness against stochastic formatting glitches (gpt-5.1 @ temp 1.0):
+        #  (a) DOUBLE-NEST: {"operation": {"operation":"ADD","head":...,"relation":...,"tail":...}}
+        #      -> unwrap so the triple isn't silently nulled out.
+        #  (b) op-as-object: {"operation": {"label":"MINT_ADD"}, "head":...} (model treats the op
+        #      like head/relation with a label/id) -> take the label.
+        op_field = element.get('operation')
+        if isinstance(op_field, dict) and any(k in op_field for k in ('head', 'relation', 'tail')):
+            element = op_field
+            op_field = element.get('operation')
+        if isinstance(op_field, dict):
+            op_field = op_field.get('label')   # {"label": "MINT_ADD"} -> "MINT_ADD"
         head = element.get('head') or {}
         relation = element.get('relation') or {}
         tail = element.get('tail') or {}
@@ -216,6 +227,7 @@ def parse_response_to_prediction(text: str) -> Prediction:
             predicted_relation=relation_label,
             predicted_triple_qids=[head_id, relation_pid, tail_id],
             predicted_triple_labels=[head_label, relation_label, tail_label],
+            operation=op_field if isinstance(op_field, str) else None,
         )
     return prediction
 
@@ -269,11 +281,16 @@ async def _process_batch(
             # returns an empty Prediction and logs a warning.
             prediction = parse_response_to_prediction(response_text)
 
-            result = {'success': True, 'prediction': prediction_to_dict(prediction)}
+            # Persist the RAW LLM output alongside the parsed prediction so the
+            # parse step is independently auditable (verify no triples are lost /
+            # nothing is a silent parse-drop). Cached too, so it survives re-runs.
+            result = {'success': True, 'prediction': prediction_to_dict(prediction),
+                      'raw_response': response_text}
             cache[cache_key] = result
             _append_cache(cache_path, cache_key, result)
 
-            return instance_id, {'success': True, 'prediction': prediction}
+            return instance_id, {'success': True, 'prediction': prediction,
+                                 'raw_response': response_text}
         except Exception as e:
             # network / client errors (NOT parse errors) — fail this instance
             # softly so the batch continues.
@@ -365,8 +382,8 @@ async def _run_all(args, cache: Dict[str, Dict], cache_path: Path):
                     batch_instances=curr_batch,
                     results=results,
                     output_dir=args.output,
-                    model_name=f'kg-prompt-{args.model}',
-                    model_config_name=f'kg-prompt-{args.model}',
+                    model_name='kg_prompt',                       # STABLE source key (SCORE reads this via source_pred_alias)
+                    model_config_name=f'kg-prompt-{args.model}',  # provenance (records the exact model)
                     opened_files=opened_files,
                 )
     finally:

@@ -310,6 +310,14 @@ class EMERGEPreLoader(EvaluationPreLoader):
                             predicted_triples_cie=predicted_triples_cie,
                             pred_triple_qid_to_labels=pred_triple_qid_to_labels
                         )
+                    elif model_type == 'kg-prompt':
+                        self.process_kg_prompt_predictions(
+                            curr_model_name=curr_model_name,
+                            curr_predictions=curr_predictions,
+                            predicted_triples_open_ie=predicted_triples_open_ie,
+                            predicted_triples_cie=predicted_triples_cie,
+                            pred_triple_qid_to_labels=pred_triple_qid_to_labels
+                        )
                     elif model_type in {'kg-gen', 'rebel', 'rakg'}:
                         self.process_other_oie_predictions(
                             curr_model_name=curr_model_name,

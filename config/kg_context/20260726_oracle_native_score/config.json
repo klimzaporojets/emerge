@@ -1,0 +1,39 @@
+{
+  "_help": "SCORE wiring for the 20260726_oracle_native 350-instance KG-conditioned baseline run (405B-support-filtered, reworded infer/mint_add, exists/deprecate triples-only). Consumed by scripts/kg_context/score_kg_prompt.py (merge -> score -> aggregate). `points` is OMITTED on purpose: _resolve_points derives ALL composed cells from the compose manifest (output/kg_prompts/20260726_oracle_native/manifest.json = 20 cells, the 15 freshly-predicted KG-condition cells PLUS the 5 text_only cells whose predictions were KEPT from the first run as the no-KG reference). MERGE injects kg_prompt preds (by hash_id, KGGen OIE schema) into each cell's composed eval-set (already carries gold tkgu_triples + 405B llm_assessment) under alias kg-prompt; the 405B GT filter is applied downstream by the aggregator (assessors below) -> recall denominator = 405B-true golds, matching Table 3. AGGREGATE prints the ladder (rows = op x condition; cols = C / G-BERTScore-R / Executable-R) vs the EDC+ gpt-5.1 baseline.",
+  "gold_base_dir": "./output/kg_prompts/20260726_oracle_native_350",
+  "pred_base_dir": "./output/kg_prompts_pred/20260726_oracle_native",
+  "merged_base_dir": "./output/kg_prompts_scored/20260726_oracle_native/merged",
+  "pkl_base_dir": "./output/kg_prompts_scored/20260726_oracle_native/pkl",
+  "aggregate_output_csv": "./output/kg_prompts_scored/20260726_oracle_native/ladder_table.csv",
+  "pred_model_subdir": "kg_prompt_gpt-5.1",
+  "source_pred_alias": "kg_prompt",
+  "target_alias": "kg-prompt",
+  "predictions_model_type": "kg-prompt",
+  "predictions_model_config_name": "kg_prompt_gpt_5_1",
+  "eval_config_file": "./config/evaluation/s0x_evaluate_predictions/20260725_kg_prompt_ladder/config.json",
+  "python_module_score": "evaluation.s0x_evaluate_predictions",
+  "assessors": {
+    "triple_assertion": "Meta-Llama-3.1-405B_prompt_v1",
+    "triple_deprecation": "Meta-Llama-3.1-405B_prompt_v1"
+  },
+  "baseline_aliases": [
+    "edc-plus-open-ai/gpt-5.1/non-canonicalized"
+  ],
+  "points": [
+    "per_op/exists/oracle_triples",
+    "per_op/exists/kg_rag_triples_n32",
+    "per_op/exists/both_triples_n32",
+    "per_op/deprecate/oracle_triples",
+    "per_op/deprecate/kg_rag_triples_n32",
+    "per_op/deprecate/both_triples_n32",
+    "per_op/add/only_oracle",
+    "per_op/add/kg_rag_k32",
+    "per_op/add/oracle_pieces_k32",
+    "per_op/mint_add/only_oracle",
+    "per_op/mint_add/kg_rag_k32",
+    "per_op/mint_add/oracle_pieces_k32",
+    "per_op/infer/only_oracle",
+    "per_op/infer/kg_rag_k32",
+    "per_op/infer/oracle_pieces_k32"
+  ]
+}

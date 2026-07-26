@@ -9,12 +9,19 @@ class Prediction:
 
     def add_predicted_triple(self, predicted_relation: Tuple[str, str, str],
                              predicted_triple_qids: Tuple[Optional[str], Optional[str], Optional[str]],
-                             predicted_triple_labels: Tuple[Optional[str], Optional[str], Optional[str]]):
-        self.predicted_triples.append({
+                             predicted_triple_labels: Tuple[Optional[str], Optional[str], Optional[str]],
+                             operation: Optional[str] = None):
+        triple = {
             'extracted_relation': predicted_relation,
             'triple_qids': predicted_triple_qids,
             'triple_labels': predicted_triple_labels
-        })
+        }
+        # kg_prompt only: keep the model's per-triple TKGU op tag (EXISTS/ADD/
+        # MINT_ADD/INFER/DEPRECATE). Needed for unified E-R op-routing; redundant
+        # for per-op (= the cell's op). Additive: kggen/edc pass None -> key absent.
+        if operation is not None:
+            triple['operation'] = operation
+        self.predicted_triples.append(triple)
 
     def __str__(self):
         return f'Prediction: predicted_triples: {self.predicted_triples}'

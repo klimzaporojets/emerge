@@ -56,6 +56,11 @@ def save_batch_predictions(
             'model': model_name,
             'model_config_name': model_config_name,
         }
+        # OPTIONAL raw LLM output for auditability (only wrappers that set it —
+        # kg_prompt — carry it; kggen/edc leave it absent). Lets us re-verify the
+        # parse never dropped triples. Not read by scoring/merge.
+        if 'raw_response' in result:
+            prediction_json['raw_response'] = result['raw_response']
 
         # `predictions` is a dict (model name → prediction) per data/README.md
         # schema, but legacy / pre-merge inputs may have it as a list. Handle

@@ -1,0 +1,114 @@
+{
+  "_comment": "COMPOSE_KG_PROMPT experiment config (the condition ladder), PER TKGU OPERATION. Reads AUGMENT_KG_CONTEXT (all-ops) component files and materializes one eval-set per <op>/<condition x k>. Everything configurable: `operations`=which ops; global `conditions`/`k`=default ladder; `per_operation`=per-op conditions + per-op `instruction` (the prompt prepended for that op). Instruction wording is a DRAFT — edit freely. Point component_dir at the _aida gather for the AIDA ablation.",
+  "component_dir": "output/kg_context/20260725_relik_all_ops",
+  "output_dir": "output/kg_prompts/20260725_ladder_all_ops",
+  "compose": {
+    "prompt_modes": [
+      "unified",
+      "per_op"
+    ],
+    "operations": [
+      "x-triples",
+      "e-triples",
+      "ee-triples",
+      "ee-kg-triples",
+      "d-triples"
+    ],
+    "conditions": [
+      "text_only",
+      "kg_rag",
+      "oracle_pieces",
+      "only_oracle"
+    ],
+    "k": [
+      16
+    ],
+    "order": "score",
+    "include_entities": true,
+    "include_relations": true,
+    "include_instruction": true,
+    "seed": 13,
+    "max_triples": 32,
+    "unified_instruction": "Update the knowledge graph from the passage using the KG context below (candidate entities and relation types with IDs, and existing KG triples with IDs). You may ONLY use relation types that are LISTED in the KG context below (never invent a relation or use one not listed); give an entity's candidate ID when it is already in the KG, and MINT (no ID) any entity the passage introduces that is not in the KG. Return every applicable update, using the IDs: (EXISTS) a listed existing triple the passage still supports; (DEPRECATE) a listed existing triple the passage indicates is no longer valid; (ADD) a NEW triple between two entities that BOTH already exist in the KG and are BOTH mentioned in the passage; (MINT+ADD) a NEW triple where both entities are mentioned in the passage and at least one is NEW (minted); (INFER) a NEW triple linking a minted entity that IS mentioned in the passage to an existing KG entity that is NOT mentioned in the passage (identify it from the KG context) via an inferred relation. There may be several of each kind, or none. The existing KG triples are shown as `label (ID)` and represent the CURRENT graph state: for ADD / MINT+ADD / INFER the triple you return must be NEW (not already among those existing triples); for EXISTS / DEPRECATE choose only from those listed existing triples.",
+    "per_operation": {
+      "x-triples": {
+        "conditions": [
+          "text_only",
+          "oracle_triples",
+          "kg_rag_triples",
+          "both_triples"
+        ],
+        "instruction": "EXISTS. The KG triples below already exist in the knowledge graph and both of their entities are mentioned in the passage. Return ALL of them that the passage SUPPORTS as still true (entailed by the text). Choose only from the listed existing triples and use their IDs; do NOT invent relations or entities."
+      },
+      "d-triples": {
+        "conditions": [
+          "text_only",
+          "oracle_triples",
+          "kg_rag_triples",
+          "both_triples"
+        ],
+        "instruction": "DEPRECATE. The KG triples below currently exist and both of their entities are mentioned in the passage. Return ALL of them that the passage indicates are NO LONGER valid (to be deprecated). Choose only from the listed existing triples and use their IDs; do NOT invent relations or entities."
+      },
+      "e-triples": {
+        "conditions": [
+          "text_only",
+          "kg_rag",
+          "oracle_pieces",
+          "only_oracle"
+        ],
+        "instruction": "ADD. The passage asserts ONE OR MORE NEW facts (not yet in the KG) between entities that BOTH already exist in the KG and are BOTH mentioned in the passage. Return each such new triple. You may ONLY use a relation type that is LISTED in the KG context below (never invent a relation or use one not listed), and give each entity's listed candidate ID. The block also lists the candidate KG entities (with IDs) and relation types to build from. The block may ALSO list EXISTING KG triples (the current graph state, shown as `label (ID)`) for context — the fact you return must NOT already be one of them.",
+        "existing_triples": {
+          "oracle": true,
+          "kg_rag": true
+        }
+      },
+      "ee-triples": {
+        "conditions": [
+          "text_only",
+          "kg_rag",
+          "oracle_pieces",
+          "only_oracle"
+        ],
+        "instruction": "MINT+ADD. The passage asserts ONE OR MORE NEW facts between entities that are BOTH mentioned in the passage, where AT LEAST ONE entity is NEW to the KG. MINT each new entity (no ID) and give the listed candidate ID for any entity already in the KG. You may ONLY use a relation type that is LISTED in the KG context below (never invent a relation or use one not listed). The block also lists the candidate KG entities (with IDs, for the already-existing end) and relation types. The block may ALSO list EXISTING KG triples (the current graph state, shown as `label (ID)`) for context — the fact you return must NOT already be one of them.",
+        "existing_triples": {
+          "oracle": true,
+          "kg_rag": true
+        }
+      },
+      "ee-kg-triples": {
+        "conditions": [
+          "text_only",
+          "kg_rag",
+          "oracle_pieces",
+          "only_oracle"
+        ],
+        "instruction": "INFER. The passage introduces a NEW entity (mentioned in the text, not in the KG) that must be MINTED (no ID). This minted entity links to an EXISTING KG entity that is NOT mentioned in the passage; identify that KG entity from the candidate KG entities/triples below (it will not be named in the text). The relation must be INFERRED, but you may ONLY choose it from the relation types LISTED in the KG context below (never invent a relation or use one not listed). Return each triple (minted entity, inferred relation, existing KG entity) using the existing entity's ID. The block may ALSO list EXISTING KG triples (the current graph state, shown as `label (ID)`) for context — the fact you return must NOT already be one of them.",
+        "existing_triples": {
+          "oracle": true,
+          "kg_rag": true
+        }
+      }
+    },
+    "few_shot_n": 5,
+    "per_op_all_instances": true
+  },
+  "predict": {
+    "baselines": [
+      "kg_prompt"
+    ],
+    "llm": "gpt-5.1",
+    "points": [
+      "per_op/exists/oracle_triples",
+      "per_op/deprecate/oracle_triples",
+      "per_op/add/only_oracle",
+      "per_op/mint_add/only_oracle",
+      "per_op/infer/only_oracle",
+      "unified/only_oracle"
+    ],
+    "base_configs": {
+      "kg_prompt": "config/benchmarks/s02_run_benchmarks/kg_prompt_gpt_5_1_t02/config.json"
+    },
+    "predict_output_dir": "output/kg_prompts_pred/20260725_ladder_all_ops_t02"
+  },
+  "template_dir": "src/kg_context/prompt_templates_kg_aware"
+}

@@ -160,3 +160,70 @@ class EvaluationPreLoader(ABC):
                     if triple_qids not in pred_triple_qid_to_labels:
                         pred_triple_qid_to_labels[triple_qids] = \
                             tuple(curr_relik_predicted_triple['triple_labels'])
+
+    # kg_prompt DECLARES the TKGU operation per triple (the `operation` tag) -> route by
+    # what the model SAYS (no snapshot/KG lookup needed; relik needs the snapshot only
+    # because it can't tell EXISTS from ADD). This also holds the model accountable for
+    # its own operation classification.
+    KG_PROMPT_OP_TO_TASK = {
+        'EXISTS': 'x-triples',
+        'ADD': 'e-triples',
+        'MINT_ADD': 'ee-triples',
+        'MINT+ADD': 'ee-triples',
+        'INFER': 'ee-kg-triples',
+        'DEPRECATE': 'd-triples',
+    }
+
+    @staticmethod
+    def process_kg_prompt_predictions(
+            curr_model_name: str,
+            curr_predictions: Dict,
+            predicted_triples_open_ie: Dict,
+            predicted_triples_cie: Dict,
+            pred_triple_qid_to_labels: Dict
+    ) -> None:
+        """Process kg_prompt (KG-conditioned baseline) predictions.
+
+        Routes each triple by the model's declared `operation` tag (EXISTS/ADD/MINT_ADD/
+        INFER/DEPRECATE -> x/e/ee/ee-kg/d-triples) -- no KG verification, unlike relik.
+        - open_ie (C / G-BERTScore-R): surface form from `triple_labels` (head, rel, tail);
+          head/tail normalized, relation kept verbatim (mirrors process_llm_tool).
+        - cie (Executable-R): the QID triple, ONLY when all three are valid Q/P/Q. Minted
+          entities are None -> excluded, so Mint+Add / Infer are E-R=0 by construction.
+        Requires the per-triple `operation` tag (present since the 2026-07-26 parser fix).
+        """
+        if len(curr_predictions) < 1:
+            return
+        assert isinstance(curr_predictions, dict), \
+            f'{curr_model_name} predictions should be in a dictionary'
+
+        for pred in curr_predictions['predicted_triples']:
+            op = pred.get('operation')
+            task = (EvaluationPreLoader.KG_PROMPT_OP_TO_TASK.get(str(op).upper())
+                    if op is not None else None)
+            if task is None:
+                logger.warning(
+                    f'{curr_model_name}: triple with missing/unroutable operation={op!r} '
+                    f'skipped (re-run PREDICT with the operation-tag parser?): {pred}')
+                continue
+
+            labels = pred.get('triple_labels') or [None, None, None]
+            # Build the semantic surface (C / G-BERTScore-R) from LABELS ONLY (no QIDs),
+            # normalizing ALL THREE components exactly like process_edc_plus_predictions so
+            # the surface convention matches the EDC+ baseline we compare against (no-op for
+            # our KG-sourced labels, which have no underscores; safe if any label ever does).
+            surface = (
+                normalize_triple_string(labels[0]),
+                normalize_triple_string(labels[1]),
+                normalize_triple_string(labels[2])
+            )
+            predicted_triples_open_ie[curr_model_name][task].add(surface)
+
+            qids = pred.get('triple_qids') or [None, None, None]
+            if (isinstance(qids[0], str) and qids[0].startswith('Q')
+                    and isinstance(qids[1], str) and qids[1].startswith('P')
+                    and isinstance(qids[2], str) and qids[2].startswith('Q')):
+                triple_qids = tuple(qids)
+                predicted_triples_cie[curr_model_name][task].add(triple_qids)
+                if triple_qids not in pred_triple_qid_to_labels:
+                    pred_triple_qid_to_labels[triple_qids] = tuple(labels)

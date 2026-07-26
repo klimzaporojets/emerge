@@ -268,9 +268,16 @@ def main() -> None:
         import tempfile
         from collections import OrderedDict
 
+        # START CLEAN. Delta files are opened in APPEND mode ('a' in write_instance: sampled instances
+        # may share a delta file WITHIN one run). So re-running over a previous run's output would DOUBLE
+        # every record (old + new mixed). Wipe the whole output dir ONCE here in the PARENT — never in a
+        # `--single` worker, which must keep appending its own year's shared delta files.
+        import shutil
+        if os.path.abspath(out_dir) in (os.path.abspath(os.sep), os.path.abspath(".")):
+            raise SystemExit(f"refusing to clear unsafe output_dir={out_dir!r}")
+        if os.path.isdir(out_dir):
+            shutil.rmtree(out_dir)
         os.makedirs(out_dir, exist_ok=True)
-        for stale in glob.glob(os.path.join(out_dir, "inspect_*.txt")):
-            os.remove(stale)
 
         sample = select_sample(cfg)
         if args.limit:
