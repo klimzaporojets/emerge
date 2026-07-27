@@ -164,10 +164,24 @@ def phase_merge(config: dict, dry_run: bool) -> None:
             allow = {ln.strip() for ln in f if ln.strip()}
         print(f'[merge] SCOPING to {len(allow)} hash_ids from {config["hash_ids_file"]}')
 
+    # PER-OP ROUTING: in per_op mode the OPERATION is FIXED by the cell (the prompt told the model which op
+    # to do), so route by the CELL's op — NOT the model's self-declared `operation` tag. The model emits that
+    # tag inconsistently (100% for exists/deprecate/mint_add/infer, but ~60% MISSING for add), and
+    # process_kg_prompt_predictions DROPS any triple whose tag is missing -> Add was silently deflated
+    # (Add/kg_rag -> 0). Stamping the cell op makes routing robust AND matches how the paper's OIE baselines
+    # are scored (their extractions reach the op bucket regardless of any self-tag). Unified points (op not
+    # derivable) keep the model's tag.
+    _OP_LABEL_TO_OPERATION = {'exists': 'EXISTS', 'add': 'ADD', 'mint_add': 'MINT_ADD',
+                              'infer': 'INFER', 'deprecate': 'DEPRECATE'}
+
     for point in config['points']:
         gold_point_dir = os.path.join(gold_base, point)
         pred_point_dir = os.path.join(pred_base, point, pred_model_subdir)
         merged_point_dir = os.path.join(merged_base, point)
+        _parts = point.split('/')
+        cell_op = (_OP_LABEL_TO_OPERATION[_parts[1]]
+                   if _parts[0] == 'per_op' and len(_parts) > 1 and _parts[1] in _OP_LABEL_TO_OPERATION
+                   else None)
 
         if not os.path.isdir(gold_point_dir):
             raise FileNotFoundError(f'gold point dir does not exist: {gold_point_dir}')
@@ -197,8 +211,11 @@ def phase_merge(config: dict, dry_run: bool) -> None:
                             f'(point={point}, file={rel})'
                         )
                     src_entry = hash_to_pred[hash_id]
+                    pred_triples = src_entry['predicted_triples']
+                    if cell_op is not None:   # per-op: route by the cell's KNOWN op, not the model's self-tag
+                        pred_triples = [{**t, 'operation': cell_op} for t in pred_triples]
                     rec['predictions'][target_alias] = {
-                        'predicted_triples': src_entry['predicted_triples'],
+                        'predicted_triples': pred_triples,
                         'model': src_entry['model'],
                         'model_config_name': model_config_name,
                         'model_type': model_type,

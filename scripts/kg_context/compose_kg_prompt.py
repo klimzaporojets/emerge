@@ -306,13 +306,24 @@ def main() -> None:
                 bar.update(1)
                 bar.set_postfix(prompts=sum(counts.values()), refresh=False)
                 kgc = inst["kg_context"]
-                # 405B-SUPPORT FILTER (Rule-C, see op_405b_supported): keep ONLY oracle pieces whose source
-                # gold op is text-supported by Meta-Llama-3.1-405B (what Table 3 scores) -> drops 405B-false
-                # golds from every oracle-based condition (only_oracle/oracle_pieces/both/oracle_triples).
-                # kg_rag_* pools are retrieval-only (no gold) and left untouched.
-                supported = supported_op_keys(inst)
-                for _k in ("oracle_entities", "oracle_relations", "oracle_triples"):
-                    kgc[_k] = [x for x in kgc[_k] if (x["gold_triple_idx"], x["op"]) in supported]
+                # 405B-SUPPORT FILTER (Rule-C, see op_405b_supported): keep ONLY oracle pieces belonging to a
+                # 405B-text-supported gold (what Table 3 scores). oracle ENTITIES/RELATIONS are SHARED across
+                # an instance's golds and augment dedups each to ONE entry keyed to its FIRST gold_triple_idx
+                # (which may be a 405B-FALSE gold) -> filtering them by that stored idx WRONGLY drops a piece
+                # that a *different* supported gold needs (e.g. "ASU" keyed to a false "employer" gold but
+                # needed by the true "educated at" gold). So filter entities/relations by whether the
+                # (qid/pid, op) is used by ANY 405B-supported gold; oracle_triples are per-gold full triples
+                # (not shared) so keep the (gold_triple_idx, op) filter. kg_rag_* pools untouched.
+                supported = supported_op_keys(inst)                    # {(gold_triple_idx, op)}
+                sup_ent, sup_rel = set(), set()
+                for _idx, _o in supported:
+                    _gt = inst["tkgu_triples"][_idx]
+                    _h, _p, _t = _gt["triple"]
+                    sup_ent.add((_h, _o)); sup_ent.add((_t, _o))       # both ends (minted end's future qid harmless)
+                    sup_rel.add((_p, _o))
+                kgc["oracle_entities"]  = [x for x in kgc["oracle_entities"]  if (x["qid"], x["op"]) in sup_ent]
+                kgc["oracle_relations"] = [x for x in kgc["oracle_relations"] if (x["pid"], x["op"]) in sup_rel]
+                kgc["oracle_triples"]   = [x for x in kgc["oracle_triples"]   if (x["gold_triple_idx"], x["op"]) in supported]
                 inst_ops = {o for (_, o) in supported} & set(operations)
                 if not inst_ops:
                     continue

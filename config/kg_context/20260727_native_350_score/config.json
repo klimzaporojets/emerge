@@ -1,0 +1,40 @@
+{
+  "_help": "2026-07-27 all-on-Snellius re-score (405B-filter fix + exists nudge + Add op-tag fix). gold=full 20260727 compose, scoped to the 350 via hash_ids_file at merge; preds=20260727 predict. 15 cells, kg-prompt vs EDC+.",
+  "gold_base_dir": "./output/kg_prompts/20260727_native_350",
+  "pred_base_dir": "./output/kg_prompts_pred/20260727_native_350",
+  "merged_base_dir": "./output/kg_prompts_scored/20260727_native_350_v2/merged",
+  "pkl_base_dir": "./output/kg_prompts_scored/20260727_native_350_v2/pkl",
+  "aggregate_output_csv": "./output/kg_prompts_scored/20260727_native_350_v2/ladder_table.csv",
+  "pred_model_subdir": "kg_prompt_gpt-5.1",
+  "source_pred_alias": "kg_prompt",
+  "target_alias": "kg-prompt",
+  "predictions_model_type": "kg-prompt",
+  "predictions_model_config_name": "kg_prompt_gpt_5_1",
+  "eval_config_file": "./config/evaluation/s0x_evaluate_predictions/20260725_kg_prompt_ladder/config.json",
+  "python_module_score": "evaluation.s0x_evaluate_predictions",
+  "assessors": {
+    "triple_assertion": "Meta-Llama-3.1-405B_prompt_v1",
+    "triple_deprecation": "Meta-Llama-3.1-405B_prompt_v1"
+  },
+  "baseline_aliases": [
+    "edc-plus-open-ai/gpt-5.1/non-canonicalized"
+  ],
+  "points": [
+    "per_op/exists/oracle_triples",
+    "per_op/exists/kg_rag_triples_n32",
+    "per_op/exists/both_triples_n32",
+    "per_op/deprecate/oracle_triples",
+    "per_op/deprecate/kg_rag_triples_n32",
+    "per_op/deprecate/both_triples_n32",
+    "per_op/add/only_oracle",
+    "per_op/add/kg_rag_k32",
+    "per_op/add/oracle_pieces_k32",
+    "per_op/mint_add/only_oracle",
+    "per_op/mint_add/kg_rag_k32",
+    "per_op/mint_add/oracle_pieces_k32",
+    "per_op/infer/only_oracle",
+    "per_op/infer/kg_rag_k32",
+    "per_op/infer/oracle_pieces_k32"
+  ],
+  "hash_ids_file": "./config/kg_context/20260727_native_350/hash_ids_350.txt"
+}

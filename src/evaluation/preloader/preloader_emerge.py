@@ -108,12 +108,31 @@ class EMERGEPreLoader(EvaluationPreLoader):
             openie_hash_ids = set(existing.df_predictions_open_ie['hash_id'].unique()) \
                 if not existing.df_predictions_open_ie.empty else set()
 
-            assert seen_hash_ids == cie_hash_ids == openie_hash_ids, (
-                'Preload invariant violated: hash_id partially present across containers'
+            # See the matching note in the fresh-preload branch below: `cie` includes GT rows
+            # (every gold instance), `openie` is prediction-only, so all-abstain gold instances
+            # are legitimately in seen/cie but not openie and are still scored (as 0) via the
+            # completeness batch. Relaxed from strict equality to GT-coverage + subset checks.
+            #
+            # OLD (too strict):
+            #   assert seen_hash_ids == cie_hash_ids == openie_hash_ids, (
+            #       'Preload invariant violated: hash_id partially present across containers')
+            #   assert bc_hash_ids <= seen_hash_ids <= cie_hash_ids <= openie_hash_ids, (
+            #       'Preload invariant violated: bc_hash_ids <= seen_hash_ids <= cie_hash_ids <= openie_hash_ids')
+            assert seen_hash_ids == cie_hash_ids, (
+                'Preload invariant violated: every gold instance must appear in '
+                'df_predictions_cie_and_gt (ground-truth coverage incomplete)'
             )
-            assert bc_hash_ids <= seen_hash_ids <= cie_hash_ids <= openie_hash_ids, (
-                'Preload invariant violated: bc_hash_ids <= seen_hash_ids <= cie_hash_ids <= openie_hash_ids'
+            assert bc_hash_ids <= seen_hash_ids and openie_hash_ids <= seen_hash_ids, (
+                'Preload invariant violated: batch / open-IE prediction hash_ids must be a subset of seen'
             )
+            _all_abstain_hash_ids = seen_hash_ids - openie_hash_ids
+            if _all_abstain_hash_ids:
+                logger.warning(
+                    'preload: %d instance(s) have gold but no open-IE prediction from any loaded '
+                    'model (all models abstained); still scored as 0 via the completeness batch. '
+                    'hash_ids (first 10): %s',
+                    len(_all_abstain_hash_ids), sorted(_all_abstain_hash_ids)[:10]
+                )
         ####### END ADDING CACHING
 
         #
@@ -650,12 +669,38 @@ class EMERGEPreLoader(EvaluationPreLoader):
 
             openie_hash_ids = set(wiki_eval_results.df_predictions_open_ie['hash_id'].unique()) \
                 if not wiki_eval_results.df_predictions_open_ie.empty else set()
-            assert seen_hash_ids == cie_hash_ids == openie_hash_ids, (
-                'Preload invariant violated: hash_id partially present across containers'
+            # --- consistency check (debug / safety) ---
+            # `df_predictions_cie_and_gt` carries ground-truth rows, so EVERY instance with gold
+            # is in `cie`. `df_predictions_open_ie` is prediction-only, so an instance on which
+            # ALL loaded models abstain (empty prediction) appears in `seen`/`cie` but NOT in
+            # `openie`. That is legitimate when only a few models are scored (e.g. kg-prompt plus
+            # one EDC+ baseline, both of which can return []). The completeness batch
+            # (`bc_hash_ids`, built with score_empty_predictions_as_zero=True) still includes such
+            # instances and scores them as 0, so the reported numbers stay correct. We therefore
+            # relax the old strict three-way equality (which assumed every instance carries a
+            # prediction) to: GT coverage must be complete (seen == cie), and predictions/batch
+            # must be a subset of seen; the all-abstain instances are warned about, not fatal.
+            #
+            # OLD (too strict — crashed when every loaded model abstained on a gold instance):
+            #   assert seen_hash_ids == cie_hash_ids == openie_hash_ids, (
+            #       'Preload invariant violated: hash_id partially present across containers')
+            #   assert bc_hash_ids <= seen_hash_ids <= cie_hash_ids <= openie_hash_ids, (
+            #       'Preload invariant violated: bc_hash_ids <= seen_hash_ids <= cie_hash_ids <= openie_hash_ids')
+            assert seen_hash_ids == cie_hash_ids, (
+                'Preload invariant violated: every gold instance must appear in '
+                'df_predictions_cie_and_gt (ground-truth coverage incomplete)'
             )
-            assert bc_hash_ids <= seen_hash_ids <= cie_hash_ids <= openie_hash_ids, (
-                'Preload invariant violated: bc_hash_ids <= seen_hash_ids <= cie_hash_ids <= openie_hash_ids'
+            assert bc_hash_ids <= seen_hash_ids and openie_hash_ids <= seen_hash_ids, (
+                'Preload invariant violated: batch / open-IE prediction hash_ids must be a subset of seen'
             )
+            _all_abstain_hash_ids = seen_hash_ids - openie_hash_ids
+            if _all_abstain_hash_ids:
+                logger.warning(
+                    'preload: %d instance(s) have gold but no open-IE prediction from any loaded '
+                    'model (all models abstained); still scored as 0 via the completeness batch. '
+                    'hash_ids (first 10): %s',
+                    len(_all_abstain_hash_ids), sorted(_all_abstain_hash_ids)[:10]
+                )
             ###### END - just checking consistency that all hash_ids are in all the structures
             return wiki_eval_results
 
