@@ -353,7 +353,7 @@ def main():
         logger.info('  ./scripts/run/evaluate.sh')
         logger.info('=' * 72)
 
-    logger.info('END_MAIN_BYE_BYE')
+    logger.info('=== evaluation run finished (this invocation only) ===')
 
     ##### END - LOGIC TO ACTUALLY OBTAIN SCORES AND BUILD EVALUATION TABLE
 

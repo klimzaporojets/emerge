@@ -245,7 +245,9 @@ def phase_score(config: dict, dry_run: bool) -> None:
     eval_config_file = config['eval_config_file']
     module = config['python_module_score']
 
-    for point in config['points']:
+    points = config['points']
+    n_points = len(points)
+    for i, point in enumerate(points, 1):
         merged_point_dir = os.path.join(merged_base, point)
         pkl_path = _point_pkl_path(config, point)
         if not dry_run and not os.path.isdir(merged_point_dir):
@@ -260,13 +262,16 @@ def phase_score(config: dict, dry_run: bool) -> None:
             '--output_path', pkl_path,
             '--cache_path', pkl_path,
         ]
-        print(f'[score] {point}:\n  ' + ' '.join(cmd))
+        print(f'[score] point {i}/{n_points}: {point}\n  ' + ' '.join(cmd))
         if dry_run:
             continue
         env = dict(os.environ)
         src_dir = os.path.abspath('src')
         env['PYTHONPATH'] = src_dir + (os.pathsep + env['PYTHONPATH'] if env.get('PYTHONPATH') else '')
         subprocess.run(cmd, check=True, env=env)
+        print(f'[score] point {i}/{n_points} DONE -> {pkl_path}')
+    print(f'[score] === all {n_points} point(s) scored. NOTE: SCORE is not finished until the '
+          f'aggregate phase writes the ladder table (run --phase aggregate, or --phase all). ===')
 
 
 # ---------------------------------------------------------------------------
@@ -361,6 +366,7 @@ def phase_aggregate(config: dict, dry_run: bool) -> None:
         for r in all_rows:
             w.writerow(r)
     print(f'\n[aggregate] wrote {len(all_rows)} rows -> {out_csv}')
+    print(f'=== SCORE COMPLETE — ladder table written to {out_csv} ===')
 
 
 # ---------------------------------------------------------------------------

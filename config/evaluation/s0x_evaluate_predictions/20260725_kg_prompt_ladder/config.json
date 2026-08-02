@@ -4,7 +4,7 @@
   "cache_path": "PLACEHOLDER_OVERRIDDEN_PER_POINT/wiki_eval_result.pkl",
   "input_dataset_path": "PLACEHOLDER_OVERRIDDEN_PER_POINT/",
   "llm_cache_flush_every": 5,
-  "load_results_from_cache": false,
+  "load_results_from_cache": true,
   "kg_snapshots_path": "./data/kg_snapshots/",
   "snapshot_year_to_kg_file": {
     "2019": "kg_snapshot_2019-01-01.tsv",
