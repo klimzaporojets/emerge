@@ -6,6 +6,12 @@ Repository for the **EMERGE** benchmark: a dataset and evaluation framework for
 **Text-driven KG Updating (TKGU)** — evaluating methods for updating knowledge
 graphs from textual evidence.
 
+> ### ⭐ KG-aware baseline
+> A targeted **GPT-5.1 baseline with access to the KG snapshot** (`oracle` / `kg_rag@32` /
+> `oracle+kg_rag`), added to test whether feeding KG structure closes the gap the IE-only baselines
+> leave. **→ [Results table and how to reproduce it](#kg-aware-baseline)**
+> _Added 2026-07-27 for the NeurIPS 2026 rebuttal._
+
 > Klim Zaporojets, Daniel Daza, Edoardo Barba, Ira Assent, Roberto Navigli, Paul Groth
 
 ## Quick Start
@@ -73,7 +79,7 @@ Each instance contains:
 
 - A Wikipedia passage with temporal context (snapshot date, delta dates)
 - Ground-truth TKGU triples with LLM and human assessments
-- Predictions from 13 benchmark models
+- Predictions from 13 benchmark models (plus a **KG-aware baseline** — see [KG-aware baseline](#kg-aware-baseline))
 
 | Model (paper name) | Type | Backend |
 |-------------------|------|---------|
@@ -90,6 +96,12 @@ Each instance contains:
 | REBEL | Local seq2seq | Babelscape/rebel-large |
 | ReLiK RE | Local neural (Open IE) | sapienzanlp/relik-relation-extraction-nyt-large |
 | ReLiK cIE | Local neural (Closed IE) | sapienzanlp/relik-cie-large |
+| **KG-aware** | LLM-based (KG-conditioned) | GPT-5.1 |
+
+The first 13 rows are the released baselines whose predictions ship in `data/evaluation_set/`. The
+last row, **KG-aware**, is a targeted baseline that gives GPT-5.1 access to the KG snapshot to test
+whether feeding KG structure closes the gap the IE-only methods leave — see
+[KG-aware baseline](#kg-aware-baseline) for its variants, results, and reproduction.
 
 ## Dataset construction pipeline
 
@@ -138,77 +150,33 @@ Raw Wikidata + Wikipedia dumps  (~TB, fetch from dumps.wikimedia.org — not in 
                                           data/evaluation_set/   (released, 3,500)
 ```
 
-### What's in this repo for each step of the pipeline above
+### What's in this repo for each step
 
-Code for every step is shipped. **The pipeline is designed for iterative LLM
-annotation** — s05's output schema equals its input schema, so you can re-run
-s05 on either of the two released artifacts with whatever LLM you can serve:
+**All pipeline code is shipped.** It is built for iterative LLM annotation: s05's output schema
+equals its input schema, so you can re-run s05 on either released artifact — `data/evaluation_set/`
+(3,500) or `data/corpus/` (1.19M, via `--corpus`) — with any LLM you can serve. Both already carry
+the paper's `Meta-Llama-3.1-405B-Instruct-GPTQ-INT4` assessments, so re-running s05 is only needed to
+benchmark a different LLM or re-query triples (as Part 3 does).
 
-- `data/evaluation_set/` (3,500-instance test set), or
-- `data/corpus/` (1.19M-instance full corpus, downloaded via `./scripts/download_data.sh --corpus`)
+| Step | Shipped | Run on released data? |
+|---|---|---|
+| **s05** LLM assessment (Llama 8B / 405B, prompts v1) | runner + SLURM (`_llama8b`/`_llama405b`) + TGI restart loop + prompts + runnable config † | ✅ re-annotate eval_set / corpus (1× / 4× H100) |
+| **Part 3** QC (detect → reinput → merge) | `scripts/dataset/` (4 CLI tools) | ✅ on `data/corpus/` — reproduces 220 flagged (0.0113 %) |
+| **§4.3 / Table 8** stats | `scripts/stats/` (3 CLI tools) | ✅ on `data/corpus/` — reproduces 608K/207K/149K/220K/9.5K/1.19M |
+| **s09** human agreement | `src/dataset/emerge/s09{a–e}_*.py` | ✅ `annotation_agreement.sh` (new annotations need annotators) |
+| **WD/WP s01–s03, emerge s03/s04** | code + SLURM submitters | placeholder configs (need raw dumps) |
+| **s06b → s07 → s07b → s07c** (reformat → dedup → subsample) | `src/dataset/emerge/{s06b,s07,s07b,s07c}_*.py` | placeholder configs (depend on s05 outputs) |
+| **evaluate.sh** paper results | `scripts/run/evaluate.sh` | ✅ reproduces the main results table |
 
-> Both releases already include the paper's `Meta-Llama-3.1-405B-Instruct-GPTQ-INT4`
-> assessments — re-running s05 is only needed if you want to benchmark a
-> different LLM (or re-query specific triples, as Part 3 garbage QA does).
+† Runnable s05 config: `config/dataset/emerge/s05_generate_dataset_with_llm/20260510_s05_runnable_on_released/` (points at `./data/evaluation_set/`). You supply the TGI Apptainer container, Llama weights (auto-pulled), and 3 env paths in the SLURM script.
 
-Per-step status:
+### Not yet shipped
 
-- **s05 — LLM assessment (Llama 8B + Llama 405B, prompts v1)** ✅ runnable
-  on released artifacts. Shipped: Python runner
-  `src/dataset/emerge/s05_generate_dataset_with_llm_v8.py`, SLURM sbatch
-  scripts for both `_llama8b.sh` (1× H100) and `_llama405b.sh` (4× H100)
-  in `scripts/slurm/dataset/`, fault-tolerant TGI/Apptainer restart loop
-  (`s05_restart_apptainer_llama400b_v5.sh`), prompt templates in
-  `src/dataset/emerge/prompts/prompts_v1/`, and a runnable config
-  `config/dataset/emerge/s05_generate_dataset_with_llm/20260510_s05_runnable_on_released/`
-  pointing at `./data/evaluation_set/` by default. You provide: TGI
-  Apptainer container, Llama weights from HuggingFace (auto-pulled by
-  TGI), and 3 environment-specific paths in the SLURM script (repo dir,
-  data dir for HF cache, `.sif` location).
-- **Part 3 — Quality control of LLM annotations** ✅ — `scripts/dataset/`
-  (4 CLI tools, functional configs). Runs on `data/corpus/`, reproduces
-  the paper's **220 flagged-triples (0.0113 %)** QA residual.
-- **Paper §4.3 / Table 8 statistics** ✅ — `scripts/stats/` (3 CLI tools,
-  functional configs). Runs on `data/corpus/`, reproduces
-  608K / 207K / 149K / 220K / 9.5K / 1.19M headline numbers.
-- **s09 human annotation + agreement statistics** ✅ for the agreement-stats
-  step — `src/dataset/emerge/s09{a,b,c,d,e}_*.py`. Released
-  `data/human_annotation/` ships the human-judged JSONL, so
-  `./scripts/run/annotation_agreement.sh` works out of the box. Generating
-  new annotations requires annotators.
-- **WD s01–s03 / WP s01–s03 / emerge s03 / s04** — code shipped
-  (`src/dataset/{wikidata,wikipedia}/`, `src/dataset/emerge/{s03,s04}_*.py`),
-  SLURM submitters in `scripts/slurm/{wikidata,wikipedia,dataset}/`. Configs
-  use `/path/to/...` placeholders for raw-dump and intermediate-output
-  locations.
-- **s06b → s07 → s07b → s07c** (reformat → dedup → subsample to 35K → 3.5K)
-  — `src/dataset/emerge/{s06b,s07,s07b,s07c}_*.py`. Placeholder configs;
-  depend on s05 outputs.
-
-### What's NOT yet in the repo (deferred to future releases)
-
-The raw Wikidata + Wikipedia history dumps (~TB total) are too large to
-redistribute via this repo or HuggingFace; fetch from
-[dumps.wikimedia.org](https://dumps.wikimedia.org/) — specifically the
-`wikidatawiki-YYYYMMDD-pages-meta-history*.7z` and
-`enwiki-YYYYMMDD-pages-meta-history*.7z` series. Their downstream
-intermediates (WD/WP s01–s03 outputs, emerge s03/s04 outputs that lead up
-to `data/corpus/`) aren't shipped either, so re-creating `data/corpus/`
-from scratch requires running WD/WP/s03/s04 yourself. **We plan to
-progressively include more of these intermediates in future releases**,
-along with a dump-download convenience script.
-
-### What you can run right now on a regular workstation
-
-- **s05 LLM assessment** ✅ — re-annotate `data/evaluation_set/` or
-  `data/corpus/` with any LLM you can serve via TGI (4× H100 for Llama 405B;
-  1× H100 for Llama 8B). Use the runnable config at
-  `config/dataset/emerge/s05_generate_dataset_with_llm/20260510_s05_runnable_on_released/`.
-- **Part 3 garbage QA** + **paper §4.3 / Table 8 statistics** — see above.
-- **All 12 baseline benchmarks** on `data/evaluation_set/` (`relik_cie` needs
-  an additional entity index — see "Running benchmark models").
-- The full **`evaluate.sh` paper-results pipeline** against
-  `data/evaluation_set/` — reproduces the paper's main results table.
+The raw Wikidata + Wikipedia history dumps (~TB) and their s01–s03 / s03–s04 intermediates are too
+large to redistribute — fetch the dumps from [dumps.wikimedia.org](https://dumps.wikimedia.org/)
+(`wikidatawiki-*-pages-meta-history*.7z`, `enwiki-*-pages-meta-history*.7z`); re-creating
+`data/corpus/` from scratch means running WD/WP/s03/s04 yourself. We plan to ship more intermediates
+(and a dump-download helper) in future releases.
 
 For per-step details + config field semantics, see [`src/dataset/README.md`](src/dataset/README.md).
 
@@ -270,66 +238,36 @@ tests/                          Pytest suite for the dataset construction pipeli
 
 ## Requirements
 
-- **Python 3.10+** with conda
+- **Python 3.12** with conda
 - **GPU**: 1x GPU with 16GB+ VRAM for evaluation (BERTScore, sentence-transformers)
 - **RAM**: 32GB minimum. 180GB+ only if loading full KG snapshots for Exists operation evaluation of CIE models
 - **API keys** (only for LLM-based benchmark models): Azure OpenAI and/or OpenAI
 
 ## Setup
 
-### Step 1: Create conda environment
+The [Quick Start](#quick-start) covers the base install (`emerge` env + `core.txt`) and the default
+dataset download. This section adds the details.
 
-```bash
-conda create -n emerge python=3.12
-conda activate emerge
-
-# PyTorch — default install (CPU on most systems). For GPU, pin the CUDA-matching
-# build first per https://pytorch.org/ (e.g. `pip install torch torchvision torchaudio
-# --index-url https://download.pytorch.org/whl/cu121` for CUDA 12.1) BEFORE the
-# core.txt install below; pip will then see torch as already-satisfied.
-pip install torch torchvision torchaudio
-
-# Core dependencies (evaluation, statistics, merge)
-pip install -r requirements/core.txt
-```
-
-After installing, download NLTK data:
+After installing `core.txt`, download the NLTK data:
 ```bash
 python -c "import nltk; nltk.download('words'); nltk.download('punkt'); nltk.download('punkt_tab')"
 ```
 
-> **Benchmark models** require separate conda environments due to package conflicts.
-> See `requirements/benchmarks/` for per-model setup instructions.
->
-> **Dataset creation** has additional dependencies: `pip install -r requirements/dataset.txt`
+> **Benchmark models** need their own conda environments (package conflicts) — see `requirements/benchmarks/`.
+> **Dataset creation** needs `pip install -r requirements/dataset.txt`.
 
-### Step 2: Download the dataset
-
-Download the EMERGE dataset from HuggingFace Hub:
-
-```bash
-./scripts/download_data.sh
-```
-
-This downloads the test set and annotation data into `data/`:
+`./scripts/download_data.sh` populates `data/`:
 
 ```
 data/
-├── evaluation_set/             Test set (3,500 instances + 13 model predictions)
-│   ├── snapshot_2019-01-01/
-│   │   ├── delta_2019-01-08.jsonl
-│   │   └── ...
-│   ├── snapshot_2020-01-01/ ... snapshot_2025-01-01/
-│   └── (7 snapshots x 5 deltas x 100 instances = 3,500 total)
-└── human_annotation/           Human annotation data for agreement statistics
-    └── solved_disagreements.jsonl
+├── evaluation_set/    Test set: 7 snapshots × 5 deltas × 100 = 3,500 instances (+ 13 model predictions)
+│                      snapshot_{2019..2025}-01-01/delta_*.jsonl
+└── human_annotation/  solved_disagreements.jsonl   (for agreement stats)
 ```
 
-To also download KG snapshots (~22 GB, needed only to score relik-cie — without them, `evaluate.sh` skips relik-cie entirely and prints a NOTE pointing here):
-
-```bash
-./scripts/download_data.sh --kg
-```
+Optional downloads: `--kg` (~22 GB KG snapshots, needed only to score `relik-cie` — without them
+`evaluate.sh` skips relik-cie and prints a NOTE), `--indices` (relation indexes), `--corpus`
+(1.19M-instance corpus).
 
 ## Reproducing paper results
 
@@ -436,16 +374,18 @@ See [`src/benchmarks/README.md`](src/benchmarks/README.md) for detailed per-mode
 
 ## KG-aware baseline
 
+_Added 2026-07-27 for the NeurIPS 2026 rebuttal._
+
 A targeted baseline that gives the **same GPT-5.1 used by EDC+** access to the reference KG
-snapshot \(G_t\), keeping the model fixed and varying only its access to KG structure. It tests
+snapshot `G_t`, keeping the model fixed and varying only its access to KG structure. It tests
 directly whether feeding KG context closes the gap that IE-only baselines leave. Three variants:
 `oracle` (gold entities/relation types and existing triples), `kg_rag@32` (top-32 candidates
-retrieved from \(G_t\) with ReLiK), and `oracle+kg_rag` (oracle context plus retrieved distractors).
+retrieved from `G_t` with ReLiK), and `oracle+kg_rag` (oracle context plus retrieved distractors).
 
 Scored with the same metrics as Table 3 — Completeness (C), G-BERTScore-R (G-R), Executable-R (E-R)
 — on the full 3,500-instance test set. Best per operation per metric in **bold**; `–` = not
 computable (open-IE methods produce no canonical IDs; MINT+ADD / INFER mint entities with no ID
-in \(G_t\)); `—` = operation not supported by that method.
+in `G_t`); `—` = operation not supported by that method.
 
 | Method | Exists (C / G-R / E-R) | Add (C / G-R / E-R) | Mint+Add (C / G-R / E-R) | Infer (C / G-R / E-R) | Deprecate (C / G-R / E-R) |
 |---|---|---|---|---|---|
@@ -456,7 +396,7 @@ in \(G_t\)); `—` = operation not supported by that method.
 | ReLiK cIE | 15.2 / 30.7 / 15.0 | 18.1 / 57.5 / 13.2 | — | — | — |
 
 With `oracle` context, the same GPT-5.1 gives the strongest near-exact updates (C) on every operation
-and — by canonicalizing against \(G_t\) — uniquely produces executable updates (E-R) where the
+and — by canonicalizing against `G_t` — uniquely produces executable updates (E-R) where the
 entities already exist in the KG (EXISTS, ADD, DEPRECATE); DEPRECATE is executed by no other baseline.
 The gap between `oracle` and `kg_rag@32` shows KG retrieval is a major bottleneck, and `oracle` not
 saturating shows a residual reasoning gap even with correct context. EDC+'s higher G-R reflects that

@@ -1,9 +1,9 @@
 # KG-aware Baseline
 
 A targeted baseline that gives the **same GPT-5.1 used by EDC+** access to the reference
-KG snapshot \(G_t\), keeping the model fixed and varying only its access to KG structure.
+KG snapshot `G_t`, keeping the model fixed and varying only its access to KG structure.
 It tests directly whether feeding KG context closes the gap that IE-only baselines leave, and
-— because it canonicalizes its outputs against \(G_t\) — it is the only IE baseline able to
+— because it canonicalizes its outputs against `G_t` — it is the only IE baseline able to
 report **Executable-R** for EXISTS / ADD / DEPRECATE and to execute DEPRECATE at all.
 
 Results (a Table-3-style ladder over three KG-context variants vs. EDC+ and ReLiK cIE) are in the
@@ -15,7 +15,7 @@ to reproduce them.
 | Variant | KG context supplied |
 |---|---|
 | `oracle` | gold entities + relation types (ADD, MINT+ADD, INFER) and gold existing triples (EXISTS, DEPRECATE) |
-| `kg_rag@32` | top-\(k=32\) candidate entities, relation types and triples retrieved from \(G_t\) with ReLiK |
+| `kg_rag@32` | top-`k=32` candidate entities, relation types and triples retrieved from `G_t` with ReLiK |
 | `oracle+kg_rag` | `oracle` context plus the `kg_rag@32` retrieved distractors |
 
 ## Pipeline
@@ -101,18 +101,30 @@ SCORE writes the ladder to
 `output/kg_prompts_scored/20260725_ladder_all_ops/ladder_table.csv`
 (rows = op × condition; columns = C / G-BERTScore-R / Executable-R).
 
-### Cheap smoke test (verify the pipeline, don't spend much)
+### Tiny smoke test (verify the pipeline, ~cents)
 
-PREDICT is the only paid step. To confirm the chain runs end-to-end without a large bill:
+A dedicated **`tiny`** config chain runs the full AUGMENT → COMPOSE → PREDICT → SCORE flow on just
+**8 instances** — enough to confirm everything wires up and produces a ladder, without a real bill
+(PREDICT is the only paid step: ~48 GPT-5.1 calls here).
 
-1. keep `n_instances` small (the representative AUGMENT config uses 32) — or set `sample.hash_ids`
-   to a handful of ids;
-2. run stages 1–2 (free), then stage 3 with `--dry-run` to inspect the commands, then a real
-   stage-3 run on that small sample;
-3. run stage 4 and confirm `ladder_table.csv` is produced with sensible numbers.
+```bash
+conda activate emerge
+PYTHONPATH=src python scripts/kg_context/build_augmented_evalset.py --config config/kg_context/tiny_augment/config.json
+PYTHONPATH=src python scripts/kg_context/compose_kg_prompt.py       --config config/kg_context/tiny_compose/config.json
 
-AUGMENT / COMPOSE / SCORE can be re-run freely; only re-run PREDICT when you actually need new
-model outputs (it hits the API).
+conda activate edc
+export OPENAI_API_KEY='<your-openai-key>'
+PYTHONPATH=src python scripts/kg_context/predict_triples.py --config config/kg_context/tiny_compose/config.json --dry-run   # preview, free
+PYTHONPATH=src python scripts/kg_context/predict_triples.py --config config/kg_context/tiny_compose/config.json            # ~cents
+
+conda activate emerge
+PYTHONPATH=src python scripts/kg_context/score_kg_prompt.py --config config/kg_context/tiny_score/config.json --phase all
+cat output/kg_prompts_scored/tiny/ladder_table.csv
+```
+
+Expect a `ladder_table.csv` with sane (non-empty) numbers. On 8 instances these are **not** the
+paper numbers — the point is only that the pipeline runs clean end-to-end. AUGMENT / COMPOSE / SCORE
+can be re-run freely; only PREDICT hits the API.
 
 ### Using Azure instead of OpenAI (optional)
 
@@ -129,6 +141,7 @@ Mistral / Azure-hosted baselines are configured.
 | COMPOSE + PREDICT block | `config/kg_context/20260725_compose_ladder/config.json` |
 | PREDICT runner (LLM/connection) | `config/benchmarks/s02_run_benchmarks/kg_prompt_gpt_5_1/config.json` |
 | SCORE | `config/kg_context/20260725_kg_prompt_ladder_score/config.json` |
+| Tiny smoke test (8 instances) | `config/kg_context/tiny_{augment,compose,score}/config.json` |
 | Retriever coverage (recall@k, optional) | `config/kg_context/20260726_coverage_{native,aida}/config.json` |
 
 ## Code

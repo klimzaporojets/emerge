@@ -74,3 +74,28 @@ def test_no_snellius_paths_in_ported_405bv1_configs():
             + "\nReplace with `/path/to/storage/wikipedia-processing/output/...` "
             "to match the existing emerge-prod config convention."
         )
+
+
+def test_no_snellius_paths_in_kg_context_configs():
+    """The KG-aware baseline configs under `config/kg_context/` must use
+    repo-relative `data/` + `output/` paths (symlinked to the real data on a
+    cluster), never author-side absolute or Snellius paths. Guards the public
+    repo against re-leaking a path via a copy-paste from emerge-stage.
+    """
+    kg_dir = REPO / "config/kg_context"
+    assert kg_dir.is_dir(), f"expected config dir at {kg_dir}"
+    offenders = []
+    for config_path in sorted(kg_dir.rglob("*.json")):
+        text = config_path.read_text()
+        for match in SNELLIUS_PATTERNS.finditer(text):
+            line = text[: match.start()].count("\n") + 1
+            offenders.append(
+                f"  {config_path.relative_to(REPO)}:{line} → {match.group(0)!r}"
+            )
+    if offenders:
+        pytest.fail(
+            "Snellius / author-side path residue in config/kg_context/:\n"
+            + "\n".join(offenders)
+            + "\nUse repo-relative data/ + output/ paths (symlink data/* to the "
+            "real data on a cluster)."
+        )
