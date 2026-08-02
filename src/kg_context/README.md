@@ -24,16 +24,28 @@ Four stages. Each is config-driven (`--config`); run from the repo root with `PY
 
 | # | Stage | Script | Conda env | GPU | Cost |
 |---|---|---|---|---|---|
-| 1 | **AUGMENT** — retrieve KG context per passage | `scripts/kg_context/build_augmented_evalset.py` | `emerge` | optional | local, free |
-| 2 | **COMPOSE** — render prompts from components | `scripts/kg_context/compose_kg_prompt.py` | `emerge` | no | local, free |
+| 1 | **AUGMENT** — retrieve KG context per passage | `scripts/kg_context/build_augmented_evalset.py` | `relik` | optional | local, free |
+| 2 | **COMPOSE** — render prompts from components | `scripts/kg_context/compose_kg_prompt.py` | `relik` | no | local, free |
 | 3 | **PREDICT** — call GPT-5.1 on each prompt | `scripts/kg_context/predict_triples.py` | `edc` | no | **API $** |
 | 4 | **SCORE** — Table-3 metrics (C / G-BERTScore-R / Executable-R) | `scripts/kg_context/score_kg_prompt.py` | `emerge` | yes | local, free |
 
-**Why two envs?** AUGMENT/COMPOSE/SCORE run in the core `emerge` env (which has the ReLiK
-retriever and the evaluation stack). PREDICT runs in the `edc` env because it reuses EDC+'s
-`edc.utils.unified_llm_client.UnifiedLLMClient` — the `edc` env has `openai`/`aiohttp`/`transformers`.
-The `edc` env cannot run ReLiK retrieval and the `emerge` env does not have the EDC+ client, so the
-stages are deliberately split (see [benchmarks README](../benchmarks/README.md) for the env setup).
+**Three envs (they don't share, by design):**
+- **AUGMENT / COMPOSE** need the **ReLiK retriever** → a `relik` env: `pip install -r requirements/benchmarks/relik.txt`. ReLiK's dependencies can conflict with the core env, so keep it in its own env (named `relik` here).
+- **PREDICT** reuses EDC+'s `edc.utils.unified_llm_client.UnifiedLLMClient` → the **`edc`** env: `pip install -r requirements/benchmarks/edc-plus.txt` (has `openai`/`aiohttp`/`transformers`). PREDICT goes through `wrappers/kg_prompt/run.sh`, which does `conda activate "${KG_PROMPT_ENV:-edc}"` — so if your EDC+ env has a different name, just `export KG_PROMPT_ENV=<that-env>` instead of creating an `edc` env.
+- **SCORE** uses the core **`emerge`** env (metrics stack: sentence-transformers, BERTScore).
+
+See the [benchmarks README](../benchmarks/README.md) for per-env setup.
+
+**AUGMENT resources & device.** AUGMENT holds three things in memory at once: the whole KG snapshot
+(loaded as a dict, ~15–20 GB for a full year), and the ReLiK entity index for that year
+(`documents.jsonl` ~7.7 GB + `embeddings.pt` ~10.4 GB). It processes **one snapshot year per
+subprocess** (peak = one year), so peak memory is a **fixed cost independent of the number of
+instances**. Set the retriever `device` in the AUGMENT config:
+- `"device": "cpu"` — the embeddings sit in **CPU RAM**; budget **~64–96 GB RAM** (32 GB OOM-kills). No GPU needed.
+- `"device": "cuda"` — the embeddings load onto the **GPU**, cutting CPU RAM to ~35–45 GB (so ~64 GB is plenty) and speeding up retrieval; needs 1 GPU.
+
+Either works; pick per your hardware. SCORE needs 1 GPU (BERTScore / sentence-transformers);
+COMPOSE and PREDICT are light.
 
 ## Prerequisites (data)
 
@@ -75,12 +87,12 @@ Representative chain (small, `n_instances=32` in the AUGMENT config — raise it
 to scale toward the full 3,500).
 
 ```bash
-# 1. AUGMENT  (emerge env)
-conda activate emerge
+# 1. AUGMENT  (relik env — the ReLiK retriever needs it)
+conda activate relik
 PYTHONPATH=src python scripts/kg_context/build_augmented_evalset.py \
     --config config/kg_context/20260725_relik_all_ops/config.json
 
-# 2. COMPOSE  (emerge env) — renders the prompt ladder; also carries the `predict` block PREDICT reads
+# 2. COMPOSE  (relik env) — renders the prompt ladder; also carries the `predict` block PREDICT reads
 PYTHONPATH=src python scripts/kg_context/compose_kg_prompt.py \
     --config config/kg_context/20260725_compose_ladder/config.json
 
@@ -108,7 +120,7 @@ A dedicated **`tiny`** config chain runs the full AUGMENT → COMPOSE → PREDIC
 (PREDICT is the only paid step: ~48 GPT-5.1 calls here).
 
 ```bash
-conda activate emerge
+conda activate relik
 PYTHONPATH=src python scripts/kg_context/build_augmented_evalset.py --config config/kg_context/tiny_augment/config.json
 PYTHONPATH=src python scripts/kg_context/compose_kg_prompt.py       --config config/kg_context/tiny_compose/config.json
 
