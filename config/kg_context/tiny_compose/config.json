@@ -105,7 +105,9 @@
       "per_op/infer/only_oracle",
       "unified/only_oracle"
     ],
-    "base_configs": {}
+    "base_configs": {
+      "kg_prompt": "config/benchmarks/s02_run_benchmarks/kg_prompt_gpt_5_1_tiny/config.json"
+    }
   },
   "template_dir": "src/kg_context/prompt_templates_kg_aware"
 }
