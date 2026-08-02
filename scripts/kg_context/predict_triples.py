@@ -8,8 +8,8 @@ Fully config-driven via the compose config's `predict` block:
     "points": null,                        # null = ALL composed points; or ["only_oracle","kg_rag_k8",...]
     "base_configs": {}                     # optional per-baseline config override {baseline: path}
   }
-Reuses `benchmarks.run_benchmarks` UNCHANGED (CLI overrides input/output). Run in the BASELINE env
-(`emerge`/`emerge-method`) with AZURE_OPENAI_API_KEY set (this step costs API $).
+Reuses `benchmarks.run_benchmarks` UNCHANGED (CLI overrides input/output). Run in the `edc`
+baseline env with an OpenAI API key configured (this step costs API $).
 
     PYTHONPATH=src python scripts/kg_context/predict_triples.py \
         --config config/kg_context/20260725_compose_only_oracle/config.json          # run

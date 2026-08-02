@@ -9,7 +9,7 @@ the SAME schema KGGen emits (`predicted_triples` = list of
 works unchanged.
 
 The LLM is called through `edc.utils.unified_llm_client.UnifiedLLMClient`
-(the same async client EDC+ uses for gpt-5.1 via the Azure research proxy).
+(the same async client EDC+ uses for gpt-5.1).
 """
 import argparse
 import asyncio
@@ -403,7 +403,7 @@ def main():
     parser.add_argument('--base-url', type=str, default=None)
     parser.add_argument('--cache-path', type=str, required=True)
     parser.add_argument('--max-tokens', type=str, required=True)
-    # ---- UnifiedLLMClient connection params (for gpt-5.1 via Azure proxy) ----
+    # ---- UnifiedLLMClient connection params (for gpt-5.1) ----
     parser.add_argument('--backend', type=str, default='http')
     parser.add_argument('--mode', type=str, default='completion')
     parser.add_argument('--api-version', type=str, default='v1')

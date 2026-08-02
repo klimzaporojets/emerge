@@ -1,0 +1,34 @@
+{
+  "_comment": "TINY smoke-test AUGMENT — same as 20260725_relik_all_ops but only n_instances=8 and a dedicated output dir (output/kg_context/tiny). Purpose: cheaply verify the KG-aware pipeline runs end-to-end (AUGMENT -> COMPOSE -> PREDICT -> SCORE). Feeds tiny_compose. Native ReLiK retriever, kg_lookup ON.",
+
+  "eval_set_dir": "data/evaluation_set",
+  "output_dir": "output/kg_context/tiny",
+
+  "sample": {
+    "years": ["2019", "2024"],
+    "operations": ["x-triples", "e-triples", "ee-triples", "ee-kg-triples", "d-triples"],
+    "n_instances": 8,
+    "hash_ids": [],
+    "seed": 13
+  },
+
+  "retrieve_top_k": 64,
+  "retriever": {
+    "which": "relik",
+    "config_name": "relik-ie/relik-cie-large",
+    "device": "cpu",
+    "cache_dir": "output/cache",
+    "entity_index_base_path": "data/indices/relik_entity_index",
+    "relation_index_base_path": "data/indices/relik_edc_relation_indexes",
+    "precision": "16"
+  },
+
+  "kg_lookup": {
+    "enabled": true,
+    "scope": "whole",
+    "snapshot_dir": "data/kg_snapshots",
+    "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
+  },
+  "snapshot_dir": "data/kg_snapshots",
+  "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
+}

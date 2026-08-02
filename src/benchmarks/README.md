@@ -153,9 +153,10 @@ EDC+ reads `data/evaluation_set/` (default) **and** `data/indices/relik_edc_rela
 #### 3. Set the API key
 
 ```bash
-export OPENAI_API_KEY_MY='your-openai-key-here'
-# Note: edc_plus_zs_gpt_5_1 reads OPENAI_API_KEY_MY; the ICL configs read OPENAI_API_KEY.
-# See the per-config "Backend LLM" table above for which env var each variant uses.
+export OPENAI_API_KEY='your-openai-key-here'
+# Both EDC+ GPT-5.1 variants (ICL and zero-shot) read OPENAI_API_KEY (OpenAI direct).
+# Azure-hosted variants (Mistral, KGGen) read AZURE_AI_API_KEY / AZURE_OPENAI_API_KEY
+# instead — see the per-config "Backend LLM" table above for the exact env var each uses.
 ```
 
 #### 4. Run

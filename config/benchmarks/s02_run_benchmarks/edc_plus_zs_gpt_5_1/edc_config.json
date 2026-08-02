@@ -10,7 +10,7 @@
     "model": "gpt-5.1",
     "concurrency": 4,
     "timeout": 300,
-    "api_key_env": "OPENAI_API_KEY_MY",
+    "api_key_env": "OPENAI_API_KEY",
     "api_version": "v1",
     "mode": "responses",
     "model_max_context": null

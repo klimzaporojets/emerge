@@ -434,6 +434,37 @@ See [`src/benchmarks/README.md`](src/benchmarks/README.md) for detailed per-mode
 > [`src/benchmarks/README.md`](src/benchmarks/README.md#note-relik-closed-ie-entity-index-heavy)
 > for the full breakdown.
 
+## KG-aware baseline
+
+A targeted baseline that gives the **same GPT-5.1 used by EDC+** access to the reference KG
+snapshot \(G_t\), keeping the model fixed and varying only its access to KG structure. It tests
+directly whether feeding KG context closes the gap that IE-only baselines leave. Three variants:
+`oracle` (gold entities/relation types and existing triples), `kg_rag@32` (top-32 candidates
+retrieved from \(G_t\) with ReLiK), and `oracle+kg_rag` (oracle context plus retrieved distractors).
+
+Scored with the same metrics as Table 3 — Completeness (C), G-BERTScore-R (G-R), Executable-R (E-R)
+— on the full 3,500-instance test set. Best per operation per metric in **bold**; `–` = not
+computable (open-IE methods produce no canonical IDs; MINT+ADD / INFER mint entities with no ID
+in \(G_t\)); `—` = operation not supported by that method.
+
+| Method | Exists (C / G-R / E-R) | Add (C / G-R / E-R) | Mint+Add (C / G-R / E-R) | Infer (C / G-R / E-R) | Deprecate (C / G-R / E-R) |
+|---|---|---|---|---|---|
+| KG-aware (oracle) | **60.4** / 50.3 / **50.3** | **46.5** / 42.9 / **39.6** | **43.2** / 47.6 / – | **50.3** / **75.9** / – | **38.4** / 36.9 / **36.9** |
+| KG-aware (kg_rag@32) | 13.8 / 27.5 / 19.4 | 15.3 / 18.7 / 12.5 | 30.6 / 49.7 / – | 11.3 / 52.1 / – | 12.3 / 12.7 / 11.2 |
+| KG-aware (oracle+kg_rag) | 52.6 / 49.3 / 43.2 | 27.4 / 27.0 / 18.2 | 39.3 / 53.1 / – | 45.0 / 75.5 / – | 18.7 / 18.4 / 17.3 |
+| EDC+ GPT-5.1 (no KG) | 25.7 / **66.3** / – | 38.0 / **76.6** / – | 35.5 / **78.2** / – | 24.3 / 73.2 / – | 36.5 / **54.8** / – |
+| ReLiK cIE | 15.2 / 30.7 / 15.0 | 18.1 / 57.5 / 13.2 | — | — | — |
+
+With `oracle` context, the same GPT-5.1 gives the strongest near-exact updates (C) on every operation
+and — by canonicalizing against \(G_t\) — uniquely produces executable updates (E-R) where the
+entities already exist in the KG (EXISTS, ADD, DEPRECATE); DEPRECATE is executed by no other baseline.
+The gap between `oracle` and `kg_rag@32` shows KG retrieval is a major bottleneck, and `oracle` not
+saturating shows a residual reasoning gap even with correct context. EDC+'s higher G-R reflects that
+metric rewarding semantic similarity rather than the exact KG form.
+
+**To reproduce these numbers**, see [`src/kg_context/README.md`](src/kg_context/README.md) — the
+AUGMENT → COMPOSE → PREDICT → SCORE runbook (configs, conda envs, commands, and a cheap smoke test).
+
 ## Evaluating new benchmark predictions
 
 Wrappers write their predictions under `./output/s02_run_benchmarks/<config_dir>/`
@@ -513,6 +544,7 @@ is not part of the routine test suite.
 |------|---------------|
 | [`src/evaluation/README.md`](src/evaluation/README.md) | Evaluation pipeline: metrics, caching, scoring modes (incl. `cie_exact_match` ↔ Executable-R / E-R mapping) |
 | [`src/benchmarks/README.md`](src/benchmarks/README.md) | All 13 benchmark models: architectures, APIs, configs |
+| [`src/kg_context/README.md`](src/kg_context/README.md) | KG-aware baseline (GPT-5.1 + KG context): AUGMENT → COMPOSE → PREDICT → SCORE runbook, configs, envs, results |
 | [`src/dataset/README.md`](src/dataset/README.md) | Full dataset creation pipeline (Wikidata + Wikipedia + EMERGE) — including **Part 3: Quality control of LLM annotations** (the detect → reinput → merge workflow exposed by `scripts/dataset/`) |
 | [`src/stats/README.md`](src/stats/README.md) | Paper statistics: notebook inventory (model evaluation), data dependencies. **Note**: `src/stats/` is notebooks for evaluation tables/figures; the CLI scripts in `scripts/stats/` are for **dataset** stat reproducibility (different artifacts despite the shared name). |
 

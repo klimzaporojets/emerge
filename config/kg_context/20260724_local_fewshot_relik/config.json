@@ -26,9 +26,9 @@
   "kg_lookup": {
     "enabled": false,
     "scope": "anchors",
-    "snapshot_dir": "/home/klim/work/mnt/data/projects/msca-kgs/wikidata_kg_snapshots",
+    "snapshot_dir": "data/kg_snapshots",
     "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
   },
-  "snapshot_dir": "/home/klim/work/mnt/data/projects/msca-kgs/wikidata_kg_snapshots",
+  "snapshot_dir": "data/kg_snapshots",
   "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
 }

@@ -24,9 +24,9 @@
     "enabled": false,
     "scope": "anchors",
     "_note": "OFF for the core (no snapshot scan). Set true to also gather lookup_triples (existing edges among all oracle entities/relations); then snapshot_dir + snapshot_file_template are required.",
-    "snapshot_dir": "/home/klim/work/mnt/data/projects/msca-kgs/wikidata_kg_snapshots",
+    "snapshot_dir": "data/kg_snapshots",
     "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
   },
-  "snapshot_dir": "/home/klim/work/mnt/data/projects/msca-kgs/wikidata_kg_snapshots",
+  "snapshot_dir": "data/kg_snapshots",
   "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
 }

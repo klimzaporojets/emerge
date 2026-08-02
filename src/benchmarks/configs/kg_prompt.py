@@ -7,7 +7,7 @@ class KGPromptConfig:
     """Config for the KG-conditioned prompt-runner baseline (kg_prompt).
 
     Mirrors KGGenConfig, plus the UnifiedLLMClient connection params needed to
-    call gpt-5.1 (Azure research proxy) directly. The wrapper sends the composed
+    call gpt-5.1 directly. The wrapper sends the composed
     `prompt` field VERBATIM to the LLM; there is no chunk_size (no local
     chunking) — the whole prompt is one request.
     """

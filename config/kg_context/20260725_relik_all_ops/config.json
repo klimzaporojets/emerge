@@ -1,5 +1,5 @@
 {
-  "_comment": "AUGMENT_KG_CONTEXT — ALL 5 TKGU operations, native ReLiK retriever (relik-cie-large e5-small). First complete iteration. 2019+2024, subprocess-per-year. n_instances=32 (configurable). retrieve_top_k=64. kg_lookup OFF (kg_rag_triples/pattern_examples deferred to the next refinement). Output feeds COMPOSE_KG_PROMPT (config 20260725_compose_ladder).",
+  "_comment": "AUGMENT_KG_CONTEXT — ALL 5 TKGU operations, native ReLiK retriever (relik-cie-large e5-small). First complete iteration. 2019+2024, subprocess-per-year. n_instances=32 (configurable). retrieve_top_k=64. kg_lookup ON (builds kg_rag_triples for the kg_rag conditions). Output feeds COMPOSE_KG_PROMPT (config 20260725_compose_ladder).",
 
   "eval_set_dir": "data/evaluation_set",
   "output_dir": "output/kg_context/20260725_relik_all_ops",
@@ -26,9 +26,9 @@
   "kg_lookup": {
     "enabled": true,
     "scope": "whole",
-    "snapshot_dir": "/home/klim/work/mnt/data/projects/msca-kgs/wikidata_kg_snapshots",
+    "snapshot_dir": "data/kg_snapshots",
     "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
   },
-  "snapshot_dir": "/home/klim/work/mnt/data/projects/msca-kgs/wikidata_kg_snapshots",
+  "snapshot_dir": "data/kg_snapshots",
   "snapshot_file_template": "kg_snapshot_{year}-01-01.tsv"
 }

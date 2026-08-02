@@ -1,0 +1,30 @@
+{
+  "_help": "TINY smoke-test SCORE — same wiring as 20260725_kg_prompt_ladder_score, but on the tiny chain (output/kg_prompts/tiny + output/kg_prompts_pred/tiny). Runs merge -> score -> aggregate over the 6 points below. Just checks the pipeline produces a ladder_table.csv end-to-end; numbers on 8 instances are NOT the paper numbers.",
+  "gold_base_dir": "output/kg_prompts/tiny",
+  "pred_base_dir": "output/kg_prompts_pred/tiny",
+  "merged_base_dir": "output/kg_prompts_scored/tiny/merged",
+  "pkl_base_dir": "output/kg_prompts_scored/tiny/pkl",
+  "aggregate_output_csv": "output/kg_prompts_scored/tiny/ladder_table.csv",
+  "pred_model_subdir": "kg_prompt_gpt-5.1",
+  "source_pred_alias": "kg_prompt",
+  "target_alias": "kg-prompt",
+  "predictions_model_type": "kg-prompt",
+  "predictions_model_config_name": "kg_prompt_gpt_5_1",
+  "eval_config_file": "config/evaluation/s0x_evaluate_predictions/20260725_kg_prompt_ladder/config.json",
+  "python_module_score": "evaluation.s0x_evaluate_predictions",
+  "assessors": {
+    "triple_assertion": "Meta-Llama-3.1-405B_prompt_v1",
+    "triple_deprecation": "Meta-Llama-3.1-405B_prompt_v1"
+  },
+  "points": [
+    "per_op/exists/oracle_triples",
+    "per_op/deprecate/oracle_triples",
+    "per_op/add/only_oracle",
+    "per_op/mint_add/only_oracle",
+    "per_op/infer/only_oracle",
+    "unified/only_oracle"
+  ],
+  "baseline_aliases": [
+    "edc-plus-open-ai/gpt-5.1/non-canonicalized"
+  ]
+}

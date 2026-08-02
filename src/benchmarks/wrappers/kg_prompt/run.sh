@@ -4,9 +4,9 @@ set -euo pipefail
 # ---- conda setup ----
 CONDA_BASE="$(conda info --base)"
 source "$CONDA_BASE/etc/profile.d/conda.sh"
-# KG-conditioned baseline runs in the emerge-method env (has openai / aiohttp /
-# transformers required by edc.utils.unified_llm_client.UnifiedLLMClient).
-conda activate emerge-method
+# KG-aware baseline runs in the same `edc` env as the EDC+ wrapper (has openai /
+# aiohttp / transformers required by edc.utils.unified_llm_client.UnifiedLLMClient).
+conda activate edc
 
 # ---- resolve directory of this script ----
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

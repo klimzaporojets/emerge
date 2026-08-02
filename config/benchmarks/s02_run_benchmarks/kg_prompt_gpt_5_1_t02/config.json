@@ -16,7 +16,7 @@
       "backend": "openai",
       "mode": "chat",
       "api_version": null,
-      "api_key_env": "OPENAI_API_KEY_MY",
+      "api_key_env": "OPENAI_API_KEY",
       "model_max_context": null,
       "authorization_header_type": null
     }
