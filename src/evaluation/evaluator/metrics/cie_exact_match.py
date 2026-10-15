@@ -19,6 +19,13 @@ class CIEExactMatchMetric(Metric):
             return wiki_eval_result
 
         model_alias = self.config.get('model_alias', 'exact_match')
+        # Default False = published Table-3 behavior (empty gold -> recall 0, kept). True makes
+        # cie-recall consistent with completeness/graph-judge (drop instances with no assessed-true
+        # gold of this tkgu_type). Apply uniformly to ALL models. See BUG_er_empty_gold_population.md.
+        # Genuinely-optional config key (configs predating the flag won't set it); explicit
+        # presence check rather than .get()-with-default (fail-hard style; matches the A2 toggle).
+        exclude_empty_gold = (
+            self.config['exclude_empty_gold'] if 'exclude_empty_gold' in self.config else False)
 
         for curr_model_name in self.models_to_evaluate:
             if curr_model_name not in wiki_eval_result.batch_cie_qid_triples:
@@ -53,6 +60,7 @@ class CIEExactMatchMetric(Metric):
                     model=curr_model_name,
                     tkgu_type=curr_tkgu_type,
                     model_alias=model_alias,
+                    exclude_empty_gold=exclude_empty_gold,
                 )
 
                 wiki_eval_result.df_metrics_cie = self._merge_graph_judge_metrics(

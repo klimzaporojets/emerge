@@ -22,6 +22,7 @@ def calculate_cie_exact_match(
     model: str,
     tkgu_type: str,
     model_alias: str = 'exact_match',
+    exclude_empty_gold: bool = False,
 ) -> Dict[str, List[Dict]]:
     """
     Compute exact-match precision, recall, F1 on QID triples.
@@ -31,6 +32,14 @@ def calculate_cie_exact_match(
 
     GT is filtered by LLM assessment flags. Predicted triples with invalid
     QIDs (null, --NME--, wrong prefix) are excluded.
+
+    `exclude_empty_gold` (default False = the published Table-3 behavior): when True, an instance
+    whose 405B/LLM-assessment-filtered `gt_set` is EMPTY (it has gold triples of this tkgu_type but
+    none is assessed-true, so there is nothing valid to recall) is SKIPPED entirely — no P/R/F1 row.
+    This makes cie-recall consistent with completeness / graph-judge, which aggregate per-triple and
+    therefore already drop such instances (an instance with 0 valid gold triples contributes nothing).
+    With False, an empty gold set yields recall `0/0 -> 0` and the instance is kept (dragging the mean).
+    See rebuttal/neurips_2026/BUG_er_empty_gold_population.md. Toggle uniformly across ALL models.
 
     Returns dict with 'scores_per_instance' key containing metric rows.
     """
@@ -56,6 +65,12 @@ def calculate_cie_exact_match(
         for i, gt_triple in enumerate(gt_qid_list):
             if i < len(assessments) and assessments[i]:
                 gt_set.add(tuple(gt_triple))
+
+        # No valid (assessed-true) gold of this tkgu_type -> recall is undefined (0/0). Under
+        # exclude_empty_gold, drop the instance so it does not contribute a recall-0 to the mean
+        # (matches completeness/graph-judge, which are per-triple and already exclude it).
+        if exclude_empty_gold and len(gt_set) == 0:
+            continue
 
         # Filter pred: skip triples with invalid QID components
         pred_set = set()
