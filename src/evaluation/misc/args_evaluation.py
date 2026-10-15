@@ -35,6 +35,15 @@ class ArgsEvaluation(Tap):
     # Default True (correct behavior). Set to False to reproduce legacy behavior.
     score_empty_predictions_as_zero: bool = True
 
+    # data/scoring correction ("A2"): when True, DEPRECATE ground-truth triples whose
+    # FULL triple (s,p,o) is absent from the current KG snapshot T_t are dropped, as they
+    # violate the deprecate precondition (s,p,o) in T_t (checks the whole triple, not just the
+    # subject -- 144 vs 46 over all 7 snapshots). Filtered once in the preloader gold loop, so
+    # it applies uniformly to Completeness, G-BERTScore-R, and Executable-R. It is a no-op for
+    # any year whose snapshot is unavailable/empty (never drops all gold).
+    # Default False = originally published behavior; set True for the corrected scoring.
+    exclude_deprecate_not_in_snapshot: bool = False
+
     # lists
     models_to_evaluate: Optional[List[str]] = None
     models_to_report: Optional[List[str]] = None

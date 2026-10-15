@@ -460,9 +460,28 @@ if __name__ == '__main__':
                         curr_triple['triple_lifespan_timestamp'] = triple_lifespan_timestamp
 
                         if curr_triple['action'] == 0:
-                            if curr_triple['triple_lifespan_timestamp'][1] is not None and \
-                                    curr_triple['triple_lifespan_timestamp'][1] <= json_input['interval_timestamps'][1]:
-                                actions.append('removed_edge')
+                            ts_from = curr_triple['triple_lifespan_timestamp'][0]
+                            ts_to = curr_triple['triple_lifespan_timestamp'][1]
+                            t_snapshot = json_input['interval_timestamps'][0]
+                            t_end = json_input['interval_timestamps'][1]
+                            # A2 fix (camera-ready): a triple can only be DEPRECATED if it was present
+                            # in the KG snapshot V_t at t, i.e. (s,p,o) in T_t. Use the same active-at-t
+                            # rule as s03_get_kg_snapshot.py (from < t and (to > t or to is None)) so this
+                            # reproduces T_t membership. Without it, triples created after t (or added AND
+                            # removed within the same window) were wrongly labeled 'd-triples' (audit:
+                            # 144/1628 not-in-snapshot deprecate gold; violates the deprecate precondition).
+                            # VALIDATE BY REGENERATION: expect 0 not-in-snapshot deprecate afterwards
+                            # (verify_deprecate_fulltriple.py) and confirm t_snapshot == the timestamp used
+                            # to build kg_snapshot_<year>.tsv.
+                            present_in_snapshot = (ts_from < t_snapshot
+                                                   and (ts_to is None or ts_to > t_snapshot))
+                            if ts_to is not None and ts_to <= t_end:
+                                if present_in_snapshot:
+                                    actions.append('removed_edge')
+                                else:
+                                    logger.info(f'A2_skip_not_in_snapshot_deprecate for triple: '
+                                                f'{curr_triple} in interval '
+                                                f'{json_input["interval_timestamps"]}')
                             else:
                                 # 2025.03.05 - atadura de alambre, based on the fix in s03_get_deltas_pyg_v3
                                 # (see msca_latent_space_status.txt notes)
