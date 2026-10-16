@@ -64,8 +64,8 @@ This provides:
 - `data/indices/relik_entity_index/` (native), `data/indices/relik_edc_relation_indexes/` (relations),
   and `data/indices/relik_entity_index_aida/` (optional AIDA entity index)
 
-**On Snellius**, don't copy the data — symlink each `data/*` entry to the cluster copy so the
-repo-relative configs resolve unchanged, e.g.:
+**On a shared cluster** (where the data lives on a separate filesystem), symlink each `data/*`
+entry to that copy so the repo-relative configs resolve unchanged, e.g.:
 
 ```bash
 ln -sfn /path/to/cluster/kg_snapshots      data/kg_snapshots
@@ -103,7 +103,7 @@ PYTHONPATH=src python scripts/kg_context/predict_triples.py \
     --config config/kg_context/20260725_compose_ladder/config.json
 #   add --dry-run first to preview the commands without spending anything
 
-# 4. SCORE  (emerge env; GPU + KG snapshots — a Snellius compute node, NOT the login node)
+# 4. SCORE  (emerge env; GPU + KG snapshots — run on a GPU compute node, not a cluster login node)
 conda activate emerge
 PYTHONPATH=src python scripts/kg_context/score_kg_prompt.py \
     --config config/kg_context/20260725_kg_prompt_ladder_score/config.json --phase all

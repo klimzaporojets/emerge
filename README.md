@@ -10,7 +10,7 @@ graphs from textual evidence.
 > A targeted **GPT-5.1 baseline with access to the KG snapshot** (`oracle` / `kg_rag@32` /
 > `oracle+kg_rag`), added to test whether feeding KG structure closes the gap the IE-only baselines
 > leave. **→ [Results table and how to reproduce it](#kg-aware-baseline)**
-> _Added 2026-07-27 for the NeurIPS 2026 rebuttal._
+> _Introduced in the v1.0.1 release._
 
 > Klim Zaporojets, Daniel Daza, Edoardo Barba, Ira Assent, Roberto Navigli, Paul Groth
 
@@ -41,7 +41,7 @@ Notes:
 - **GPU users**: pin a CUDA-matching `torch` wheel (see https://pytorch.org/) BEFORE step 1's `core.txt` install — e.g. `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121` for CUDA 12.1.
 - **Optional downloads** beyond the default test set:
   - `./scripts/download_data.sh --indices` (+400 MB) — relation indexes used by EDC+ and ReLiK
-  - `./scripts/download_data.sh --corpus` (+2.4 GB) — 1.19M-instance corpus used by Part 3 garbage QA + paper §4.3 statistics
+  - `./scripts/download_data.sh --corpus` (+2.3 GB) — 1.19M-operation corpus used by Part 3 garbage QA + paper §4.3 statistics
   - `./scripts/download_data.sh --kg` (+22 GB after decompression) — KG snapshots, only needed for correct `relik-cie` scoring (see [Reproducing paper results](#reproducing-paper-results))
 - **Step 3 hardware + time**: see the [Reproducing paper results](#reproducing-paper-results) section for full details (RAM/GPU/runtime, plus what happens if KG snapshots are not present on disk).
 
@@ -175,8 +175,8 @@ benchmark a different LLM or re-query triples (as Part 3 does).
 The raw Wikidata + Wikipedia history dumps (~TB) and their s01–s03 / s03–s04 intermediates are too
 large to redistribute — fetch the dumps from [dumps.wikimedia.org](https://dumps.wikimedia.org/)
 (`wikidatawiki-*-pages-meta-history*.7z`, `enwiki-*-pages-meta-history*.7z`); re-creating
-`data/corpus/` from scratch means running WD/WP/s03/s04 yourself. We plan to ship more intermediates
-(and a dump-download helper) in future releases.
+`data/corpus/` from scratch means running WD/WP/s03/s04 yourself. Additional intermediates
+(and a dump-download helper) may be added in future releases.
 
 For per-step details + config field semantics, see [`src/dataset/README.md`](src/dataset/README.md).
 
@@ -267,7 +267,7 @@ data/
 
 Optional downloads: `--kg` (~22 GB KG snapshots, needed only to score `relik-cie` — without them
 `evaluate.sh` skips relik-cie and prints a NOTE), `--indices` (relation indexes), `--corpus`
-(1.19M-instance corpus).
+(1.19M-operation corpus).
 
 ## Reproducing paper results
 
@@ -374,7 +374,7 @@ See [`src/benchmarks/README.md`](src/benchmarks/README.md) for detailed per-mode
 
 ## KG-aware baseline
 
-_Added 2026-07-27 for the NeurIPS 2026 rebuttal._
+_Introduced in the v1.0.1 release._
 
 A targeted baseline that gives the **same GPT-5.1 used by EDC+** access to the reference KG
 snapshot `G_t`, keeping the model fixed and varying only its access to KG structure. It tests
@@ -389,11 +389,11 @@ in `G_t`); `—` = operation not supported by that method.
 
 | Method | Exists (C / G-R / E-R) | Add (C / G-R / E-R) | Mint+Add (C / G-R / E-R) | Infer (C / G-R / E-R) | Deprecate (C / G-R / E-R) |
 |---|---|---|---|---|---|
-| KG-aware (oracle) | **60.4** / 50.3 / **50.3** | **46.5** / 42.9 / **39.6** | **43.2** / 47.6 / – | **50.3** / **75.9** / – | **38.4** / 36.9 / **36.9** |
-| KG-aware (kg_rag@32) | 13.8 / 27.5 / 19.4 | 15.3 / 18.7 / 12.5 | 30.6 / 49.7 / – | 11.3 / 52.1 / – | 12.3 / 12.7 / 11.2 |
-| KG-aware (oracle+kg_rag) | 52.6 / 49.3 / 43.2 | 27.4 / 27.0 / 18.2 | 39.3 / 53.1 / – | 45.0 / 75.5 / – | 18.7 / 18.4 / 17.3 |
-| EDC+ GPT-5.1 (no KG) | 25.7 / **66.3** / – | 38.0 / **76.6** / – | 35.5 / **78.2** / – | 24.3 / 73.2 / – | 36.5 / **54.8** / – |
-| ReLiK cIE | 15.2 / 30.7 / 15.0 | 18.1 / 57.5 / 13.2 | — | — | — |
+| KG-aware (oracle) | **60.4** / 50.3 / **50.3** | **46.5** / 42.9 / **39.6** | **43.2** / 47.6 / – | **50.3** / **75.9** / – | **38.6** / 35.8 / **37.4** |
+| KG-aware (kg_rag@32) | 13.8 / 27.5 / 19.4 | 15.3 / 18.7 / 12.5 | 30.6 / 49.7 / – | 11.3 / 52.1 / – | 13.1 / 12.7 / 12.5 |
+| KG-aware (oracle+kg_rag) | 52.6 / 49.3 / 43.2 | 27.4 / 27.0 / 18.2 | 39.3 / 53.1 / – | 45.0 / 75.5 / – | 19.5 / 18.4 / 18.5 |
+| EDC+ GPT-5.1 (no KG) | 25.7 / **66.3** / – | 40.2 / **77.5** / – | 35.6 / **77.3** / – | 21.9 / 72.4 / – | 35.5 / **53.2** / – |
+| ReLiK cIE | 15.2 / 30.7 / 16.2 | 18.1 / 57.5 / 15.0 | — | — | — |
 
 With `oracle` context, the same GPT-5.1 gives the strongest near-exact updates (C) on every operation
 and — by canonicalizing against `G_t` — uniquely produces executable updates (E-R) where the
@@ -490,12 +490,14 @@ is not part of the routine test suite.
 
 ## Citation
 
+Accepted at **NeurIPS 2026** (Datasets & Benchmarks Track).
+
 ```bibtex
-@article{zaporojets2025emerge,
+@inproceedings{zaporojets2026emerge,
   title={EMERGE: A Benchmark for Updating Knowledge Graphs with Emerging Textual Knowledge},
   author={Zaporojets, Klim and Daza, Daniel and Barba, Edoardo and Assent, Ira and Navigli, Roberto and Groth, Paul},
-  journal={arXiv preprint arXiv:2507.03617},
-  year={2025}
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS 2026), Datasets and Benchmarks Track},
+  year={2026}
 }
 ```
 

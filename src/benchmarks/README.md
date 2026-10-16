@@ -131,7 +131,7 @@ End-to-end walkthrough on a fresh clone. **All commands run from the repository 
 
 ```bash
 # Orchestrator env (also used for ReLiK)
-conda create -n emerge python=3.10 -y && conda activate emerge
+conda create -n emerge python=3.12 -y && conda activate emerge
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 pip install -r requirements/core.txt
 

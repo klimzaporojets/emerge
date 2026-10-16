@@ -17,8 +17,8 @@ src/stats/
     └── *.ipynb
 ```
 
-For how to launch JupyterLab on HPC cluster, see the
-[top-level README](../../README.md#how-to-run-the-notebooks-slurm).
+For how to launch JupyterLab, see the
+[top-level README](../../README.md#reproduce-paper-tables-and-figures).
 
 ---
 
@@ -108,9 +108,8 @@ All paths below are on HPC cluster. Each notebook has configurable path variable
 - GT triples: `df_wiki_predictions_and_gt_cie.pkl`
 - Instances: `df_instances_v13.pkl`
 - These pkls contain the full 233K-instance dataset with GT triples and LLM assessments
-  (no model predictions). They are too large to include in this repository and will be
-  provided in the public release. The notebooks include saved cell outputs so results
-  can be viewed without these files.
+  (no model predictions). They are too large to include in this repository; the notebooks include saved
+  cell outputs so all results can be viewed without them, and the pkls are available on request.
 
 **Annotation data** (used by annotation agreement table):
 - Included in this repository at `data/human_annotation/solved_disagreements.jsonl`

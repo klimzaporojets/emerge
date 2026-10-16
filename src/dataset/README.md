@@ -331,7 +331,7 @@ the script can detect and merge triples that were split across files due to redi
 
 ```
 sbatch scripts/slurm/wikidata/s02_normalize_history_graph.sh \
-  config/dataset/wikidata/s02_normalize_history_graph/20250320/config_sorted.json \
+  config/dataset/wikidata/s02_normalize_history_graph/20250320/config.json \
   logs/s02_normalize_history_graph_20250320_sorted.log
 ```
 
@@ -420,7 +420,7 @@ in `s01_history_links_extraction.py`).
 ```
 export PYTHONPATH="$PWD/src"
 python -u -m dataset.wikipedia.s01_extract_title_changes \
-    --config_file config/dataset/wikipedia/s01_extract_title_changes/20251101_slurm_english/config.json
+    --config_file config/dataset/wikipedia/s01_extract_title_changes/20251101_english/config.json
 ```
 
 sbatch (English):
@@ -429,16 +429,11 @@ sbatch \
   --cpus-per-task=1 \
   --mem=8G \
   scripts/slurm/wikipedia/s01_extract_title_changes.sh \
-  config/dataset/wikipedia/s01_extract_title_changes/20251101_slurm_english/config.json \
+  config/dataset/wikipedia/s01_extract_title_changes/20251101_english/config.json \
   logs/s01_extract_title_changes_20251101_english.log
 ```
 
-sbatch (example for Danish):
-```
-sbatch scripts/slurm/wikipedia/s01_extract_title_changes.sh \
-  config/dataset/wikipedia/s01_extract_title_changes/20260207_slurm_multilingual/s01_config_20251101_danish.json \
-  logs/s01_extract_title_changes_20251101_danish.log
-```
+For other languages, mirror the English config structure above (multilingual configs are not shipped in this release).
 
 
 ## Wikipedia step W01b - extract historical hyperlinks (Python)
@@ -462,7 +457,7 @@ sbatch \
   --mem=196G \
   scripts/slurm/wikipedia/s01_history_links_extraction.sh \
   64 \
-  config/dataset/wikipedia/s01_history_links_extraction/20251101_slurm_english/config.json \
+  config/dataset/wikipedia/s01_history_links_extraction/20251101_english/config.json \
   logs/s01_history_links_extraction_20251101_english.log
 ```
 
@@ -525,7 +520,7 @@ rm $OUTPUT_BASE/wikipedia_history_filtered_cat/merged_file.csv
 
 ```
 sbatch scripts/slurm/wikipedia/s02_normalize_history_graph.sh \
-  config/dataset/wikipedia/s02_normalize_history_graph/20250320/config_sorted.json \
+  config/dataset/wikipedia/s02_normalize_history_graph/20250320/config.json \
   logs/s02_wpedia_normalize_history_graph_20250320_sorted.log
 ```
 
@@ -581,7 +576,7 @@ The sbatch script starts the API server(s), waits for them to load, then runs th
 
 ```
 sbatch scripts/slurm/wikipedia/s03_extract_entity_descriptions.sh \
-  config/dataset/wikipedia/s03_extract_entity_descriptions/20251101_slurm_english/config.json \
+  config/dataset/wikipedia/s03_extract_entity_descriptions/20251101_english/config.json \
   20251101 8000 1
 ```
 
@@ -592,14 +587,14 @@ To run locally (after starting the API manually):
 # Terminal 1: start the API server
 export PYTHONPATH="$PWD/src"
 python -u -m dataset.wikipedia.s03_API_wiki_mapping \
-    --config_file config/dataset/wikipedia/s03_extract_entity_descriptions/20251101_slurm_english/config.json \
+    --config_file config/dataset/wikipedia/s03_extract_entity_descriptions/20251101_english/config.json \
     --debug_size -1 \
     --api_port 8000
 
 # Terminal 2: run the extractor
 export PYTHONPATH="$PWD/src"
 python -u -m dataset.wikipedia.s03_extract_entity_descriptions \
-    --config_file config/dataset/wikipedia/s03_extract_entity_descriptions/20251101_slurm_english/config.json \
+    --config_file config/dataset/wikipedia/s03_extract_entity_descriptions/20251101_english/config.json \
     --nr_threads_processor 4 \
     --api_ports_wiki_mapping 8000
 ```
@@ -711,7 +706,7 @@ Two assessment modes:
 ```bash
 # On HPC cluster (sbatch):
 sbatch scripts/slurm/dataset/s05_generate_dataset_with_llm_v9_llama405b.sh \
-    config/dataset/emerge/s05_generate_dataset_with_llm/20250916_v8_llama_405b_v1/config.json \
+    config/dataset/emerge/s05_generate_dataset_with_llm/20260502_v8_llama_405b_v1_complete_dataset/config.json \
     Meta-Llama-3.1-405B_prompt_v1
 ```
 
@@ -723,7 +718,7 @@ Loads full Wikidata KG graph (.pt tensor, ~18GB) to GPU, matches candidate snipp
 
 ```bash
 sbatch scripts/slurm/dataset/s04_find_interesting_snippets.sh \
-    config/dataset/emerge/s04_find_interesting_snippets_v3/20250413_slurm/config.json \
+    config/dataset/emerge/s04_find_interesting_snippets_v3/20250413/config.json \
     logs/s04_20250413.log
 ```
 
@@ -747,7 +742,7 @@ Extracts entity/relation dictionaries for ReLiK benchmark. Uses its own API: `s0
 
 ```bash
 sbatch scripts/slurm/dataset/s08_extract_relik_dictionary.sh \
-    config/dataset/emerge/s08_extract_relik_index/20250405_slurm/config.json \
+    config/dataset/emerge/s08_extract_relik_index/20250405/config.json \
     20250405 8000 1
 ```
 
@@ -875,7 +870,8 @@ Sliding-window cluster detection groups consecutive flagged triples
 python scripts/dataset/inspect_cluster_neighbors.py \
     --root <your-output-tree>/llama405b_assessed \
     --clusters-jsonl output/garbage_clusters_<ts>.jsonl \
-    --sample-n 5
+    --n-clusters 5 \
+    --output output/cluster_neighbors_report.jsonl
 ```
 
 Eyeball the printed neighbours; tighten `--cluster-gap` / `--cluster-pad`
