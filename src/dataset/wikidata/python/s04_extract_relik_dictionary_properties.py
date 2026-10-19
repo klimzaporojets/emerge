@@ -17,7 +17,7 @@ import xml
 
 from dataset.wikipedia.misc.article_queue import ArticleReadingQueue
 from dataset.wikipedia.misc.seven_zip_reader import SevenZipStreamDecompressor
-from dataset.wikidata.python.misc.wikidata_history_dictionary_extractor_v1 import WikidataHistoryDictionaryExtractorV1
+from dataset.wikidata.python.misc.wikidata_history_dictionary_extractor import WikidataHistoryDictionaryExtractorV1
 import os
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',

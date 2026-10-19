@@ -33,7 +33,7 @@ fi
 ############################
 # Environment setup
 ############################
-source /home/user/.bashrc
+source ~/.bashrc
 cd /path/to/emerge/
 git pull
 

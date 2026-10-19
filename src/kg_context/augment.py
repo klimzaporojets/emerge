@@ -288,8 +288,8 @@ def _effective_triples(kgc: dict, source: str, op_match, max_kg_rag: int = -1) -
     # of the retriever score of the head entity + the relation type + the tail entity (from the kg_rag
     # pools; a piece absent from its pool contributes 0). Additive per-passage ranking -> the edges whose
     # ends AND relation the retriever surfaced most confidently come first.
-    e_score = {e["qid"]: e.get("score", 0.0) for e in kgc["kg_rag_entities"]}
-    r_score = {r["pid"]: r.get("score", 0.0) for r in kgc["kg_rag_relations"]}
+    e_score = {e["qid"]: e["score"] for e in kgc["kg_rag_entities"]}
+    r_score = {r["pid"]: r["score"] for r in kgc["kg_rag_relations"]}
 
     def _triple_score(t: dict) -> float:
         h, r, tl = t["triple_qids"]

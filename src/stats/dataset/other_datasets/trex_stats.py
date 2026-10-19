@@ -45,7 +45,7 @@ def main() -> int:
         "--zip",
         required=False,
         help="Path to trex_nif.zip",
-        default="/mnt/data/projects/msca-kgs/trex/TREx_NIF.zip",
+        default="/path/to/data/trex/TREx_NIF.zip",
     )
     ap.add_argument("--chunk_mb", type=int, default=4, help="Read size per chunk (MB)")
     args = ap.parse_args()

@@ -14,7 +14,6 @@ from nltk.translate.bleu_score import sentence_bleu
 from nltk.translate.bleu_score import SmoothingFunction
 from scipy.optimize import linear_sum_assignment
 from spacy.lang.en import English
-import networkx as nx
 from sklearn import preprocessing
 from sklearn.metrics import precision_score, recall_score, f1_score
 

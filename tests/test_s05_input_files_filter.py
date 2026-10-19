@@ -1,7 +1,7 @@
 """Regression test for the file-iteration filter in the s05 entry point.
 
 Background: job 22442903/22442904 (2026-05-03) wasted 4 H100-hours each
-because `s05_generate_dataset_with_llm_v8.py:167` called `exit(0)` instead
+because `s05_generate_dataset_with_llm.py:167` called `exit(0)` instead
 of `continue` when the iteration encountered an input file not listed in
 `input_files_to_process`. Result: the moment the OS-level file iteration
 hit any unlisted file, the entire script terminated cleanly with exit 0,
@@ -19,7 +19,7 @@ import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ENTRY = ROOT / "src" / "dataset" / "emerge" / "s05_generate_dataset_with_llm_v8.py"
+ENTRY = ROOT / "src" / "dataset" / "emerge" / "s05_generate_dataset_with_llm.py"
 
 
 def _find_input_files_to_process_filter(tree: ast.AST):

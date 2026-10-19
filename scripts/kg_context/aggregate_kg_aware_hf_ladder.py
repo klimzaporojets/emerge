@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """Aggregate the HF-validation score pkl into a per-op ladder and (optionally) diff it
-against the published rebuttal ladder.
+against the published KG-aware ladder.
 
-This is the AGGREGATE step of the end-to-end validation (see
-rebuttal/neurips_2026/hf_incorporation_plan.md step 4b). It reads the SINGLE pkl produced by
-one `s0x_evaluate_predictions` pass over the merged HF file
+This is the AGGREGATE step of the end-to-end validation. It reads the SINGLE pkl produced by
+one `s04_evaluate_predictions` pass over the merged HF file
 (output/evaluation_set_with_kg_aware/) scored with config
-config/evaluation/s0x_evaluate_predictions/20260803_kg_aware_hf_validation/config.json, and
+config/evaluation/s04_evaluate_predictions/20260803_kg_aware_hf_validation/config.json, and
 for each of the 3 KG-aware model keys prints C / G-BERTScore-R / Executable-R per TKGU op —
 using the SAME aggregation as scripts/kg_context/score_kg_prompt.py (stats.evaluation.load_results,
 405B-assessor GT filter, >0.9 completeness threshold, per-op mean x100). If --compare-ladder is
@@ -14,7 +13,7 @@ given (the published output/kg_prompts_scored/20260727_native_3500/ladder_table.
 (variant, op) to that ladder's (point, op) and prints the delta — a match proves the consolidated
 per-instance HF file reproduces the ladder, i.e. the format is faithful end-to-end.
 
-Usage (Snellius, PYTHONPATH=src; CPU-only, reads the pkl — no GPU needed):
+Usage (PYTHONPATH=src; CPU-only, reads the pkl — no GPU needed):
     PYTHONPATH=src python scripts/kg_context/aggregate_kg_aware_hf_ladder.py \
         --pkl   output/kg_prompts_scored/20260803_hf_validation/wiki_eval_result.pkl \
         --out-csv output/kg_prompts_scored/20260803_hf_validation/hf_ladder.csv \

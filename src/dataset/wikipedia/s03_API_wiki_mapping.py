@@ -3,7 +3,7 @@ FastAPI server that loads Wikipedia SQL tables, redirect maps,
 and QID mappings into memory. Used by s03_extract_entity_descriptions.py to
 resolve page IDs to QIDs and check entity creation timestamps.
 
-Based on s08_API_v1_wiki_mapping.py from wikidata-temp/wikipedia-temp.
+Based on s08_API_wiki_mapping.py from wikidata-temp/wikipedia-temp.
 """
 
 import argparse

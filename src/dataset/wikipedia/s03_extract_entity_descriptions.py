@@ -6,7 +6,7 @@
 # Requires s03_API_wiki_mapping.py to be running (FastAPI server that resolves
 # page IDs to QIDs and provides creation timestamps).
 #
-# Based on s08_extract_relik_dictionary.py from wikidata-temp/wikipedia-temp.
+# Based on s08_extract_relik_index.py from wikidata-temp/wikipedia-temp.
 
 import argparse
 import json
@@ -23,7 +23,7 @@ import xml.sax
 
 from .misc.article_queue import ArticleReadingQueue
 from .misc.seven_zip_reader import SevenZipStreamDecompressor
-from .misc.wikipedia_history_dictionary_extractor_v1 import WikipediaHistoryDictionaryExtractorV1
+from .misc.wikipedia_history_dictionary_extractor import WikipediaHistoryDictionaryExtractorV1
 
 _LOG_LEVEL = logging._nameToLevel.get(
     os.environ.get('LOGGING_LEVEL', '').strip(), logging.INFO

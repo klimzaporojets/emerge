@@ -11,7 +11,7 @@ import os
 
 import pandas as pd
 
-from dataset.emerge.utils.s09_annotate_dataset_utils_v4 import get_annotation_statistics, \
+from dataset.emerge.utils.s09_annotate_dataset_utils import get_annotation_statistics, \
     merge_annotations, get_print_annotation_statistics_w_humans, return_paper_stats
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',

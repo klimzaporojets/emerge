@@ -59,7 +59,7 @@ def iter_corpus(corpus_dir, excl_hids, excl_pass):
             if not l.strip():
                 continue
             r = json.loads(l)
-            if r.get("hash_id") in excl_hids or r.get("passage", "").strip() in excl_pass:
+            if r["hash_id"] in excl_hids or r["passage"].strip() in excl_pass:
                 continue
             yield r
 
@@ -90,7 +90,7 @@ def passes_qa(passage):
 def verified_by_op(inst):
     """{op_label: [triple,...]} for triples that pass Rule-C, grouped by primary op."""
     out = {}
-    for t in inst.get("tkgu_triples", []):
+    for t in inst["tkgu_triples"]:
         op = primary_op(t)
         if op and keep_triple_rule_c(t):
             out.setdefault(OP_LABEL[op], []).append(t)
@@ -108,9 +108,9 @@ def render_answer(triples):
         q, lab = t["triple"], t["triple_labels"]
         op = OP_LABEL[primary_op(t)]
         arr.append({"operation": OP_OUT[op],
-                    "head": _elem(q[0], lab[0], t.get("emerging_head", False)),
+                    "head": _elem(q[0], lab[0], t["emerging_head"]),
                     "relation": {"label": lab[1], "id": q[1]},
-                    "tail": _elem(q[2], lab[2], t.get("emerging_tail", False))})
+                    "tail": _elem(q[2], lab[2], t["emerging_tail"])})
     return json.dumps(arr, ensure_ascii=False)
 
 

@@ -224,7 +224,7 @@ class EMERGEPreLoader(EvaluationPreLoader):
                             # A2: drop DEPRECATE gold whose FULL triple (s,p,o) is absent from
                             # T_t (violates the deprecate precondition). Checks the whole triple,
                             # NOT just the subject (144 vs 46 over all 7 snapshots; Exists control
-                            # 99.3% confirms T_t is triple-complete -- see camera-ready runbook).
+                            # 99.3% confirms T_t is triple-complete).
                             # Skipping here keeps all parallel gold lists index-aligned. No-op when
                             # the flag is off or the year's snapshot is unavailable.
                             if self.exclude_deprecate_not_in_snapshot:

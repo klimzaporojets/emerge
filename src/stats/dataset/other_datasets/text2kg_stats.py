@@ -55,7 +55,7 @@ def iter_jsonl_files_under(d: str) -> List[str]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", required=False,
-                    default='/path/to/data
+                    default='/path/to/data/text2kg',
                     help="Root directory to search recursively")
     args = ap.parse_args()
 

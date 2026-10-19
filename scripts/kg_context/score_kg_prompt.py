@@ -9,9 +9,9 @@ Three phases, all driven by one config (config/kg_context/20260725_kg_prompt_lad
              carries the gold `tkgu_triples` + 405B `llm_assessment`) under alias `kg-prompt`
              / model_type `kg-gen`. Writes a scoreable per-point tree. No GPU / no LLM.
 
-  score      For each point, run `python -m evaluation.s0x_evaluate_predictions` UNCHANGED,
+  score      For each point, run `python -m evaluation.s04_evaluate_predictions` UNCHANGED,
              overriding input_dataset_path / output_path / cache_path per point on the CLI.
-             GPU + KG snapshots — run on a Snellius compute node, NOT the login node. One run
+             GPU + KG snapshots — run on a GPU compute node, NOT a cluster login node. One run
              per point is REQUIRED: the preloader asserts each hash_id appears once, and the
              same passage recurs across conditions, so points cannot share a single tree.
 
@@ -233,7 +233,7 @@ def phase_merge(config: dict, dry_run: bool) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Phase 2: score (drives s0x_evaluate_predictions UNCHANGED, one run per point)
+# Phase 2: score (drives s04_evaluate_predictions UNCHANGED, one run per point)
 # ---------------------------------------------------------------------------
 
 def _point_pkl_path(config: dict, point: str) -> str:

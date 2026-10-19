@@ -31,7 +31,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--input",
                     required=False,
-                    default='/mnt/data/projects/msca-kgs/docred/train_distant.json',
+                    default='/path/to/data/docred/train_distant.json',
                     help="Path to huge JSON file")
     ap.add_argument(
         "--entity_key",

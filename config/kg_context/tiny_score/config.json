@@ -10,8 +10,8 @@
   "target_alias": "kg-prompt",
   "predictions_model_type": "kg-prompt",
   "predictions_model_config_name": "kg_prompt_gpt_5_1",
-  "eval_config_file": "config/evaluation/s0x_evaluate_predictions/20260725_kg_prompt_ladder/config.json",
-  "python_module_score": "evaluation.s0x_evaluate_predictions",
+  "eval_config_file": "config/evaluation/s04_evaluate_predictions/20260725_kg_prompt_ladder/config.json",
+  "python_module_score": "evaluation.s04_evaluate_predictions",
   "assessors": {
     "triple_assertion": "Meta-Llama-3.1-405B_prompt_v1",
     "triple_deprecation": "Meta-Llama-3.1-405B_prompt_v1"

@@ -5,14 +5,12 @@ triple must be present in the current KG snapshot T_t (you cannot deprecate an e
 there). Triples that violate this are mislabeled and are dropped when the evaluation runs with
 ArgsEvaluation.exclude_deprecate_not_in_snapshot=True (see preloader_emerge).
 
-IMPORTANT — this checks the FULL triple, not just the subject. Verified on all 7 snapshots
-(see writeup/iclr_2027/iclr_final_camera_ready_neurips.md):
+IMPORTANT — this checks the FULL triple, not just the subject. Verified on all 7 snapshots:
   * full-triple (s,p,o) not in T_t : 144 / 1628  -> corrected denominator 1484   [THE correct check]
   * subject not in V_t             :  46 / 1628                                   (too weak)
   * control: Exists gold full-triple IN T_t = 99.3% -> the snapshot IS triple-complete, so a
     missing full triple is a real precondition violation, not a snapshot-coverage artifact.
 Kept free of pandas/torch so the logic can be tested in <0.1s in any environment.
-See rebuttal/neurips_2026/BUG_deprecate_not_in_snapshot_gold.md.
 """
 
 

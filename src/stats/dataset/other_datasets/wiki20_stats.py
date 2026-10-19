@@ -26,7 +26,7 @@ from typing import Set
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir",
-                    default='/mnt/data/projects/msca-kgs/wiki20/wiki20m',
+                    default='/path/to/data/wiki20/wiki20m',
                     required=False,
                     help="Directory containing *.txt files")
     ap.add_argument(

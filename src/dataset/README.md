@@ -31,18 +31,18 @@ Wikidata/Wikipedia dumps to the final 3,500-instance evaluation set used in the 
 >   timestamps: `src/dataset/wikipedia/{s02_normalize_entity_creation_date,s02b_normalize_history_graph,s03_extract_entity_descriptions}.py`;
 >   SLURM `scripts/slurm/wikipedia/s02_*.sh`.
 > - **emerge s03–s04** — Match WP passages with WD deltas → filter for KG-relevant
->   snippets: `src/dataset/emerge/{s03_obtain_textual_delta_snippets_v8,s04_find_interesting_snippets_v3}.py`.
+>   snippets: `src/dataset/emerge/{s03_obtain_textual_delta_snippets,s04_find_interesting_snippets}.py`.
 > - **s05 LLM assessment (Llama 8B + Llama 405B, prompts v1):**
->   - Python runner: `src/dataset/emerge/s05_generate_dataset_with_llm_v8.py`
->   - SLURM 405B submitter: `scripts/slurm/dataset/s05_generate_dataset_with_llm_v9_llama405b.sh`
->   - SLURM 8B variant: `scripts/slurm/dataset/s05_generate_dataset_with_llm_v9_llama8b.sh`
->   - Fault-tolerant TGI/Apptainer restart loop: `scripts/slurm/dataset/s05_restart_apptainer_llama400b_v5.sh`
+>   - Python runner: `src/dataset/emerge/s05_generate_dataset_with_llm.py`
+>   - SLURM 405B submitter: `scripts/slurm/dataset/s05_generate_dataset_with_llm_llama405b.sh`
+>   - SLURM 8B variant: `scripts/slurm/dataset/s05_generate_dataset_with_llm_llama8b.sh`
+>   - Fault-tolerant TGI/Apptainer restart loop: `scripts/slurm/dataset/s05_restart_apptainer_llama400b.sh`
 >   - Prompt templates: `src/dataset/emerge/prompts/prompts_v1/` (single/multi assert + deprecate)
 >   - Configs: `config/dataset/emerge/s05_generate_dataset_with_llm/{20251216_v8_llama_405b_v1, 20260502_v8_llama_405b_v1_complete_dataset}/`
-> - **s06b/s07/s07b/s07c** — Reformat → dedup → 35K subsample → 3.5K subsample:
->   `src/dataset/emerge/{s06b_refactor_final_format,s07_reduce_duplicates_v6,s07b_subsample_dataset,s07c_verify_duplicates}.py`.
+> - **s06/s07/s07b/s07c** — Reformat → dedup → 35K subsample → 3.5K subsample:
+>   `src/dataset/emerge/{s06_refactor_final_format,s07_reduce_duplicates,s07b_subsample_dataset,s07c_verify_duplicates}.py`.
 > - **s08** — Extract ReLiK entity index from Wikipedia:
->   `src/dataset/emerge/s08_*.py`; SLURM `scripts/slurm/dataset/s08_extract_relik_dictionary.sh`.
+>   `src/dataset/emerge/s08_*.py`; SLURM `scripts/slurm/dataset/s08_extract_relik_index.sh`.
 > - **s09** — Human annotation + agreement statistics:
 >   `src/dataset/emerge/s09{a,b,c,d,e}_*.py`.
 > - **Part 3 — Garbage QA / quality control of LLM annotations:**
@@ -82,8 +82,8 @@ Wikidata/Wikipedia dumps to the final 3,500-instance evaluation set used in the 
 >   LLM-labelled corpus — already past this stage, so it can't be used as input to
 >   re-run s05. To run s05 you'd need the s04-output candidate set (~1.19M unlabelled
 >   snippets), which we don't redistribute.
-> - **s06b–s09**: depends on s05 output; while `data/corpus/` is post-s05, none of
->   s06b–s09 has been smoke-tested for public use against it.
+> - **s06–s09**: depends on s05 output; while `data/corpus/` is post-s05, none of
+>   s06–s09 has been smoke-tested for public use against it.
 >
 > **Configs are placeholders:** every JSON under `config/dataset/` uses
 > `/path/to/storage/...` strings as a structural template. Rewriting them for your
@@ -123,7 +123,7 @@ Raw Wikipedia dumps ─→ [WP s01-s03] ──→ Entity descriptions + hyperlin
                                               │
                               [s05] LLM assessment (Llama 8B + 405B)
                                               │
-                              [s06b] Reformat into TKGU format
+                              [s06] Reformat into TKGU format
                                               │
                               [s07] Deduplicate passages
                                               │
@@ -611,7 +611,7 @@ Located in `src/dataset/emerge/`.
 
 ```
 s05_v4 (early LLM assessment, llama400b)
-  → s06b (reformat into TKGU format, generate hash IDs)
+  → s06 (reformat into TKGU format, generate hash IDs)
   → s05_v8 (8B assertion) → s05_v8 (405B deprecation)
   → s07 (deduplicate by textual similarity + triple-level dedup)
   → s07b (stratified subsample: full 35K, then tiny 3.5K from full)
@@ -632,15 +632,15 @@ Merge step (src/merge/):
 - `Meta-Llama-3.1-405B`: deprecation assessment, baked into dataset at s05_v8 step
 - `Meta-Llama-3.1-405B_prompt_v1`: full re-assessment (assertion), applied via merge step
 
-### s06b — reformat final format
+### s06 — reformat final format
 
 Reformats old s05_v4 LLM assessment output into the TKGU format used by the evaluation pipeline.
 Generates hash IDs, renames assessments, assigns TKGU operations (Exists, Add, Mint+Add, Infer, Deprecate).
 
 ```bash
 export PYTHONPATH="$PWD/src"
-python -u -m dataset.emerge.s06b_refactor_final_format \
-    --config_file config/dataset/emerge/s06b_refactor_final_format/20250830/config.json
+python -u -m dataset.emerge.s06_refactor_final_format \
+    --config_file config/dataset/emerge/s06_refactor_final_format/20250830/config.json
 ```
 
 ### s07 — reduce duplicates (v6)
@@ -653,7 +653,7 @@ Requires `input_relation_dictionaries` (per-snapshot `documents.jsonl` from s08_
 
 ```bash
 export PYTHONPATH="$PWD/src"
-python -u -m dataset.emerge.s07_reduce_duplicates_v6 \
+python -u -m dataset.emerge.s07_reduce_duplicates \
     --config_file config/dataset/emerge/s07_reduce_duplicates/20250910/config.json
 ```
 
@@ -673,7 +673,7 @@ export PYTHONPATH="$PWD/src"
 python -u -m dataset.emerge.s07b_subsample_dataset \
     --config_file config/dataset/emerge/s07b_subsample_dataset/20250910/config.json
 
-# Tiny 3.5K for ICML (drawn from the full 35K):
+# Tiny 3.5K subset (drawn from the full 35K):
 python -u -m dataset.emerge.s07b_subsample_dataset \
     --config_file config/dataset/emerge/s07b_subsample_dataset/20251203_tiny/config.json
 ```
@@ -705,7 +705,7 @@ Two assessment modes:
 
 ```bash
 # On HPC cluster (sbatch):
-sbatch scripts/slurm/dataset/s05_generate_dataset_with_llm_v9_llama405b.sh \
+sbatch scripts/slurm/dataset/s05_generate_dataset_with_llm_llama405b.sh \
     config/dataset/emerge/s05_generate_dataset_with_llm/20260502_v8_llama_405b_v1_complete_dataset/config.json \
     Meta-Llama-3.1-405B_prompt_v1
 ```
@@ -718,19 +718,19 @@ Loads full Wikidata KG graph (.pt tensor, ~18GB) to GPU, matches candidate snipp
 
 ```bash
 sbatch scripts/slurm/dataset/s04_find_interesting_snippets.sh \
-    config/dataset/emerge/s04_find_interesting_snippets_v3/20250413/config.json \
+    config/dataset/emerge/s04_find_interesting_snippets/20250413/config.json \
     logs/s04_20250413.log
 ```
 
 ### s03 — textual delta snippets (v8, API-dependent)
 
 Extracts textual context for KG deltas from Wikipedia history dumps. Requires 2 API services running:
-1. `s03_API_v6_wiki_mapping.py` — Wikipedia→Wikidata mapping (CPU)
-2. `s03_API_v8_only_deltas.py` — delta triple lookup (optional GPU)
+1. `s03_API_wiki_mapping.py` — Wikipedia→Wikidata mapping (CPU)
+2. `s03_API_only_deltas.py` — delta triple lookup (optional GPU)
 
 ```bash
-sbatch scripts/slurm/dataset/s03_obtain_textual_delta_snippets_v8.sh \
-    config/dataset/emerge/s03_obtain_textual_delta_snippets_v8/20250324/config.json \
+sbatch scripts/slurm/dataset/s03_obtain_textual_delta_snippets.sh \
+    config/dataset/emerge/s03_obtain_textual_delta_snippets/20250324/config.json \
     20250324 8000 1 8200 20 logs/s03_20250324.log 36 cuda:0 cuda:1
 ```
 
@@ -738,10 +738,10 @@ sbatch scripts/slurm/dataset/s03_obtain_textual_delta_snippets_v8.sh \
 
 ### s08 — extract ReLiK dictionary (API-dependent)
 
-Extracts entity/relation dictionaries for ReLiK benchmark. Uses its own API: `s08_API_v1_wiki_mapping.py`.
+Extracts entity/relation dictionaries for ReLiK benchmark. Uses its own API: `s08_API_wiki_mapping.py`.
 
 ```bash
-sbatch scripts/slurm/dataset/s08_extract_relik_dictionary.sh \
+sbatch scripts/slurm/dataset/s08_extract_relik_index.sh \
     config/dataset/emerge/s08_extract_relik_index/20250405/config.json \
     20250405 8000 1
 ```
@@ -757,13 +757,13 @@ Located in `src/dataset/emerge/`:
 
 | Script | What it does |
 |--------|-------------|
-| `s09a_subsample_to_annotate_v4.py` | Stratified subsample for annotation (balanced TKGU operations) |
-| `s09b_annotate_dataset_v4.py` | Interactive terminal annotation tool (Y/N per triple) |
+| `s09a_subsample_to_annotate.py` | Stratified subsample for annotation (balanced TKGU operations) |
+| `s09b_annotate_dataset.py` | Interactive terminal annotation tool (Y/N per triple) |
 | `s09c_filter_out_not_annotated.py` | Filter out unannotated instances |
 | `s09d_show_and_fix_disagreements.py` | Review and resolve inter-annotator disagreements |
 | `s09e_annotation_stats_for_paper.py` | Compute annotation agreement: Cohen's kappa, Fleiss' kappa, Krippendorff's alpha |
 
-Shared utility: `utils/s09_annotate_dataset_utils_v4.py` (agreement metrics, annotation processing).
+Shared utility: `utils/s09_annotate_dataset_utils.py` (agreement metrics, annotation processing).
 
 **Annotation agreement for the paper** (Table in appendix):
 ```bash
@@ -820,7 +820,7 @@ python -u -m dataset.wikidata.python.s06_rename_relik_dictionary_properties \
 Long LLM annotation runs occasionally produce this kind of off-rails
 output, especially when serving via quantised TGI. EMERGE applied an
 iterative **detect → reinput → re-run → merge** loop on the
-233K-record corpus to catch and re-query these cases. The loop
+233K-instance corpus to catch and re-query these cases. The loop
 converged in 3 iterations (871 → 240 → 220 flagged triples on each
 pass; final residual rate ≈0.011%).
 
@@ -897,7 +897,7 @@ s05 in single-file mode.
 
 This step is HPC-bound (it actually invokes the 405B LLM). Use the
 existing
-[`scripts/slurm/dataset/s05_generate_dataset_with_llm_v9_llama405b.sh`](../../scripts/slurm/dataset/s05_generate_dataset_with_llm_v9_llama405b.sh)
+[`scripts/slurm/dataset/s05_generate_dataset_with_llm_llama405b.sh`](../../scripts/slurm/dataset/s05_generate_dataset_with_llm_llama405b.sh)
 (or your equivalent), pointing it at the reinput tree as input. The
 per-triple skip-resume logic in s05 ensures only triples missing a
 `Meta-Llama-3.1-405B_prompt_v1` entry get re-queried.

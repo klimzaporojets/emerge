@@ -1,5 +1,5 @@
 {
-  "_comment": "AUGMENT_KG_CONTEXT coverage run — AIDA entity retriever (relik-retriever-e5-base-v2-aida-blink, e5-base 768-dim; entity_config_name=sapienzanlp/relik-entity-linking-large), native relik-cie-large relations. All 7 snapshots, all 5 TKGU operations, retrieve_top_k=124 for recall@k coverage analysis (see coverage_report.py). Pairs with 20260726_coverage_native for a native-vs-AIDA retriever comparison. Paths are repo-relative: symlink data/* to the real data (indices, snapshots) — on Snellius point them at the cluster copies.",
+  "_comment": "AUGMENT_KG_CONTEXT coverage run — AIDA entity retriever (relik-retriever-e5-base-v2-aida-blink, e5-base 768-dim; entity_config_name=sapienzanlp/relik-entity-linking-large), native relik-cie-large relations. All 7 snapshots, all 5 TKGU operations, retrieve_top_k=124 for recall@k coverage analysis (see coverage_report.py). Pairs with 20260726_coverage_native for a native-vs-AIDA retriever comparison. Paths are repo-relative: symlink data/* to the real data (indices, snapshots) — on a cluster, point them at the cluster copies.",
   "eval_set_dir": "data/evaluation_set",
   "output_dir": "output/kg_context/20260726_coverage_aida",
   "sample": {

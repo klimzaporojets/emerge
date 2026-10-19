@@ -1,5 +1,11 @@
+import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import words
+
+# Ensure the required NLTK corpora are present before we access them at import
+# time (any module that imports this one must not depend on a prior download).
+nltk.download('words', quiet=True)
+nltk.download('punkt', quiet=True)
 
 # Load the list of English words
 english_words = set(words.words())

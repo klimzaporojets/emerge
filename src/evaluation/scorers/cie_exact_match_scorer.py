@@ -39,7 +39,7 @@ def calculate_cie_exact_match(
     This makes cie-recall consistent with completeness / graph-judge, which aggregate per-triple and
     therefore already drop such instances (an instance with 0 valid gold triples contributes nothing).
     With False, an empty gold set yields recall `0/0 -> 0` and the instance is kept (dragging the mean).
-    See rebuttal/neurips_2026/BUG_er_empty_gold_population.md. Toggle uniformly across ALL models.
+    Toggle uniformly across ALL models.
 
     Returns dict with 'scores_per_instance' key containing metric rows.
     """

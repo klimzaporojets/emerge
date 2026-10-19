@@ -45,7 +45,7 @@ def main():
 
     config = json.load(open(args.config, 'rt'))
 
-    from relik_benchmark_v2 import RelikBenchmarkV2
+    from relik_benchmark import RelikBenchmarkV2
     from experiment_executor import ExperimentExecutor
 
     for curr_benchmark_model in config['benchmark_models']:

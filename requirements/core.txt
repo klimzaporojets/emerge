@@ -42,7 +42,16 @@ lz4>=4.0
 pandas>=2.0
 numpy>=1.24
 matplotlib>=3.7
+seaborn>=0.13
 tqdm>=4.65
 
 # Jupyter (for stats notebooks)
 jupyter
+
+# Optional: only for the cross-dataset comparison scripts under
+# src/stats/dataset/other_datasets/ (each also needs its external dataset
+# downloaded separately). Safe to skip if you are not reproducing those tables.
+datasets>=2.14
+ijson>=3.0
+jsonlines>=4.0
+pyarrow>=14.0

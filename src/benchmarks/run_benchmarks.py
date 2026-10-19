@@ -163,7 +163,7 @@ def main():
                 args=relik_args,
             )
         elif curr_model in ('edc_plus', 'edc'):
-            # EDC/EDC+ uses its own config format (s01_run_v3.py).
+            # EDC/EDC+ uses its own config format (s01_run.py).
             # The experiment config must include 'edc_config' pointing to the
             # EDC config JSON, and optionally 'postprocess_config'.
             edc_args = [

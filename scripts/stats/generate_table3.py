@@ -15,7 +15,7 @@ aggregation used for the paper table, via `src/stats/evaluation/load_results.py`
 Usage (run from the emerge repo root, after ./scripts/run/evaluate.sh has produced the pkl):
 
     PYTHONPATH="$PWD/src" python scripts/stats/generate_table3.py \
-        --pkl output/s0x_evaluate_predictions/20260324_all_models_with_zs_fixed_with_kg/wiki_eval_result.pkl \
+        --pkl output/s04_evaluate_predictions/20260324_all_models_with_zs_fixed_with_kg/wiki_eval_result.pkl \
         --compare
 
 `--compare` prints PASS/FAIL vs the published Table 3 (tolerance 0.05 for rounding).

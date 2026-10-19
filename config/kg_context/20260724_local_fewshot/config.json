@@ -1,5 +1,5 @@
 {
-  "_comment": "Local few-sample GATHER of KG-context components (rebuttal Task 1). CPU only. AUGMENT emits ONE component file per passage (raw passage + kg_context = kg_rag_*/oracle_* lists with scores); conditions (kg_rag/only_oracle/oracle_pieces/oracle_triples, k, ...) are composed at experiment time by compose_block/GENERATE. See rebuttal_baseline.md CONDITION LADDER + EXPERIMENT_SPACE.",
+  "_comment": "Local few-sample GATHER of KG-context components. CPU only. AUGMENT emits ONE component file per passage (raw passage + kg_context = kg_rag_*/oracle_* lists with scores); conditions (kg_rag/only_oracle/oracle_pieces/oracle_triples, k, ...) are composed at experiment time by compose_block/GENERATE.",
 
   "eval_set_dir": "data/evaluation_set",
   "output_dir": "output/kg_context/20260724_local_fewshot",

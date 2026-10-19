@@ -40,7 +40,7 @@ ok "download_data.sh"
 # ---- 2. --help on every ported script ----
 echo "[2/4] --help on each ported script in scripts/dataset/ + scripts/stats/"
 for script in scripts/dataset/{find_garbage_clusters,inspect_cluster_neighbors,build_reinput_for_garbage,merge_reinput_into_dataset}.py \
-              scripts/stats/{compute_405bv1_dataset_stats,figures_dataset_stats_v2_405bv1,figure_tkgu_distribution_v2_405bv1}.py; do
+              scripts/stats/{compute_405bv1_dataset_stats,figures_dataset_stats_405bv1,figure_tkgu_distribution_405bv1}.py; do
     python3 "$script" --help >/dev/null 2>&1 || fail "$script --help failed (import error or argparse breakage)"
 done
 ok "all 7 scripts parse argparse cleanly"

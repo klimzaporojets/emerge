@@ -13,7 +13,7 @@
 config_file=$1
 output_log=$2
 
-source /home/user/.bashrc
+source ~/.bashrc
 cd /path/to/emerge
 git pull
 
@@ -24,7 +24,7 @@ conda activate emerge
 #--second_run_cat_sorted 2>&1 | tee $output_log
 
 export PYTHONPATH="$PWD/src"
-python -u -m dataset.emerge.s04_find_interesting_snippets_v3 \
+python -u -m dataset.emerge.s04_find_interesting_snippets \
   --config_file $config_file \
   --device cuda:0 \
   --device2 cuda:0 \

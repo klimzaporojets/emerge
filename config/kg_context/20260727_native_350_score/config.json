@@ -1,5 +1,5 @@
 {
-  "_help": "2026-07-27 all-on-Snellius re-score (405B-filter fix + exists nudge + Add op-tag fix). gold=full 20260727 compose, scoped to the 350 via hash_ids_file at merge; preds=20260727 predict. 15 cells, kg-prompt vs EDC+.",
+  "_help": "2026-07-27 all-on-cluster re-score (405B-filter fix + exists nudge + Add op-tag fix). gold=full 20260727 compose, scoped to the 350 via hash_ids_file at merge; preds=20260727 predict. 15 cells, kg-prompt vs EDC+.",
   "gold_base_dir": "./output/kg_prompts/20260727_native_350",
   "pred_base_dir": "./output/kg_prompts_pred/20260727_native_350",
   "merged_base_dir": "./output/kg_prompts_scored/20260727_native_350_v2/merged",
@@ -10,8 +10,8 @@
   "target_alias": "kg-prompt",
   "predictions_model_type": "kg-prompt",
   "predictions_model_config_name": "kg_prompt_gpt_5_1",
-  "eval_config_file": "./config/evaluation/s0x_evaluate_predictions/20260725_kg_prompt_ladder/config.json",
-  "python_module_score": "evaluation.s0x_evaluate_predictions",
+  "eval_config_file": "./config/evaluation/s04_evaluate_predictions/20260725_kg_prompt_ladder/config.json",
+  "python_module_score": "evaluation.s04_evaluate_predictions",
   "assessors": {
     "triple_assertion": "Meta-Llama-3.1-405B_prompt_v1",
     "triple_deprecation": "Meta-Llama-3.1-405B_prompt_v1"

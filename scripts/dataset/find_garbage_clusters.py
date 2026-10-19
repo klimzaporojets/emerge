@@ -54,7 +54,7 @@ JSONL schema for each cluster:
     }
 
 Usage (read-only on any 405B-style annotation tree, e.g. the output of
-your own `s05_generate_dataset_with_llm_v9_llama405b.sh` run):
+your own `s05_generate_dataset_with_llm_llama405b.sh` run):
 
     python scripts/dataset/find_garbage_clusters.py \\
         --root <your-output-tree>/llama405b_assessed \\

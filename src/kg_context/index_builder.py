@@ -6,7 +6,7 @@ EVERY distinct relation label of a snapshot ONCE, so RETRIEVE can find candidate
 index-wide by passage nearest-neighbor. NO graph traversal, no anchor neighborhoods.
 
 Big one-time job (a snapshot has millions of distinct entities) -> run on GPU
-(Snellius, `--device cuda`); the code is device-configurable. For local dev, build a
+(`--device cuda`); the code is device-configurable. For local dev, build a
 small index from a `*_top_N.tsv` snapshot with `--device cpu`.
 
 Outputs, per index, under <out_dir>/<kind>/ (kind = entities | relations):

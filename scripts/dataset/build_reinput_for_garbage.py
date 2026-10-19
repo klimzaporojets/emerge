@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Build a re-input tree for the garbage 405B-v1 assessments, so a small
-sbatch can re-query ONLY the affected triples.
+re-query run can re-query ONLY the affected triples.
 
 Companion to `find_garbage_clusters.py` (which produced the cluster JSONL)
 and `inspect_cluster_neighbors.py` (which validated cluster boundaries

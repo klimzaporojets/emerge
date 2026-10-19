@@ -2,7 +2,7 @@
 callers and callees without running any LLM or loading the GPU.
 
 Background: job 22422141 (2026-05-02 1-h smoke test) burnt 1 H100-hour on 4,148
-identical TypeErrors because `s05_prompt_llm_utils_v8.py` calls
+identical TypeErrors because `s05_prompt_llm_utils.py` calls
 `get_prompt_from_config()` with 5 args, but the def in `s05_prompts.py` was
 extended to require 7. This test would have caught it in <1 second on a
 laptop with no GPU.
@@ -29,18 +29,18 @@ SRC = ROOT / "src"
 AUDIT_PAIRS: List[Tuple[str, str]] = [
     # The bug from job 22422141 lives in this pair.
     (
-        "dataset/emerge/utils/s05_prompt_llm_utils_v8.py",
+        "dataset/emerge/utils/s05_prompt_llm_utils.py",
         "dataset.emerge.utils.s05_prompts",
     ),
     # Parent caller of the prompt-LLM utils.
     (
-        "dataset/emerge/utils/s05_generate_dataset_utils_v8.py",
-        "dataset.emerge.utils.s05_prompt_llm_utils_v8",
+        "dataset/emerge/utils/s05_generate_dataset_utils.py",
+        "dataset.emerge.utils.s05_prompt_llm_utils",
     ),
     # Top-level entrypoint imports the utils.
     (
-        "dataset/emerge/s05_generate_dataset_with_llm_v8.py",
-        "dataset.emerge.utils.s05_generate_dataset_utils_v8",
+        "dataset/emerge/s05_generate_dataset_with_llm.py",
+        "dataset.emerge.utils.s05_generate_dataset_utils",
     ),
     # Parallel `get_prompt_from_config` lives in misc/llms — different caller chain,
     # but same shape, so audit it too to prevent the regression from creeping in.

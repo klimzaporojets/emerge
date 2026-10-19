@@ -2,15 +2,15 @@
 EDC / EDC+ wrapper for the benchmark pipeline.
 
 This wrapper bridges the ModelRunner CLI interface to the edc-tt2kg repo's
-s01_run_v3.py entry point. Unlike KG-GEN/RAKG/REBEL wrappers which process
+s01_run.py entry point. Unlike KG-GEN/RAKG/REBEL wrappers which process
 instances directly, EDC+ has its own config-driven execution with:
   - 3-stage LLM pipeline (OIE → Schema Definition → Schema Canonicalization)
   - Its own batch processing and checkpoint/resume logic
   - Per-snapshot processing with separate target schemas
 
 The wrapper receives a single --edc-config argument pointing to the EDC config
-JSON file, and forwards it to s01_run_v3.py. The postprocessing step
-(s02_postprocess_results_v2.py) is run separately after predictions are done.
+JSON file, and forwards it to s01_run.py. The postprocessing step
+(s02_postprocess_results.py) is run separately after predictions are done.
 
 Variants controlled by config:
   - EDC+ ICL (non-canonicalized): run_canonicalizer=false, prompt_templates_emerge/
@@ -38,7 +38,7 @@ logger = logging.getLogger('edc-plus-wrapper')
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--edc-config', required=True,
-                        help='Path to the EDC config JSON file (s01_run_v3 format)')
+                        help='Path to the EDC config JSON file (s01_run format)')
     parser.add_argument('--batch-size', type=int, default=10,
                         help='Batch size for EDC processing')
     parser.add_argument('--max-workers', type=int, default=32,
@@ -55,14 +55,14 @@ def main():
 
     # Locate the edc-tt2kg directory.
     # In emerge-prod (public repo) it ships in-tree as this wrapper's sibling.
-    # The legacy stage / Snellius setup uses an external repo via
-    # EDC_REPO_PATH; we honour that override for backward compatibility.
+    # The legacy setup uses an external repo via EDC_REPO_PATH; we honour
+    # that override for backward compatibility.
     WRAPPER_DIR = os.path.dirname(os.path.abspath(__file__))
     IN_TREE_EDC_REPO = os.path.join(WRAPPER_DIR, 'edc_tt2kg')
-    edc_repo = os.environ.get('EDC_REPO_PATH', IN_TREE_EDC_REPO)
-    if not os.path.isfile(os.path.join(edc_repo, 's01_run_v3.py')):
+    edc_repo = os.environ['EDC_REPO_PATH'] if 'EDC_REPO_PATH' in os.environ else IN_TREE_EDC_REPO
+    if not os.path.isfile(os.path.join(edc_repo, 's01_run.py')):
         raise RuntimeError(
-            f'Cannot find s01_run_v3.py at {edc_repo}. '
+            f'Cannot find s01_run.py at {edc_repo}. '
             f'Either the in-tree edc_tt2kg/ is missing or EDC_REPO_PATH '
             f'(currently {os.environ.get("EDC_REPO_PATH", "<unset>")}) '
             f'points at the wrong directory.'
@@ -74,12 +74,12 @@ def main():
     # so the subprocess MUST run with cwd=REPO_ROOT for those to resolve.
     REPO_ROOT = os.path.abspath(os.path.join(WRAPPER_DIR, '..', '..', '..', '..'))
 
-    # Step 1: Run EDC prediction pipeline (s01_run_v3.py)
+    # Step 1: Run EDC prediction pipeline (s01_run.py)
     # Pass the script as an absolute path (so the cwd doesn't matter for finding
-    # s01_run_v3.py itself), and set cwd=REPO_ROOT so the relative paths inside
+    # s01_run.py itself), and set cwd=REPO_ROOT so the relative paths inside
     # the config resolve correctly.
     edc_cmd = [
-        sys.executable, '-u', os.path.join(edc_repo, 's01_run_v3.py'),
+        sys.executable, '-u', os.path.join(edc_repo, 's01_run.py'),
         '--config_file', args.edc_config,
         '--batch_size', str(args.batch_size),
         '--max_workers', str(args.max_workers),
@@ -92,7 +92,7 @@ def main():
     # Step 2: Run postprocessing (optional)
     if args.postprocess_config:
         postprocess_cmd = [
-            sys.executable, '-u', os.path.join(edc_repo, 's02_postprocess_results_v2.py'),
+            sys.executable, '-u', os.path.join(edc_repo, 's02_postprocess_results.py'),
             '--config_file', args.postprocess_config,
         ]
         logger.info(f'Running EDC postprocessing (cwd={REPO_ROOT}): {" ".join(postprocess_cmd)}')

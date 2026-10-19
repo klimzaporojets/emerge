@@ -1,11 +1,10 @@
 """Tests for the A2 deprecate-precondition filter helpers in deprecate_snapshot_filter.
 
-Guards the fix in rebuttal/neurips_2026/BUG_deprecate_not_in_snapshot_gold.md:
+Guards the deprecate-precondition fix:
 a DEPRECATE gold triple (h,r,t) that is absent from the KG snapshot T_t violates the
 precondition (s,p,o) in T_t and must be dropped when exclude_deprecate_not_in_snapshot=True.
 
-CRUCIAL: the check is on the FULL triple, not just the subject. Verified on all 7 snapshots
-(writeup/iclr_2027/iclr_final_camera_ready_neurips.md): full-triple ∉ T_t = 144, subject ∉ V_t
+CRUCIAL: the check is on the FULL triple, not just the subject. Verified on all 7 snapshots: full-triple ∉ T_t = 144, subject ∉ V_t
 = 46; the extra 98 have a present subject but an absent edge, and must also be dropped.
 
 The helpers are pure functions, so this runs anywhere in <0.1s.

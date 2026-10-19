@@ -53,16 +53,35 @@ All paths in the configs are **repo-relative** (`data/...`, `output/...`) — no
 absolute or cluster path. Fetch the data with the repo's downloader:
 
 ```bash
-./scripts/download_data.sh --indices   # eval set + ReLiK indices
-./scripts/download_data.sh --kg        # 7 yearly Wikidata KG snapshots (needed by AUGMENT + SCORE)
+./scripts/download_data.sh --indices        # eval set + ReLiK relation indexes (~400MB)
+./scripts/download_data.sh --kg             # 7 yearly Wikidata KG snapshots (needed by AUGMENT + SCORE)
+./scripts/download_data.sh --entity-dicts   # KG-aware entity dictionaries, gzipped (~17GB all; opt-in)
 ```
 
 This provides:
 
 - `data/evaluation_set/` — the 3,500-instance test set
 - `data/kg_snapshots/kg_snapshot_{year}-01-01.tsv` — KG snapshots
-- `data/indices/relik_entity_index/` (native), `data/indices/relik_edc_relation_indexes/` (relations),
-  and `data/indices/relik_entity_index_aida/` (optional AIDA entity index)
+- `data/indices/relik_edc_relation_indexes/` — ReLiK/EDC+ **relation** indexes
+- `data/indices/relik_entity_index/<year>-01-01/documents.jsonl.gz` — the per-snapshot entity
+  **dictionaries** (gzipped text; `--entity-dicts`)
+
+> **AUGMENT needs a per-snapshot entity index** (`data/indices/relik_entity_index/<year>-01-01/`
+> with `documents.jsonl` + `embeddings.pt`). Only the gzipped **dictionaries** are hosted — the dense
+> `embeddings.pt` is not (float32, barely compresses). Rebuild it locally on a GPU (a few hours for the
+> full ~6M-entity dictionary; **no Wikipedia dumps needed**) with the `relik` env:
+>
+> ```bash
+> conda activate relik
+> python scripts/kg_context/s08b_build_relik_index.py \
+>     --documents data/indices/relik_entity_index/2019-01-01/documents.jsonl.gz \
+>     --out-dir   data/indices/relik_entity_index/2019-01-01 --device cuda
+> ```
+>
+> Fetch only the snapshots you need, e.g. `./scripts/download_data.sh --entity-dicts=2019-01-01`, and
+> build those. The AIDA variant `data/indices/relik_entity_index_aida/` is optional (retriever-ablation
+> configs only); build it the same way with `--encoder sapienzanlp/relik-entity-linking-large`. Without a
+> built entity index the AUGMENT step cannot retrieve entity candidates.
 
 **On a shared cluster** (where the data lives on a separate filesystem), symlink each `data/*`
 entry to that copy so the repo-relative configs resolve unchanged, e.g.:

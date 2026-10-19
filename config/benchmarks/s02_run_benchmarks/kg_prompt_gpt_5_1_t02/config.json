@@ -1,12 +1,12 @@
 {
   "input_dataset_base_path": "./data/evaluation_set/",
-  "output_base_dir": "./output/s02_run_benchmarks/kg_prompt_gpt_5_1/",
+  "output_base_dir": "./output/s02_run_benchmarks/kg_prompt_gpt_5_1_t02/",
   "wrapper_root": "./src/benchmarks/wrappers/",
   "models": [
     {
       "name": "kg_prompt",
       "output_path": "kg_prompt",
-      "cache_path": "./output/caches/kg-prompt/kg_prompt_cache_gpt5_1.jsonl",
+      "cache_path": "./output/caches/kg-prompt/kg_prompt_cache_gpt5_1_t02.jsonl",
       "model": "gpt-5.1-2025-11-13",
       "temperature": 0.2,
       "max_workers": 16,

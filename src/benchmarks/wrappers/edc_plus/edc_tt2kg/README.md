@@ -4,13 +4,13 @@
 >
 > **This wrapper adapts the upstream [EDC repository](https://github.com/clear-nus/edc).** The upstream `datasets/tt2kg/{kgs/, passages/}` data layout it uses **does not apply to EMERGE.**
 >
-> For EMERGE, the actual entry point is [`s01_run_v3.py`](s01_run_v3.py) in this directory, which reads from EMERGE's standard data layout produced by `./scripts/download_data.sh`:
+> For EMERGE, the actual entry point is [`s01_run.py`](s01_run.py) in this directory, which reads from EMERGE's standard data layout produced by `./scripts/download_data.sh`:
 >
 > 1. **Download the data** from the repo root:
 >    ```bash
 >    ./scripts/download_data.sh --indices
 >    ```
->    This fetches `data/indices/relik_edc_relation_indexes/` (~400 MB) which `s01_run_v3.py` hard-asserts. **Without `--indices` you'll get an `AssertionError` on `target_schema_path`** (this was [issue #1](https://github.com/klimzaporojets/emerge/issues/1)).
+>    This fetches `data/indices/relik_edc_relation_indexes/` (~400 MB) which `s01_run.py` hard-asserts. **Without `--indices` you'll get an `AssertionError` on `target_schema_path`** (this was [issue #1](https://github.com/klimzaporojets/emerge/issues/1)).
 > 2. The eval set passages already live at `data/evaluation_set/snapshot_*/delta_*.jsonl` after the default `./scripts/download_data.sh` (no extra flag needed).
 > 3. Run the wrapper through the standard EMERGE benchmark orchestrator:
 >    ```bash

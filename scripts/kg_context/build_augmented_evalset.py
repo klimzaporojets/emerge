@@ -188,7 +188,7 @@ def gather_worker(cfg: dict, limit: int | None) -> int:
         inspect: list[str] = []   # per-year fragment (flushed to inspect_<year>.txt below)
         for i, (_, relpath, inst) in enumerate(tqdm(items, desc=f"gather {yr}", unit="inst")):
             anchor = inst["anchor_page_qid"]
-            anchor_label = inst.get("anchor_title") or anchor
+            anchor_label = inst["anchor_title"] or anchor
             passage = inst["passage"]
             if which == "relik" and i == 0:
                 print(f"  [{yr}] first passage -> encoder forward (span + triplet retrievers) ...", flush=True)

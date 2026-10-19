@@ -76,7 +76,7 @@ Uses the [KG-GEN pip package](https://pypi.org/project/kg-gen/).
 #### RAKG (Retrieval-Augmented Knowledge Graph)
 
 LLM-based triple extraction with retrieval augmentation.
-Uses the external [RAKG repository](https://github.com/RUC-NLPIR/RAKG) (referenced via absolute path in `run.sh`).
+Uses the external [RAKG repository](https://github.com/RUC-NLPIR/RAKG) (located via the `RAKG_REPO_PATH` env var in `run.sh`).
 
 | Paper name | Internal name | Backend LLM | API |
 |-----------|---------------|-------------|-----|
@@ -148,7 +148,7 @@ conda activate emerge
 ./scripts/download_data.sh --indices    # ~155 MB eval set + ~400 MB indices
 ```
 
-EDC+ reads `data/evaluation_set/` (default) **and** `data/indices/relik_edc_relation_indexes/` (only with `--indices`). Skip `--indices` and you'll hit `AssertionError` at `s01_run_v3.py:82` — this was [issue #1](https://github.com/klimzaporojets/emerge/issues/1).
+EDC+ reads `data/evaluation_set/` (default) **and** `data/indices/relik_edc_relation_indexes/` (only with `--indices`). Skip `--indices` and you'll hit `AssertionError` at `s01_run.py:82` — this was [issue #1](https://github.com/klimzaporojets/emerge/issues/1).
 
 #### 3. Set the API key
 
@@ -177,7 +177,7 @@ python -u -m benchmarks.run_benchmarks \
 - Output: 7 snapshots × 5 deltas = 35 JSONL files under `output/s02_run_benchmarks/edc_plus_zs_gpt_5_1/last_processed/snapshot_*-01-01/`, each with 100 instances
 
 **Common failures** (with fix):
-- `AssertionError` at `s01_run_v3.py:82` → forgot `--indices` in step 2
+- `AssertionError` at `s01_run.py:82` → forgot `--indices` in step 2
 - `aiohttp ClientResponseError: 401 Unauthorized` → API key env var unset or wrong name (check step 3)
 - `ModuleNotFoundError: openai` → the `edc` conda env isn't activated in the subprocess; check that step 1's `pip install -r requirements/benchmarks/edc-plus.txt` succeeded
 
@@ -203,24 +203,31 @@ For each: `pip install -r requirements/benchmarks/<model>.txt` to populate the w
 
 Re-running `relik_cie` requires a per-snapshot Wikipedia entity index (used by ReLiK
 for entity linking) under `./data/indices/relik_entity_index/<YYYY>-01-01/` for each
-of the 7 snapshot years 2019–2025. **This index is not part of the standard dataset
-download** — `download_data.sh --indices` only ships the *relation* indexes
-(`./data/indices/relik_edc_relation_indexes/`). Two ways to obtain the entity index:
+of the 7 snapshot years 2019–2025, with `documents.jsonl` (the entity dictionary) +
+`embeddings.pt` (the dense vectors). `download_data.sh --indices` only ships the
+*relation* indexes (`./data/indices/relik_edc_relation_indexes/`). Three ways to
+obtain the entity index, easiest first:
 
-1. **Build it yourself** by running `scripts/slurm/dataset/s08_extract_relik_dictionary.sh`
-   against an English Wikipedia dump. Per the SLURM header that script needs:
-   - **CPU**: 80 cores
-   - **RAM (build)**: 128 GB
-   - **Wall-clock**: up to 48 h
-   - **Disk**: tens of GB output (per-snapshot dense vector indexes; exact size
-     depends on Wikipedia dump version) — point its `output_dir` at
-     `./data/indices/relik_entity_index/` so `relik_cie/relik_config.json` finds it.
-   - **Input**: an English Wikipedia history dump (~hundreds of GB).
+1. **Download the dictionary and rebuild the embeddings (recommended).** The gzipped
+   per-snapshot dictionaries are hosted (`documents.jsonl.gz`, ~2.7 GB each); the dense
+   `embeddings.pt` is not (it barely compresses), so you regenerate it locally on a GPU
+   — **no Wikipedia dump needed** (a few hours per snapshot):
+   ```bash
+   ./scripts/download_data.sh --entity-dicts=2019-01-01      # or --entity-dicts for all 7
+   conda activate relik
+   python scripts/kg_context/s08b_build_relik_index.py \
+       --documents data/indices/relik_entity_index/2019-01-01/documents.jsonl.gz \
+       --out-dir   data/indices/relik_entity_index/2019-01-01 --device cuda
+   ```
 2. **Skip re-running and use the released predictions instead.** The released
    `data/evaluation_set/` already contains the `relik-cie` predictions used in the
    paper. `./scripts/run/evaluate.sh` reads them directly — you only need an entity
-   index if you want to **re-generate** ReLiK cIE outputs from scratch (e.g., on a
-   different Wikipedia snapshot or with different ReLiK weights).
+   index if you want to **re-generate** ReLiK cIE outputs from scratch.
+3. **Rebuild the dictionary itself from a Wikipedia dump** (only if you need a
+   *different* snapshot/dump than the hosted ones) by running
+   `scripts/slurm/dataset/s08_extract_relik_index.sh`. Per its SLURM header this needs
+   ~80 CPU cores, 128 GB RAM, up to ~48 h, and an English Wikipedia history dump
+   (~hundreds of GB); then build the embeddings with `s08b_build_relik_index.py` as in (1).
 
 At inference time, **loaded** entity indexes contribute to the 180 GB RAM figure for
 `relik_cie` above (the index sits in memory alongside the KG snapshot for correct
@@ -235,7 +242,7 @@ writes `kg-gen-gpt-5.1`; the canonical name evaluation expects is `kg-gen/azure/
 > **⚠️ The merge step is mandatory before evaluation.** Pipeline:
 > `wrapper → merge → evaluation`.
 >
-> `src/merge/s0x_merge_predictions.py` reads each wrapper's raw output, maps it
+> `src/merge/s03_merge_predictions.py` reads each wrapper's raw output, maps it
 > to the canonical model name (declared in the merge config), and writes a
 > unified `predictions[<canonical_name>]` dict that evaluation reads.
 > Running evaluation directly on raw wrapper output makes evaluation silently
@@ -252,4 +259,4 @@ Set `LOGGING_LEVEL=DEBUG` for verbose output.
 - RAKG uses the [RAKG repository](https://github.com/RUC-NLPIR/RAKG)
 - KG-GEN uses the [kg-gen pip package](https://pypi.org/project/kg-gen/)
 - REBEL uses [Babelscape/rebel-large](https://huggingface.co/Babelscape/rebel-large)
-- ReLiK uses [sapienzanlp/relik-relation-extraction-nyt-large](https://huggingface.co/sapienzanlp/relik-relation-extraction-nyt-large)
+- ReLiK uses [relik-ie/relik-relation-extraction-large](https://huggingface.co/relik-ie/relik-relation-extraction-large) (RE) and [relik-ie/relik-cie-large](https://huggingface.co/relik-ie/relik-cie-large) (cIE)

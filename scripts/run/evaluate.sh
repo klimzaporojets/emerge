@@ -16,10 +16,10 @@
 #
 # Examples:
 #   # Recommended — all 13 models, correct scoring, with KG snapshots:
-#   ./scripts/run/evaluate.sh config/evaluation/s0x_evaluate_predictions/20260324_all_models_with_zs_fixed_with_kg/config.json
+#   ./scripts/run/evaluate.sh config/evaluation/s04_evaluate_predictions/20260324_all_models_with_zs_fixed_with_kg/config.json
 #
-#   # Legacy scoring (reproduces original ICML submission numbers):
-#   ./scripts/run/evaluate.sh config/evaluation/s0x_evaluate_predictions/20260324_all_models_with_zs_legacy_with_kg/config.json
+#   # Legacy scoring (reproduces the original submission numbers):
+#   ./scripts/run/evaluate.sh config/evaluation/s04_evaluate_predictions/20260324_all_models_with_zs_legacy_with_kg/config.json
 #
 #   # Default (no argument) — uses the recommended config:
 #   ./scripts/run/evaluate.sh
@@ -27,7 +27,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
-CONFIG_FILE="${1:-config/evaluation/s0x_evaluate_predictions/20260324_all_models_with_zs_fixed_with_kg/config.json}"
+CONFIG_FILE="${1:-config/evaluation/s04_evaluate_predictions/20260324_all_models_with_zs_fixed_with_kg/config.json}"
 
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Error: config file not found: $CONFIG_FILE"
@@ -44,6 +44,6 @@ echo "  Config: $CONFIG_FILE"
 echo ""
 
 export PYTHONPATH="$PWD/src"
-python -u -m evaluation.s0x_evaluate_predictions \
+python -u -m evaluation.s04_evaluate_predictions \
     --config_file "$CONFIG_FILE" \
     2>&1 | tee logs/evaluate_$(date +%Y%m%d_%H%M%S).log

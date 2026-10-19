@@ -1,7 +1,7 @@
 """Tests for the `exclude_empty_gold` toggle in cie_exact_match_scorer.
 
 The scorer has no heavy deps (logging + typing), so this runs anywhere in <0.1s.
-Guards the fix in rebuttal/neurips_2026/BUG_er_empty_gold_population.md:
+Guards the empty-gold E-R fix:
   - Option A (default, exclude_empty_gold=False): an instance whose 405B-filtered gold is EMPTY
     (a "Bucket B" instance) scores cie-recall 0 and is KEPT -> drags the mean (= published Table-3).
   - Option B (exclude_empty_gold=True): that instance is DROPPED entirely -> cie-recall consistent

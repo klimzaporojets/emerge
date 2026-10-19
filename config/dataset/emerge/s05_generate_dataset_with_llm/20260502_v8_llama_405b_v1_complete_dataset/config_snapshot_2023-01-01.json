@@ -1,5 +1,5 @@
 {
-  "restart_apptainer_script_name": "dataset/s05_restart_apptainer_llama400b_v5.sh",
+  "restart_apptainer_script_name": "dataset/s05_restart_apptainer_llama400b.sh",
   "input_dir_joined_snippets_triples": "/path/to/storage/wikipedia-processing/output/experiments/s05_generate_dataset_with_llm/20260502_v8_llama_405b_v1_complete_dataset_input_merged/",
   "output_dir": "/path/to/storage/wikipedia-processing/output/experiments/s05_generate_dataset_with_llm/20260502_v8_llama_405b_v1_complete_dataset/llama405b_assessed/snapshot_2023-01-01/llm_assessed/",
   "llm_tokenizer": "hugging-quants/Meta-Llama-3.1-405B-Instruct-GPTQ-INT4",

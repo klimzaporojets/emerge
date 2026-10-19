@@ -2,7 +2,7 @@
 construction pipeline.
 
 Catches the most common breakage from a port: a renamed import, a
-typo'd argparse default, an `argparse.FileType` pointing at a Snellius
+typo'd argparse default, an `argparse.FileType` pointing at a cluster
 path that no longer exists, a Python syntax error from an editor's
 auto-format. None of these need the actual data on disk — they all
 surface when the script is invoked with `--help`.
@@ -24,8 +24,8 @@ PORTED_SCRIPTS = [
     REPO / "scripts/dataset/build_reinput_for_garbage.py",
     REPO / "scripts/dataset/merge_reinput_into_dataset.py",
     REPO / "scripts/stats/compute_405bv1_dataset_stats.py",
-    REPO / "scripts/stats/figures_dataset_stats_v2_405bv1.py",
-    REPO / "scripts/stats/figure_tkgu_distribution_v2_405bv1.py",
+    REPO / "scripts/stats/figures_dataset_stats_405bv1.py",
+    REPO / "scripts/stats/figure_tkgu_distribution_405bv1.py",
 ]
 
 

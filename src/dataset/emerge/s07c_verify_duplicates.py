@@ -1,6 +1,6 @@
 # The difference with _v4 is that this _v5 adapts to the new, final format
 # of the dataset, which I guess is even the newer than the one adapted by _v4.
-# This new format is the result of executing s06b_refactor_final_format.py.
+# This new format is the result of executing s06_refactor_final_format.py.
 
 import argparse
 import json

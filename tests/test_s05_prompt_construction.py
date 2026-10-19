@@ -83,7 +83,7 @@ def test_regression_5arg_call_succeeds_with_defaults():
     sensible defaults (empty string → placeholder substitution is a no-op).
 
     Backstory: in 2026-05-02 these two params were added without defaults,
-    breaking all 4 call sites in `s05_prompt_llm_utils_v8.py` and burning
+    breaking all 4 call sites in `s05_prompt_llm_utils.py` and burning
     1 H100-hour on TypeErrors. This test guards both directions:
       - keeps callers happy without forcing them to thread the new args
       - if someone makes the params required again, this test fails loudly

@@ -1,5 +1,5 @@
 {
-  "_help": "20260727b — CORRECTED re-score of the 20260727_native_350 re-run (405B-filter fix + exists nudge + Add op-tag fix). FRESH output dir 20260727b_native_350 to avoid s0x pkl-cache reuse (the earlier 20260727_native_350 scored dir was polluted by an Add-tag re-score on OLD predictions). LESSON: every score experiment MUST use a fresh output/pkl/merged path.",
+  "_help": "20260727b — CORRECTED re-score of the 20260727_native_350 re-run (405B-filter fix + exists nudge + Add op-tag fix). FRESH output dir 20260727b_native_350 to avoid s04 pkl-cache reuse (the earlier 20260727_native_350 scored dir was polluted by an Add-tag re-score on OLD predictions). LESSON: every score experiment MUST use a fresh output/pkl/merged path.",
   "gold_base_dir": "./output/kg_prompts/20260727_native",
   "pred_base_dir": "./output/kg_prompts_pred/20260727_native",
   "merged_base_dir": "./output/kg_prompts_scored/20260727b_native_350/merged",
@@ -10,8 +10,8 @@
   "target_alias": "kg-prompt",
   "predictions_model_type": "kg-prompt",
   "predictions_model_config_name": "kg_prompt_gpt_5_1",
-  "eval_config_file": "./config/evaluation/s0x_evaluate_predictions/20260725_kg_prompt_ladder/config.json",
-  "python_module_score": "evaluation.s0x_evaluate_predictions",
+  "eval_config_file": "./config/evaluation/s04_evaluate_predictions/20260725_kg_prompt_ladder/config.json",
+  "python_module_score": "evaluation.s04_evaluate_predictions",
   "assessors": {
     "triple_assertion": "Meta-Llama-3.1-405B_prompt_v1",
     "triple_deprecation": "Meta-Llama-3.1-405B_prompt_v1"

@@ -2,8 +2,8 @@
 """Merge corrected records from a reinput-tree concat file into a NEW
 dataset tree, splicing by `hash_id`. Source tree stays read-only.
 
-Companion to build_reinput_for_garbage.py. After a single-sbatch
-re-query has produced corrected 405B-v1 assessments at e.g.
+Companion to build_reinput_for_garbage.py. After a re-query run
+has produced corrected 405B-v1 assessments at e.g.
 `…/_complete_dataset_reinput_garbage_2_concat/.../delta_2099-01-01.jsonl`,
 this script:
 

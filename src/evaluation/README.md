@@ -26,7 +26,7 @@ The scoring behavior is controlled by `score_empty_predictions_as_zero` in the c
 - **`true` (fixed, correct):** Instances with no predictions are scored as P=0/R=0/F1=0 and
   included in the average. This is the correct behavior.
 - **`false` (legacy):** Instances with no predictions are excluded from the average.
-  Reproduces the original ICML submission numbers (scores are higher due to this exclusion).
+  Reproduces the original submission numbers (scores are higher due to this exclusion).
 
 ---
 
@@ -102,8 +102,8 @@ From the repository root, with `conda activate emerge`:
 ```bash
 export PYTHONPATH="$PWD/src"
 
-python -u -m evaluation.s0x_evaluate_predictions \
-    --config_file config/evaluation/s0x_evaluate_predictions/<config_name>/config.json \
+python -u -m evaluation.s04_evaluate_predictions \
+    --config_file config/evaluation/s04_evaluate_predictions/<config_name>/config.json \
     2>&1 | tee logs/evaluation.log
 ```
 
@@ -113,7 +113,7 @@ This requires a GPU for BERTScore and sentence-transformer metrics.
 <summary>SLURM equivalent</summary>
 
 ```bash
-sbatch scripts/slurm/evaluation/s0x_evaluate_predictions.sh \
+sbatch scripts/slurm/evaluation/s04_evaluate_predictions.sh \
     <config_file> <experiment_id>
 ```
 

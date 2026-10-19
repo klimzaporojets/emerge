@@ -1,15 +1,17 @@
 #!/bin/bash
 # End-to-end test script for EMERGE benchmark.
-# Run this on a GPU node (e.g., Snellius H100) to verify the repo works from scratch.
+# Run this on any GPU node to verify the repo works from scratch.
 #
 # Prerequisites:
 #   - Conda available
 #   - GPU with 16GB+ VRAM
 #   - 180GB+ RAM (for KG snapshots in evaluation)
 #
-# Usage (on Snellius):
-#   salloc -p gpu_h100 -n 1 --gpus 1 --cpus-per-task 10 -t 2:00:00 --mem=180G
+# Usage:
 #   bash scripts/test_end_to_end.sh
+#
+# On a SLURM cluster, first grab an interactive GPU allocation, e.g.:
+#   salloc -p <gpu_partition> -n 1 --gpus 1 --cpus-per-task 10 -t 2:00:00 --mem=180G
 #
 # The script assumes it is run from the repository root.
 
@@ -17,11 +19,13 @@ set -eo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 ENV_NAME="emerge-test"
-# If scratch storage is available, symlink data/ there to avoid filling home quota.
-# This is important on Snellius where home is limited (~200GB).
-SCRATCH_DATA="/scratch-shared/$USER/emerge-data"
-if [ -d "/scratch-shared/$USER" ] && [ ! -L "$REPO_DIR/data" ]; then
-    echo "Scratch storage detected. Symlinking data/ to $SCRATCH_DATA"
+# If scratch storage is available, symlink data/ there to avoid filling a
+# limited home quota. Set EMERGE_SCRATCH to your scratch directory to enable
+# this (e.g. EMERGE_SCRATCH=/scratch/$USER/emerge-data); otherwise data/ stays
+# under the repo.
+SCRATCH_DATA="${EMERGE_SCRATCH:-}"
+if [ -n "$SCRATCH_DATA" ] && [ ! -L "$REPO_DIR/data" ]; then
+    echo "Scratch storage set. Symlinking data/ to $SCRATCH_DATA"
     mkdir -p "$SCRATCH_DATA"
     # Preserve data/README.md (tracked in git)
     if [ -f "$REPO_DIR/data/README.md" ]; then
@@ -39,7 +43,7 @@ echo ""
 
 # ---- Step 1: Create conda env ----
 echo "=== Step 1: Creating conda environment '$ENV_NAME' ==="
-conda create -n "$ENV_NAME" python=3.10 -y
+conda create -n "$ENV_NAME" python=3.12 -y
 eval "$(conda shell.bash hook)"
 conda activate "$ENV_NAME"
 echo "Python: $(which python) ($(python --version))"
@@ -92,7 +96,7 @@ bash ./scripts/run/evaluate.sh
 
 # Verify
 echo "Verifying evaluation output..."
-find "$REPO_DIR/output/s0x_evaluate_predictions/" -name "wiki_eval_result.pkl" | head -1
+find "$REPO_DIR/output/s04_evaluate_predictions/" -name "wiki_eval_result.pkl" | head -1
 
 # ---- Step 7: Run annotation agreement ----
 echo ""

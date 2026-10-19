@@ -1,57 +1,8 @@
 import _io
-import io
 from typing import List, Dict, Any, Optional
 
-import py7zlib
 import py7zr
 from py7zr.compressor import SevenZipDecompressor
-
-
-class SevenZFileError(py7zlib.ArchiveError):
-    pass
-
-
-class SevenZFile(object):
-    @classmethod
-    def is_7zfile(cls, filepath):
-        """ Determine if filepath points to a valid 7z archive. """
-        is7z = False
-        fp = None
-        try:
-            fp = open(filepath, 'rb')
-            archive = py7zlib.Archive7z(fp)
-            _ = len(archive.getnames())
-            is7z = True
-        finally:
-            if fp: fp.close()
-        return is7z
-
-    def __init__(self, filepath):
-        fp = open(filepath, 'rb')
-        self.filepath = filepath
-        self.archive = py7zlib.Archive7z(fp)
-
-    def __contains__(self, name):
-        return name in self.archive.getnames()
-
-    def readlines(self, name, newline=''):
-        r""" Iterator of lines from named archive member.
-
-        `newline` controls how line endings are handled.
-
-        It can be None, '', '\n', '\r', and '\r\n' and works the same way as it does
-        in StringIO. Note however that the default value is different and is to enable
-        universal newlines mode, but line endings are returned untranslated.
-        """
-        archivefile = self.archive.getmember(name)
-        if not archivefile:
-            raise SevenZFileError('archive member %r not found in %r' %
-                                  (name, self.filepath))
-
-        # Decompress entire member and return its contents iteratively.
-        data = archivefile.read().decode()
-        for line in io.StringIO(data, newline=newline):
-            yield line
 
 
 class SevenZipStreamDecompressor(SevenZipDecompressor):

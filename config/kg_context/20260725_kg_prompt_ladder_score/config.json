@@ -1,5 +1,5 @@
 {
-  "_help": "2026-07-25 SCORE wiring for the KG-conditioned baseline (kg_prompt) ladder. Consumed by scripts/kg_context/score_kg_prompt.py (phases: merge -> score -> aggregate). MERGE injects each point's kg_prompt predictions (keyed by hash_id, KGGen OIE schema) into that point's composed eval-set (which already carries gold tkgu_triples + the 405B llm_assessment) under alias `kg-prompt` / model_type `kg-gen`, writing a scoreable tree. SCORE runs `python -m evaluation.s0x_evaluate_predictions` ONCE PER POINT (per-point trees are required: the preloader asserts each hash_id appears once, and the same passage recurs across conditions, so points cannot share one tree). AGGREGATE reads every per-point pkl and prints/writes the ladder table with the SAME 3 Table-3 metrics: C, G-BERTScore-R, Executable-R. Points are (op, condition) leaves that directly contain snapshot_*/delta_*.jsonl. Predictions for a point live at <pred_base_dir>/<point>/<pred_model_subdir>/snapshot_*/delta_*.jsonl and are read from the source predictions-dict key `source_pred_alias` (the kg_prompt wrapper's model_name). Adjust `points`, `pred_model_subdir`, or `source_pred_alias` if predict_triples.py wrote a different layout.",
+  "_help": "2026-07-25 SCORE wiring for the KG-conditioned baseline (kg_prompt) ladder. Consumed by scripts/kg_context/score_kg_prompt.py (phases: merge -> score -> aggregate). MERGE injects each point's kg_prompt predictions (keyed by hash_id, KGGen OIE schema) into that point's composed eval-set (which already carries gold tkgu_triples + the 405B llm_assessment) under alias `kg-prompt` / model_type `kg-gen`, writing a scoreable tree. SCORE runs `python -m evaluation.s04_evaluate_predictions` ONCE PER POINT (per-point trees are required: the preloader asserts each hash_id appears once, and the same passage recurs across conditions, so points cannot share one tree). AGGREGATE reads every per-point pkl and prints/writes the ladder table with the SAME 3 Table-3 metrics: C, G-BERTScore-R, Executable-R. Points are (op, condition) leaves that directly contain snapshot_*/delta_*.jsonl. Predictions for a point live at <pred_base_dir>/<point>/<pred_model_subdir>/snapshot_*/delta_*.jsonl and are read from the source predictions-dict key `source_pred_alias` (the kg_prompt wrapper's model_name). Adjust `points`, `pred_model_subdir`, or `source_pred_alias` if predict_triples.py wrote a different layout.",
   "gold_base_dir": "./output/kg_prompts/20260725_ladder_all_ops",
   "pred_base_dir": "./output/kg_prompts_pred/20260725_ladder_all_ops",
   "merged_base_dir": "./output/kg_prompts_scored/20260725_ladder_all_ops/merged",
@@ -10,8 +10,8 @@
   "target_alias": "kg-prompt",
   "predictions_model_type": "kg-prompt",
   "predictions_model_config_name": "kg_prompt_gpt_5_1",
-  "eval_config_file": "./config/evaluation/s0x_evaluate_predictions/20260725_kg_prompt_ladder/config.json",
-  "python_module_score": "evaluation.s0x_evaluate_predictions",
+  "eval_config_file": "./config/evaluation/s04_evaluate_predictions/20260725_kg_prompt_ladder/config.json",
+  "python_module_score": "evaluation.s04_evaluate_predictions",
   "assessors": {
     "triple_assertion": "Meta-Llama-3.1-405B_prompt_v1",
     "triple_deprecation": "Meta-Llama-3.1-405B_prompt_v1"

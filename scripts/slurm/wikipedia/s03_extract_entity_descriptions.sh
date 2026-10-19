@@ -10,7 +10,7 @@
 
 # Usage:
 #   sbatch scripts/slurm/wikipedia/s03_extract_entity_descriptions.sh \
-#     config/dataset/wikipedia/s03_extract_entity_descriptions/20251101_slurm_english/config.json \
+#     config/dataset/wikipedia/s03_extract_entity_descriptions/20251101_english/config.json \
 #     20251101 8000 1
 #
 # Arguments:
@@ -31,7 +31,7 @@ experiment_id=$2
 start_port_wiki_mapping=$3
 num_instances_wiki_mapping=$4
 
-source /home/user/.bashrc
+source ~/.bashrc
 cd /path/to/emerge
 git pull
 

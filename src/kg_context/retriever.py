@@ -132,7 +132,7 @@ class RelikCandidateRetriever:
           - != config_name (e.g. `sapienzanlp/relik-entity-linking-large`) -> SPLIT: entity retriever is
             loaded from THAT model (e.g. e5-base-v2 AIDA, 768-dim) over `entity_index_path`, while the
             RELATION retriever stays native (`config_name` over `relation_index_path`). Only the entity
-            side changes -> a clean native-vs-AIDA ablation. See rebuttal_baseline.md TODO."""
+            side changes -> a clean native-vs-AIDA ablation."""
         import time
         from relik import Relik
         from relik.inference.data.objects import TaskType

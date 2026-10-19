@@ -66,9 +66,10 @@ the difference between fixed vs legacy scoring.
 without re-executing.
 
 **KG snapshots and CIE Exists operations.**
-The `20260217` configs have `snapshot_year_to_kg_file` set to `null` (light mode).
-CIE models like `relik-cie` cannot distinguish Exists from Add operations without KG
-snapshots. The `20260324_*_with_kg` configs fix this. See
+An evaluation config with `snapshot_year_to_kg_file` set to `null` runs in light mode
+(no KG snapshots loaded). CIE models like `relik-cie` cannot distinguish Exists from Add
+operations without KG snapshots. The `20260324_*_with_kg` configs load the snapshots to
+fix this. See
 [`src/evaluation/README.md`](../evaluation/README.md) for details.
 
 ---

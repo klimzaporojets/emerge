@@ -15,7 +15,7 @@ from dataset.emerge.utils.constants import (
     ACTION_CATEGORY_ASSERT,
     ACTION_CATEGORY_DEPRECATE,
 )
-from dataset.emerge.utils.s05_prompt_llm_utils_v8 import (
+from dataset.emerge.utils.s05_prompt_llm_utils import (
     call_llm_and_return_parsed_result_v8,
 )
 

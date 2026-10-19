@@ -15,7 +15,7 @@ from dataset.emerge.utils.constants import ACTION_CATEGORY_DEPRECATE, ACTION_CAT
 
 import pandas as pd
 
-from dataset.emerge.utils.s09_annotate_dataset_utils_v4 import obtain_property_ids_to_definitions, \
+from dataset.emerge.utils.s09_annotate_dataset_utils import obtain_property_ids_to_definitions, \
     get_instance_tkgu_types_llm_assessments, load_all_instances, stats_all_instances, get_annotation_statistics, \
     human_assessment_exists, clear_stdin, get_print_annotation_statistics, \
     show_discrepancies, exceeds_max_per_tkgu_type, update_count_annotated, update_count_annotated_per_triple

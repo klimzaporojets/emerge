@@ -3,9 +3,9 @@
 Catches:
   - Malformed JSON anywhere in `config/` (a single typo in a config file
     that the runtime only opens lazily can sit unnoticed for weeks).
-  - Snellius / author-side paths leaking back into the *ported*
-    405B-v1 configs after a future refactor (the migration scrubbed
-    them once; this test ensures it stays scrubbed).
+  - Cluster / author-side absolute paths leaking back into the
+    *ported* 405B-v1 configs after a future refactor (the migration
+    scrubbed them once; this test ensures it stays scrubbed).
 
 <1 s, CPU only, no data needed. Failure messages name the offending file
 and line so debugging is one click away.
@@ -39,19 +39,20 @@ def test_config_is_valid_json(config_path):
         )
 
 
-# Snellius / author-side path patterns that should never appear in any
-# emerge-prod config body. Excludes the documented `/path/to/storage/`
-# placeholder which IS the convention.
-SNELLIUS_PATTERNS = re.compile(
-    r"/projects/0/|/scratch-shared/|prjs1103|gcn[0-9]+|kzaporojets|/home/klim/"
+# Cluster / author-side absolute-path patterns that should never appear in any
+# public config body. The convention is repo-relative `data/` + `output/`
+# paths, or the documented `/path/to/storage/` placeholder — any real absolute
+# mount (home directory, HPC project, scratch, gpfs) is a leak.
+CLUSTER_PATH_PATTERNS = re.compile(
+    r"/projects/|/scratch|/home/|/gpfs/"
 )
 
 
-def test_no_snellius_paths_in_ported_405bv1_configs():
+def test_no_cluster_paths_in_ported_405bv1_configs():
     """The 8 ported s05 405B-v1 configs must use the `/path/to/storage/`
     placeholder convention, not author-side absolute paths. Was a real
     issue in the original migration; this test prevents accidental
-    re-introduction by a copy-paste from emerge-stage.
+    re-introduction by a copy-paste from a local author workspace.
     """
     ported_dir = (
         REPO
@@ -62,39 +63,40 @@ def test_no_snellius_paths_in_ported_405bv1_configs():
     offenders = []
     for config_path in sorted(ported_dir.glob("*.json")):
         text = config_path.read_text()
-        for match in SNELLIUS_PATTERNS.finditer(text):
+        for match in CLUSTER_PATH_PATTERNS.finditer(text):
             line = text[: match.start()].count("\n") + 1
             offenders.append(
                 f"  {config_path.relative_to(REPO)}:{line} → {match.group(0)!r}"
             )
     if offenders:
         pytest.fail(
-            "Snellius / author-side path residue in ported 405B-v1 configs:\n"
+            "Cluster / author-side path residue in ported 405B-v1 configs:\n"
             + "\n".join(offenders)
             + "\nReplace with `/path/to/storage/wikipedia-processing/output/...` "
             "to match the existing emerge-prod config convention."
         )
 
 
-def test_no_snellius_paths_in_kg_context_configs():
+def test_no_cluster_paths_in_kg_context_configs():
     """The KG-aware baseline configs under `config/kg_context/` must use
     repo-relative `data/` + `output/` paths (symlinked to the real data on a
-    cluster), never author-side absolute or Snellius paths. Guards the public
-    repo against re-leaking a path via a copy-paste from emerge-stage.
+    cluster), never author-side absolute or cluster paths. Guards the public
+    repo against re-leaking a path via a copy-paste from a local author
+    workspace.
     """
     kg_dir = REPO / "config/kg_context"
     assert kg_dir.is_dir(), f"expected config dir at {kg_dir}"
     offenders = []
     for config_path in sorted(kg_dir.rglob("*.json")):
         text = config_path.read_text()
-        for match in SNELLIUS_PATTERNS.finditer(text):
+        for match in CLUSTER_PATH_PATTERNS.finditer(text):
             line = text[: match.start()].count("\n") + 1
             offenders.append(
                 f"  {config_path.relative_to(REPO)}:{line} → {match.group(0)!r}"
             )
     if offenders:
         pytest.fail(
-            "Snellius / author-side path residue in config/kg_context/:\n"
+            "Cluster / author-side path residue in config/kg_context/:\n"
             + "\n".join(offenders)
             + "\nUse repo-relative data/ + output/ paths (symlink data/* to the "
             "real data on a cluster)."

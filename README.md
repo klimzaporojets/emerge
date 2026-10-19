@@ -94,8 +94,8 @@ Each instance contains:
 | RAKG M-Lg | LLM-based | Mistral-Large |
 | RAKG M-Sm | LLM-based | Mistral-Small |
 | REBEL | Local seq2seq | Babelscape/rebel-large |
-| ReLiK RE | Local neural (Open IE) | sapienzanlp/relik-relation-extraction-nyt-large |
-| ReLiK cIE | Local neural (Closed IE) | sapienzanlp/relik-cie-large |
+| ReLiK RE | Local neural (Open IE) | relik-ie/relik-relation-extraction-large |
+| ReLiK cIE | Local neural (Closed IE) | relik-ie/relik-cie-large |
 | **KG-aware** | LLM-based (KG-conditioned) | GPT-5.1 |
 
 The first 13 rows are the released baselines whose predictions ship in `data/evaluation_set/`. The
@@ -110,7 +110,7 @@ below. **Using or evaluating against the dataset does NOT require running any of
 steps** — `download_data.sh` + `evaluate.sh` is sufficient. The construction code is
 shipped here for **transparency**.
 
-Each `s0x` label below is a pipeline-step identifier; code lives under `src/dataset/{wikidata,wikipedia,emerge}/<step>_*.py` and SLURM submitters in `scripts/slurm/{wikidata,wikipedia,dataset}/<step>_*.sh`. See [`src/dataset/README.md`](src/dataset/README.md) for per-step execution details + config field semantics.
+Each `sNN` label below is a pipeline-step identifier; code lives under `src/dataset/{wikidata,wikipedia,emerge}/<step>_*.py` and SLURM submitters in `scripts/slurm/{wikidata,wikipedia,dataset}/<step>_*.sh`. See [`src/dataset/README.md`](src/dataset/README.md) for per-step execution details + config field semantics.
 
 ```
 Raw Wikidata + Wikipedia dumps  (~TB, fetch from dumps.wikimedia.org — not in repo)
@@ -165,7 +165,7 @@ benchmark a different LLM or re-query triples (as Part 3 does).
 | **§4.3 / Table 8** stats | `scripts/stats/` (3 CLI tools) | ✅ on `data/corpus/` — reproduces 608K/207K/149K/220K/9.5K/1.19M |
 | **s09** human agreement | `src/dataset/emerge/s09{a–e}_*.py` | ✅ `annotation_agreement.sh` (new annotations need annotators) |
 | **WD/WP s01–s03, emerge s03/s04** | code + SLURM submitters | placeholder configs (need raw dumps) |
-| **s06b → s07 → s07b → s07c** (reformat → dedup → subsample) | `src/dataset/emerge/{s06b,s07,s07b,s07c}_*.py` | placeholder configs (depend on s05 outputs) |
+| **s06 → s07 → s07b → s07c** (reformat → dedup → subsample) | `src/dataset/emerge/{s06,s07,s07b,s07c}_*.py` | placeholder configs (depend on s05 outputs) |
 | **evaluate.sh** paper results | `scripts/run/evaluate.sh` | ✅ reproduces the main results table |
 
 † Runnable s05 config: `config/dataset/emerge/s05_generate_dataset_with_llm/20260510_s05_runnable_on_released/` (points at `./data/evaluation_set/`). You supply the TGI Apptainer container, Llama weights (auto-pulled), and 3 env paths in the SLURM script.
@@ -192,7 +192,7 @@ src/
 │   └── wikipedia/              Wikipedia processing (hyperlinks, entity descriptions)
 │
 ├── evaluation/                 Model evaluation pipeline
-│   ├── s0x_evaluate_predictions.py    Main entry point
+│   ├── s04_evaluate_predictions.py    Main entry point
 │   ├── evaluator/              Metric implementations (completeness, graph_judge, CIE)
 │   ├── preloader/              Data loading + preprocessing
 │   └── scorers/                Scoring (BERTScore, sentence transformers, exact match)
@@ -292,8 +292,8 @@ and produces a `wiki_eval_result.pkl` file that the statistics notebooks read.
 To use a different config or run manually:
 ```bash
 export PYTHONPATH="$PWD/src"
-python -u -m evaluation.s0x_evaluate_predictions \
-    --config_file config/evaluation/s0x_evaluate_predictions/20260324_all_models_with_zs_fixed_with_kg/config.json
+python -u -m evaluation.s04_evaluate_predictions \
+    --config_file config/evaluation/s04_evaluate_predictions/20260324_all_models_with_zs_fixed_with_kg/config.json
 ```
 
 See [`src/evaluation/README.md`](src/evaluation/README.md) for all available configs
@@ -364,7 +364,7 @@ See [`src/benchmarks/README.md`](src/benchmarks/README.md) for detailed per-mode
 
 > **Heads-up on `relik_cie`**: re-running ReLiK Closed IE additionally requires a
 > per-snapshot Wikipedia entity index that is **not** part of `download_data.sh`.
-> Building it via `scripts/slurm/dataset/s08_extract_relik_dictionary.sh` needs
+> Building it via `scripts/slurm/dataset/s08_extract_relik_index.sh` needs
 > ~80 CPUs, 128 GB RAM, and up to 48 h of wall-clock against an English Wikipedia
 > history dump. The released `data/evaluation_set/` already contains the
 > `relik-cie` predictions, so evaluating ReLiK Closed IE against the paper numbers
@@ -410,7 +410,7 @@ AUGMENT → COMPOSE → PREDICT → SCORE runbook (configs, conda envs, commands
 Wrappers write their predictions under `./output/s02_run_benchmarks/<config_dir>/`
 with model-local names (e.g., the KGGen wrapper writes `kg-gen-gpt-5.1`, while the
 canonical key the evaluator expects is `kg-gen/azure/gpt5.1`). Before evaluation,
-the **merge step** (`src/merge/s0x_merge_predictions.py`) reads each wrapper's raw
+the **merge step** (`src/merge/s03_merge_predictions.py`) reads each wrapper's raw
 output, normalises the model name to its canonical form, and writes a unified
 dataset that the evaluator consumes. Pipeline:
 
@@ -431,11 +431,11 @@ export PYTHONPATH="$PWD/src"
 #    The config has a `_help` field at the top documenting the field semantics.
 #    Delete entries from `input_other_datasets_paths` for any model you did NOT
 #    re-run — merge raises FileNotFoundError on missing wrapper output paths.
-python -u -m merge.s0x_merge_predictions \
-    --config_file config/merge/s0x_merge_predictions/20260509_all_models_with_zs/config.json
-# → writes ./output/s0x_merge_predictions/20260509_all_models_with_zs/
+python -u -m merge.s03_merge_predictions \
+    --config_file config/merge/s03_merge_predictions/20260509_all_models_with_zs/config.json
+# → writes ./output/s03_merge_predictions/20260509_all_models_with_zs/
 
-# 3. Evaluate. Copy a config under config/evaluation/s0x_evaluate_predictions/
+# 3. Evaluate. Copy a config under config/evaluation/s04_evaluate_predictions/
 #    and change `input_dataset_path` to the merge output above before running.
 ./scripts/run/evaluate.sh path/to/your/evaluation_config.json
 ```
@@ -496,7 +496,7 @@ Accepted at **NeurIPS 2026** (Datasets & Benchmarks Track).
 @inproceedings{zaporojets2026emerge,
   title={EMERGE: A Benchmark for Updating Knowledge Graphs with Emerging Textual Knowledge},
   author={Zaporojets, Klim and Daza, Daniel and Barba, Edoardo and Assent, Ira and Navigli, Roberto and Groth, Paul},
-  booktitle={Advances in Neural Information Processing Systems (NeurIPS 2026), Datasets and Benchmarks Track},
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS 2026)},
   year={2026}
 }
 ```
