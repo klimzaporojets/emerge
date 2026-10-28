@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-from benchmarks.prediction import Prediction
+from prediction import Prediction  # wrappers/prediction.py; run.sh puts wrappers/ on PYTHONPATH (as its siblings use)
 
 
 class BenchmarkModel:

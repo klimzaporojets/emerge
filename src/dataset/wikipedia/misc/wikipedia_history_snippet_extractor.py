@@ -22,19 +22,17 @@ import requests
 from requests import Session
 from urllib3 import Retry
 
-from misc.cleaning import gross_clean, fine_clean, clean_random_stuff
-from misc.wiki_parse import extract_mentions_with_positions_v2
+from dataset.wikipedia.misc.cleaning import gross_clean, fine_clean, clean_random_stuff
+from dataset.wikipedia.misc.wiki_parse import extract_mentions_with_positions_v2
 # from s04_find_interesting_snippets import timestamp_to_date
-from utils import wiki_logger
 
-from misc.compiled_regexes import compiled_regexes
+from dataset.wikipedia.misc.compiled_regexes import compiled_regexes
 
 from requests.adapters import HTTPAdapter
 
-from utils.wiki_utils import generate_short_hash
+from dataset.emerge.utils.wiki_utils import generate_short_hash
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-                    datefmt='%m/%d/%Y %H:%M:%S', level=wiki_logger.logger_level)
+# logging format/level are configured once in dataset/wikipedia/__init__.py (LOG_LEVEL, default INFO)
 logger = logging.getLogger(__name__)
 
 def timestamp_to_date(timestamp: int, return_time=False):

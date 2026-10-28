@@ -2,6 +2,7 @@
 
 import argparse
 import base64
+import collections
 import copy
 import hashlib
 import json
@@ -10,9 +11,12 @@ import os
 import os.path
 import re
 from pathlib import Path
-from typing import Dict, Tuple, Any, Set
+from typing import Dict, List, Tuple, Any, Set
 
 from tqdm import tqdm
+
+from dataset.emerge.tkgu_rules import (OP_LABEL, OPS, RELABELLED_TO_EXISTS, KgLookup, apply_rules_to_entry,
+                                       exists_of_instance, load_kg_lookups, triple_key)
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
@@ -102,6 +106,76 @@ def generate_short_hash(input_string: str, hash_length: int):
     return short_hash[:hash_length]
 
 
+# ---------------- every TKGU operation must agree with the KG snapshot it refers to ----------------
+# The rules (manuscript §3) live in tkgu_rules.py: triple rule (Exists in T_t; Add / Mint+Add / Infer not in T_t),
+# entity rule (flags fit the op; an entity to mint is NOT in the KG, an existing one is; "in KG" = in a snapshot
+# triple OR in the entity dictionary); Deprecate has no rule. An operation that breaks a rule is dropped, e.g. a merged
+# Wikidata item flagged as emerging (it is already in the KG) or an existing entity missing from the KG. Exception:
+# an Add whose triple is already in T_t is an Exists (a statement created before t whose start-time qualifier falls
+# inside the interval is an `added_edge` in Wikidata terms, but the KG at t already holds the fact); it is relabelled
+# (same 405B prompt `triple_assertion`, so the assessment carries over), unless the instance already has that Exists.
+# The operations of the released v1.0.1 data follow exactly these rules (the release keeps all its instances, also
+# those this step would skip because no operation or only Exists operations are left).
+
+KNOWLEDGE_LISTS = ('emerging_knowledge', 'existing_knowledge', 'matched_triples_entities_to_kg')
+
+
+def snapshot_date_of(parsed_line: Dict) -> str:
+    """'<year>-01-01' of the yearly KG snapshot an instance belongs to; its deltas are weekly intervals starting
+    at the snapshot date (taken from the date strings, so no time zone can shift the year)."""
+    dates = parsed_line['delta_dates'] if 'delta_dates' in parsed_line else parsed_line['interval_dates']
+    start = dates[0]
+    if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', start) or start > f'{start[:4]}-02-05':
+        raise ValueError(f'unexpected delta start {start!r}: deltas are 5 weekly intervals from January 1')
+    return f'{start[:4]}-01-01'
+
+
+def collect_lookup_keys(jsonl_files) -> Dict[str, Tuple[Set[Tuple[str, str, str]], Set[str]]]:
+    """Pass 1: per snapshot date, the (s,p,o) and the entities of every triple an instance may keep (only these are
+    looked up in the KG)."""
+    wanted: Dict[str, Tuple[Set[Tuple[str, str, str]], Set[str]]] = dict()
+    for file_path in jsonl_files:
+        with open(file_path, 'rt', encoding='utf-8') as infile:
+            for line in infile:
+                parsed_line = json.loads(line)
+                date = snapshot_date_of(parsed_line)
+                if date not in wanted:
+                    wanted[date] = (set(), set())
+                triples, entities = wanted[date]
+                for knowledge in KNOWLEDGE_LISTS:
+                    for entry in parsed_line[knowledge]:
+                        key = triple_key(entry['triple'])
+                        triples.add(key)
+                        entities.add(key[0])
+                        entities.add(key[2])
+    return wanted
+
+
+def enforce_kg_rules(tkgu_triples: List[Dict], lookup: KgLookup, decisions: collections.Counter) -> List[Dict]:
+    """Drop every operation of an instance that breaks a rule (an Add already in T_t becomes an Exists); a triple
+    entry left without operations is dropped. Counts (op, action, triple reason, entity reason) into `decisions`."""
+    exists_in_instance = exists_of_instance(tkgu_triples, lookup)
+    kept_triples = list()
+    for entry in tkgu_triples:
+        kept_ops, entry_decisions = apply_rules_to_entry(entry, lookup, exists_in_instance)
+        decisions.update(entry_decisions)
+        if kept_ops:
+            entry['tkgu_operations'] = kept_ops
+            kept_triples.append(entry)
+    return kept_triples
+
+
+def log_kg_rule_decisions(decisions: collections.Counter) -> None:
+    logger.info('KG rules (tkgu_rules.py): operations that broke a rule, by (op, action, triple reason, entity reason):')
+    for op in OPS:
+        for (d_op, action, tr, er), nr in sorted(decisions.items(), key=lambda kv: str(kv[0])):
+            if d_op == op:
+                logger.info(f'  {OP_LABEL[op]:<9} {action:<28} triple: {str(tr):<9} entity: {str(er):<19} {nr:,}')
+    nr_relabelled = sum(nr for (_, action, _, _), nr in decisions.items() if action == RELABELLED_TO_EXISTS)
+    logger.info(f'KG rules: {sum(decisions.values()):,} operations broke a rule, {nr_relabelled:,} of them Adds '
+                f'already in T_t relabelled as Exists, the rest dropped')
+
+
 def rename_assessments(assessments):
     new_assess = list()
     for curr_assess in assessments:
@@ -173,6 +247,17 @@ if __name__ == '__main__':
     tot_failed_assessments = 0
     tot_not_assessed_triples = 0
     all_hashed_ids = set()
+
+    # required: the KG snapshots + entity dictionaries the labels refer to (every operation must agree with them)
+    kg_snapshots_dir = config['kg_snapshots_dir']
+    entity_dicts_dir = config['entity_dicts_dir']
+    all_input_files = [file_path for curr_input_dir in config['input_dirs']
+                       for file_path in Path(os.path.join(base_dir, curr_input_dir)).rglob('*.jsonl')]
+    logger.info(f'pass 1 (KG rules): collecting the triples / entities to look up from {len(all_input_files)} '
+                f'input files')
+    kg_lookups = load_kg_lookups(kg_snapshots_dir, entity_dicts_dir, collect_lookup_keys(all_input_files))
+    kg_rule_decisions = collections.Counter()
+
     for curr_input_dir in config['input_dirs']:
         input_dir = os.path.join(base_dir, curr_input_dir)
 
@@ -205,6 +290,7 @@ if __name__ == '__main__':
                         nr_emerging_knowledge_left = 0
                         nr_emerging_entities_to_kg_left = 0
                         parsed_line['tkgu_triples'] = list()
+                        kg_lookup = kg_lookups[snapshot_date_of(parsed_line)]     # this instance's snapshot
 
                         for curr_triple in parsed_line['emerging_knowledge']:
                             # deep copy
@@ -452,6 +538,12 @@ if __name__ == '__main__':
                             # tot_nr_triples_left += 1
 
                         del parsed_line['matched_triples_entities_to_kg']
+                        # every operation must agree with the KG snapshot (tkgu_rules.py); the triples the rules
+                        # keep are the reference for the prompt-adjustment check below
+                        parsed_line['tkgu_triples'] = enforce_kg_rules(parsed_line['tkgu_triples'], kg_lookup,
+                                                                       kg_rule_decisions)
+                        all_triples_before = {tuple(t['triple']) for t in parsed_line['tkgu_triples']}
+                        set_tkgu_operations = {op for t in parsed_line['tkgu_triples'] for op in t['tkgu_operations']}
                         # tot_nr_entries_left += 1
                         if len(parsed_line['tkgu_triples']) == 0:
                             continue
@@ -591,6 +683,7 @@ if __name__ == '__main__':
                             outfile.write(json.dumps(parsed_line,
                                                      ensure_ascii=False) + '\n')
 
+    log_kg_rule_decisions(kg_rule_decisions)
     logger.info('JOB_FINISHED_BYE_BYE')
 
 ####

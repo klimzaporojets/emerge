@@ -30,6 +30,8 @@ from __future__ import annotations
 import argparse
 from collections import defaultdict
 
+from kg_context.snapshot_io import open_kg_snapshot
+
 
 class KGLookup:
     def __init__(self) -> None:
@@ -51,7 +53,7 @@ class KGLookup:
         kg = cls()
         keep = target_anchors  # None => whole snapshot; else keep triples touching an anchor
         desc = f"KG-LOOKUP scan {_os.path.basename(snapshot_path)}"
-        with open(snapshot_path, "r", encoding="utf-8") as f:
+        with open_kg_snapshot(snapshot_path) as f:  # streams the .gz; never decompress
             for raw in tqdm(f, desc=desc, unit="ln", unit_scale=True, mininterval=1.0):
                 line = raw.rstrip("\n").rstrip("\r")
                 if not line:

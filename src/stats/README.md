@@ -56,7 +56,8 @@ Available evaluation configs produce different pkl variants:
 
 | Config | Description |
 |--------|-------------|
-| `20260324_all_models_with_zs_fixed_with_kg/` | All 13 models, fixed scoring, with KG snapshots (recommended) |
+| `20261023_v1_0_1_reissue/` | Dataset v1.0.1 (re-issued): all 13 models, camera-ready scoring, with KG snapshots (recommended) |
+| `20260324_all_models_with_zs_fixed_with_kg/` | Dataset v1.0.0: all 13 models, fixed scoring, with KG snapshots |
 | `20260324_all_models_with_zs_legacy_with_kg/` | All 13 models, legacy scoring (reproduces paper tables) |
 
 See [`src/evaluation/README.md`](../evaluation/README.md) for the full config list and

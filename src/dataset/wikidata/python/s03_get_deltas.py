@@ -29,7 +29,8 @@ import ctypes
 
 from dataset.wikidata.python.misc.s03_constant import AttrIndexes, QualifIdsToActions
 from dataset.wikidata.python.misc.s03_volatility import obtain_changes_per_entity, save_most_volatile_entities
-from dataset.wikidata.python.misc.wiki_utils import generate_short_hash, load_wikidata_qid_to_label, \
+from dataset.wikidata.python.misc.wiki_utils import generate_short_hash, input_files_fingerprint, \
+    load_wikidata_qid_to_label, \
     load_property_qid_to_label, get_git_commit_hash, load_wiki_page_id_to_wdata_qid_only_parsed
 from dataset.wikipedia.misc.load_wiki_sql_tables import load_wiki_page_id_to_wikidata_qid
 
@@ -508,7 +509,11 @@ def load_into_pyg_dynamically_data(input_triples_path, debug_nr_triples,
                                    wikidata_qid_to_wikipedia_page_id,
                                    config, kb_type, precision,
                                    property_qid_to_label,
+                                   wikidata_qid_to_label: Dict,
                                    triple_to_index: Dict = None):
+    # wikidata_qid_to_label labels the example triple of each newly seen qualifier (qualifiers.jsonl). It used to
+    # be read as a global defined only when this module runs as a script, so importing the loader (e.g. from
+    # s03_get_kg_snapshot) crashed with a NameError at the first qualifier.
     pyg_graph = Data()
 
     heads_in_wikipedia = config['heads_in_wikipedia']
@@ -554,7 +559,14 @@ def load_into_pyg_dynamically_data(input_triples_path, debug_nr_triples,
         curr_file_path = os.path.join(input_triples_path, curr_file)
         with (open(curr_file_path, 'r') as input_file):
             tsv_reader = csv.reader(input_file, delimiter='\t')
+            prev_line_num = 0
             for row in tsv_reader:
+                # one statement = one physical line (s02 sanitises values); a record over several lines means an
+                # unbalanced quote swallowed the lines that follow it -- in 2025 whole id ranges were lost that way
+                if tsv_reader.line_num != prev_line_num + 1:
+                    raise ValueError(f'{curr_file_path}:{prev_line_num + 1}: one record spans '
+                                     f'{tsv_reader.line_num - prev_line_num} lines (unbalanced quote?): {str(row)[:300]}')
+                prev_line_num = tsv_reader.line_num
                 add_triple = True
                 if kb_type == 'wikidata':
                     tail_type = row[3]
@@ -1987,14 +1999,18 @@ if __name__ == '__main__':
     # wikidata_qid_to_label = dict()
     caches_dir = config['caches_dir']
     os.makedirs(caches_dir, exist_ok=True)
-    caches_wikidata_qid_to_label_path = os.path.join(caches_dir, 'wikidata_qid_to_label.pickle')
+    # every cache/pickle name includes its input files' fingerprint: a name keyed on paths alone is silently reused
+    # when a file changes under the same path (this once produced stale released KG snapshots)
+    caches_wikidata_qid_to_label_path = os.path.join(
+        caches_dir, f'wikidata_qid_to_label_{input_files_fingerprint([path_wikidata_labels])}.pickle')
     logger.info('BEGIN invoking load_wikidata_qid_to_label')
     wikidata_qid_to_label: Dict = load_wikidata_qid_to_label(
         path_wikidata_labels, caches_wikidata_qid_to_label_path
     )
     logger.info('END invoking load_wikidata_qid_to_label')
 
-    caches_property_qid_to_label_path = os.path.join(caches_dir, 'property_qid_to_label.pickle')
+    caches_property_qid_to_label_path = os.path.join(
+        caches_dir, f'property_qid_to_label_{input_files_fingerprint([path_property_labels])}.pickle')
     logger.info('BEGIN invoking load_property_qid_to_label')
     property_qid_to_label: Dict = load_property_qid_to_label(
         path_property_labels, caches_property_qid_to_label_path
@@ -2019,26 +2035,33 @@ if __name__ == '__main__':
     free_memory_gb = memory_info.available / (1024 ** 3)  # Convert bytes to gigabytes
     os.makedirs(caches_dir, exist_ok=True)
     #
-    # obtains hashes of path_extracted_history_triples_wpedia and path_extracted_history_triples_wdata
+    # the graph cache is keyed on the histories and the creation-date files (paths AND contents)
+    inputs_hash = input_files_fingerprint([input_triples_path_wdata, input_triples_path_wpedia,
+                                           wpedia_entity_creation_date_path, wdata_entity_creation_date_path])
+    logger.info(f'input files fingerprint: {inputs_hash}')
     if debug_nr_triples == -1:
         cache_path = os.path.join(caches_dir, f'loaded_graph_all_v3_{config["heads_in_wikipedia"]}_'
                                               f'{config["tails_in_wikipedia"]}_'
                                               f'{config["qids_in_both_wdata_and_wpedia_parsed_entities"]}_'
-                                              f'{wpedia_wdata_path_hash}.pt')
+                                              f'{wpedia_wdata_path_hash}_{inputs_hash}.pt')
     else:
         cache_path = os.path.join(caches_dir, f'loaded_graph_v3_{debug_nr_triples}_'
                                               f'{config["heads_in_wikipedia"]}_'
                                               f'{config["tails_in_wikipedia"]}_'
                                               f'{config["qids_in_both_wdata_and_wpedia_parsed_entities"]}_'
-                                              f'{wpedia_wdata_path_hash}.pt')
+                                              f'{wpedia_wdata_path_hash}_{inputs_hash}.pt')
 
     path_wikipedia_wikidata_map = config['path_wikipedia_wikidata_map']
 
-    path_cache_wikipedia_page_id_to_wikidata_qid = os.path.join(caches_dir,
-                                                                'wikipedia_page_id_to_wikidata_qid.pickle')
-
-    path_cache_wdata_and_wpedia_parsed_mapping = os.path.join(caches_dir,
-                                                              'wpedia_wdata_parsed_mapping.pickle')
+    if config['qids_in_both_wdata_and_wpedia_parsed_entities']:
+        mapping_hash = input_files_fingerprint([wpedia_entity_creation_date_path, wdata_entity_creation_date_path])
+        path_cache_wdata_and_wpedia_parsed_mapping = os.path.join(
+            caches_dir, f'wpedia_wdata_parsed_mapping_{mapping_hash}.pickle')
+    else:
+        # only fingerprinted when used (the page_props dump may be absent when the parsed mapping is used)
+        path_cache_wikipedia_page_id_to_wikidata_qid = os.path.join(
+            caches_dir,
+            f'wikipedia_page_id_to_wikidata_qid_{input_files_fingerprint([path_wikipedia_wikidata_map])}.pickle')
 
     if config['qids_in_both_wdata_and_wpedia_parsed_entities']:
         wikipedia_page_id_to_wikidata_qid = load_wiki_page_id_to_wdata_qid_only_parsed(
@@ -2082,6 +2105,7 @@ if __name__ == '__main__':
                                            # args,
                                            kb_type='wikidata',
                                            property_qid_to_label=property_qid_to_label,
+                                           wikidata_qid_to_label=wikidata_qid_to_label,
                                            precision=config['precision_wdata'])
 
         logger.info('extend_with_creation_dates for wikidata')
@@ -2112,6 +2136,7 @@ if __name__ == '__main__':
                                            kb_type='wikipedia',
                                            precision=config['precision_wpedia'],
                                            property_qid_to_label=property_qid_to_label,
+                                           wikidata_qid_to_label=wikidata_qid_to_label,
                                            triple_to_index=triple_to_index)
 
         logger.info('extend_with_creation_dates for wikipedia')

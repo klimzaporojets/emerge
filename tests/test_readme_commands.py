@@ -23,12 +23,20 @@ PLACEHOLDER_MARKERS = (
     "/path/to", "path/to/your", "<", ">", "{year}", "${", "yyyy", "YYYY",
     "<snap", "<year", "<config", "edc-plus-config", "your_", "...",
 )
-# Reference substrings that point at build artifacts / runtime data legitimately absent.
+# LEADING path prefixes of build artifacts / runtime data that are legitimately absent.
+# Matched as a prefix only (see _is_absent_ok): a bare substring test made "data/" match
+# "wikidata/" and silently skipped 14 real scripts/slurm/wikidata + config/dataset/wikidata refs.
 ABSENT_OK = (
     "src/dataset/wikidata/target/",   # Maven build output
     "data/",                          # populated by download_data.sh
     "output/",                        # produced at runtime
 )
+
+
+def _is_absent_ok(token: str) -> bool:
+    """True iff `token` lives under a runtime/build-artifact root (leading-prefix match only)."""
+    t = token[2:] if token.startswith("./") else token
+    return any(t.startswith(a) for a in ABSENT_OK)
 
 PY_MODULE_RE = re.compile(r"-m\s+([A-Za-z_][A-Za-z0-9_.]+)")
 SCRIPT_RE = re.compile(r"(?<![\w./])\.?/?((?:scripts|src)/[A-Za-z0-9_./-]+\.(?:sh|py))")
@@ -78,13 +86,27 @@ def test_found_some_references():
     assert len(_REFS) > 10, f"suspiciously few README references found ({len(_REFS)})"
 
 
+@pytest.mark.parametrize("token,expected", [
+    ("data/evaluation_set/x.py", True),                  # download dir -> legitimately absent
+    ("./output/s04/run.py", True),                       # runtime output
+    ("src/dataset/wikidata/target/app.py", True),        # Maven build output
+    ("scripts/slurm/wikidata/s03_get_kg_snapshot.sh", False),   # 'wikidata/' must NOT match 'data/'
+    ("config/dataset/wikidata/s03_get_kg_snapshot/20250320/config.json", False),
+    ("src/dataset/wikidata/python/s03_get_kg_snapshot.py", False),
+    ("scripts/metadata/foo.py", False),                  # any '*data/' dir is not the data/ root
+])
+def test_absent_ok_is_prefix_not_substring(token, expected):
+    """Regression guard: the runtime-artifact allow-list must not swallow real source paths."""
+    assert _is_absent_ok(token) is expected
+
+
 @pytest.mark.parametrize(
     "md,lineno,kind,token,target",
     _REFS,
     ids=[f"{r[0]}:{r[1]}:{r[3]}" for r in _REFS],
 )
 def test_readme_reference_exists(md, lineno, kind, token, target):
-    if any(token.startswith(a) or a in token for a in ABSENT_OK):
+    if _is_absent_ok(token):
         pytest.skip(f"{token} is a runtime/build artifact (legitimately absent)")
     assert target.exists(), (
         f"{md}:{lineno} references a {kind} that does not exist on disk:\n"

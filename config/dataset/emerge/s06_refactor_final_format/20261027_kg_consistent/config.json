@@ -1,0 +1,16 @@
+{
+  "base_dir": "/path/to/storage/wikipedia-processing/output/experiments/",
+  "hash_length": 10,
+  "input_dirs": [
+    "s05_generate_dataset_with_llm/20250321_v4_llama400b/dataset",
+    "s05_generate_dataset_with_llm/20250414b_v4_llama400b/dataset"
+  ],
+  "output_dir": "s06_refactor_final_format/20261027_kg_consistent/dataset/",
+  "assessor_mappings": {
+    "Llama-8B": "Meta-Llama-3.1-8B"
+  },
+  "_kg_snapshots_dir": "the released KG snapshots the labels refer to (kg_snapshot_<year>-01-01.tsv.gz)",
+  "kg_snapshots_dir": "/path/to/storage/kg_snapshots/",
+  "_entity_dicts_dir": "the released per-snapshot entity dictionaries (<year>-01-01/documents.jsonl.gz); an entity is in the KG if it is in a snapshot triple OR in this dictionary. Every TKGU operation must agree with the KG (src/dataset/emerge/tkgu_rules.py)",
+  "entity_dicts_dir": "/path/to/storage/indices/relik_entity_index/"
+}

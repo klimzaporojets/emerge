@@ -14,6 +14,7 @@ from evaluation.misc.utils import filter_by_assessor_evaluation, add_columns, ma
     make_agg_all, make_metrics_cli_table, model_name_to_latex, load_from_cache
 from evaluation.misc.wiki_eval_result import WikiEvalResult
 from evaluation.orchestrator.evaluation_orchestrator import EvaluationOrchestrator
+from kg_context.snapshot_io import open_kg_snapshot, resolve_kg_snapshot
 from pathlib import Path
 import pickle
 import lz4.frame
@@ -119,16 +120,17 @@ def main():
                 if fname is None:
                     snapshot_to_triples[snap] = triples
                     continue
-                curr_snapshot_path = os.path.join(base, fname)
-                if not os.path.exists(curr_snapshot_path):
+                configured_path = os.path.join(base, fname)
+                curr_snapshot_path = resolve_kg_snapshot(configured_path)  # streams the .gz if present
+                if curr_snapshot_path is None:
                     logger.warning(
-                        f'KG snapshot file not found: {curr_snapshot_path}. '
+                        f'KG snapshot file not found: {configured_path} (nor {configured_path}.gz). '
                         f'Proceeding with empty snapshot for {snap}.'
                     )
                     snapshot_to_triples[snap] = triples
                     continue
-                logger.info(f'loading {fname}')
-                with open(curr_snapshot_path, 'r', encoding='utf-8') as f:
+                logger.info(f'loading {curr_snapshot_path}')
+                with open_kg_snapshot(curr_snapshot_path) as f:
                     for line in tqdm(f):
                         # split only first 3 columns, ignoring labels
                         line = line.strip()

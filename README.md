@@ -28,7 +28,7 @@ pip install -r requirements/core.txt
 ./scripts/download_data.sh
 # Optional — for correct relik-cie scoring in step 3 (to identify Exists vs.
 # Add TKGU operations), also download KG snapshots:
-# ./scripts/download_data.sh --kg     # +22 GB after decompression
+# ./scripts/download_data.sh --kg     # +3.8 GB (kept gzipped; streamed, never decompressed)
 
 # 3. Reproduce paper evaluation (requires 1× GPU)
 ./scripts/run/evaluate.sh
@@ -42,7 +42,7 @@ Notes:
 - **Optional downloads** beyond the default test set:
   - `./scripts/download_data.sh --indices` (+400 MB) — relation indexes used by EDC+ and ReLiK
   - `./scripts/download_data.sh --corpus` (+2.3 GB) — 1.19M-operation corpus used by Part 3 garbage QA + paper §4.3 statistics
-  - `./scripts/download_data.sh --kg` (+22 GB after decompression) — KG snapshots, only needed for correct `relik-cie` scoring (see [Reproducing paper results](#reproducing-paper-results))
+  - `./scripts/download_data.sh --kg` (+3.8 GB, kept gzipped and streamed — never decompressed) — KG snapshots, only needed for correct `relik-cie` scoring (see [Reproducing paper results](#reproducing-paper-results))
 - **Step 3 hardware + time**: see the [Reproducing paper results](#reproducing-paper-results) section for full details (RAM/GPU/runtime, plus what happens if KG snapshots are not present on disk).
 
 ---
@@ -265,7 +265,7 @@ data/
 └── human_annotation/  solved_disagreements.jsonl   (for agreement stats)
 ```
 
-Optional downloads: `--kg` (~22 GB KG snapshots, needed only to score `relik-cie` — without them
+Optional downloads: `--kg` (~3.8 GB gzipped KG snapshots, streamed; needed only to score `relik-cie` — without them
 `evaluate.sh` skips relik-cie and prints a NOTE), `--indices` (relation indexes), `--corpus`
 (1.19M-operation corpus).
 
@@ -286,14 +286,14 @@ dataset) against ground-truth annotations:
 ./scripts/run/evaluate.sh
 ```
 
-This uses the recommended config (all 13 models, correct scoring, with KG snapshots)
+This uses the recommended config for dataset v1.0.1 (all 13 models, camera-ready scoring, with KG snapshots)
 and produces a `wiki_eval_result.pkl` file that the statistics notebooks read.
 
 To use a different config or run manually:
 ```bash
 export PYTHONPATH="$PWD/src"
 python -u -m evaluation.s04_evaluate_predictions \
-    --config_file config/evaluation/s04_evaluate_predictions/20260324_all_models_with_zs_fixed_with_kg/config.json
+    --config_file config/evaluation/s04_evaluate_predictions/20261023_v1_0_1_reissue/config.json
 ```
 
 See [`src/evaluation/README.md`](src/evaluation/README.md) for all available configs

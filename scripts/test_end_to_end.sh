@@ -76,8 +76,7 @@ echo "=== Step 4: Downloading KG snapshots ==="
 bash ./scripts/download_data.sh --kg
 
 # Verify
-echo "Verifying KG snapshots..."
-ls "$DATA_DIR/kg_snapshots/"*.tsv | head -3
+echo "Verifying KG snapshots (kept gzipped; readers stream them)..."
 ls "$DATA_DIR/kg_snapshots/"*.tsv.gz | head -3
 
 # ---- Step 5: Download indices ----

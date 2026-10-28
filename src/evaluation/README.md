@@ -127,7 +127,9 @@ For cached re-runs (`load_results_from_cache: true`), no GPU is needed.
 
 | Config | Scoring mode | KG snapshots | Description |
 |--------|-------------|--------------|-------------|
-| `20260324_all_models_with_zs_fixed_with_kg/` | Fixed (correct) | Yes | **Recommended.** All 13 models including zero-shot, correct scoring |
+| `20261023_v1_0_1_reissue/` | Fixed (correct) | Yes | **Recommended.** Dataset v1.0.1 (re-issued): all 13 models including zero-shot, camera-ready Table 3 (fixed scoring, and an instance without gold triples of an operation is left out of that operation's Executable-R mean) |
+| `20261028_kg_aware_v1_0_1_reissue/` | Fixed (correct) | No (not needed) | The 3 KG-aware rows of Table 3 on dataset v1.0.1, same scoring as the row above; EDC+ GPT-5.1 included as a reference row |
+| `20260324_all_models_with_zs_fixed_with_kg/` | Fixed (correct) | Yes | Dataset v1.0.0: all 13 models including zero-shot, correct scoring |
 | `20260324_all_models_with_zs_legacy_with_kg/` | Legacy | Yes | All 13 models, reproduces original submission numbers |
 
 **Without KG snapshots** (`snapshot_year_to_kg_file: null`, or any of the per-year
@@ -140,7 +142,7 @@ clear the cache, re-run). Open IE models — KGGen, RAKG, REBEL, ReLiK RE, EDC+ 
 all variants — score correctly without KG snapshots, since they don't depend on
 the snapshot for operation classification.
 
-**With KG snapshots** (`20260324_*_with_kg`): loads KG snapshot TSVs into memory (~22 GB
+**With KG snapshots** (`20261023_v1_0_1_reissue`, `20260324_*_with_kg`): streams the gzipped KG snapshots (`.tsv.gz`, never decompressed on disk) into memory (~22 GB
 per snapshot, ~154 GB total for 7 years; the eval currently keeps all 7 in memory
 simultaneously). Required for correct `relik-cie` scoring (both Exists and Add).
 Needs ~180 GB system RAM.

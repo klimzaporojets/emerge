@@ -1,0 +1,23 @@
+{
+  "caches_dir": "/path/to/storage/wikidata-processing/caches/s03_get_kg_snapshot_20261024/",
+  "output_dir_data": "/path/to/storage/wikidata-processing/output/experiments/s03_get_kg_snapshot/20261024_released_kg_snapshots_complete_history/",
+  "path_extracted_history_triples_wdata": "/path/to/storage/wikidata-processing/output/experiments/s02_normalize_history_graph/20261024_safe_tsv/s02c_normalized_filtered_sorted_cat/s02a_generated_history_triples_filtered/",
+  "path_property_labels": "/path/to/storage/wikidata-processing/output/experiments/s03_get_wikidata_labels/20250321/map_property_id_to_label.tsv",
+  "path_wikidata_labels": "/path/to/storage/wikidata-processing/output/experiments/s03_get_wikidata_labels/20250321/wikidata_canonical_names.tsv",
+  "_path_entity_filter_qids": "the entity set of the released snapshots (released with them as kg_snapshots/entity_filter_qids.txt.gz): the entities of the 2025-03-30 build's index, which passed the Wikipedia filter of March 2025",
+  "path_entity_filter_qids": "/path/to/storage/kg_snapshots/entity_filter_qids.txt.gz",
+  "heads_in_wikipedia": true,
+  "tails_in_wikipedia": true,
+  "precision_wdata": "milliseconds",
+  "snapshot_timezone": "Europe/Amsterdam",
+  "output_with_labels": true,
+  "snapshot_timestamps": [
+    "2019-01-01",
+    "2020-01-01",
+    "2021-01-01",
+    "2022-01-01",
+    "2023-01-01",
+    "2024-01-01",
+    "2025-01-01"
+  ]
+}

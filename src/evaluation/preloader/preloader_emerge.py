@@ -11,8 +11,6 @@ from datetime import datetime
 from evaluation.misc.args_evaluation import ArgsEvaluation
 from evaluation.misc.wiki_eval_result import WikiEvalResult
 from evaluation.preloader.preloader import EvaluationPreLoader
-from evaluation.preloader.deprecate_snapshot_filter import (
-    snapshot_triple_set, deprecate_gold_out_of_snapshot)
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +32,6 @@ class EMERGEPreLoader(EvaluationPreLoader):
         # self.arg_llm_names_to_load = None
         self.loaded_dataset = loaded_dataset
         self.snapshot_to_triples = snapshot_to_triples
-        # A2 correction toggle. Explicit optional access (backward-compatible with configs
-        # that predate the flag); default False == originally published behavior, so nothing
-        # changes unless it is explicitly set True.
-        self.exclude_deprecate_not_in_snapshot = (
-            self.config.exclude_deprecate_not_in_snapshot
-            if hasattr(self.config, 'exclude_deprecate_not_in_snapshot') else False)
 
     def preload(self, existing: WikiEvalResult | None) -> WikiEvalResult:
         """Extract predictions and ground truth from the dataset, merging with existing cached results."""
@@ -221,18 +213,6 @@ class EMERGEPreLoader(EvaluationPreLoader):
                         llm_prompt_name = ACTION_CATEGORY_ASSERT
                         if curr_task.lower() == 'd-triples':
                             llm_prompt_name = ACTION_CATEGORY_DEPRECATE
-                            # A2: drop DEPRECATE gold whose FULL triple (s,p,o) is absent from
-                            # T_t (violates the deprecate precondition). Checks the whole triple,
-                            # NOT just the subject (144 vs 46 over all 7 snapshots; Exists control
-                            # 99.3% confirms T_t is triple-complete).
-                            # Skipping here keeps all parallel gold lists index-aligned. No-op when
-                            # the flag is off or the year's snapshot is unavailable.
-                            if self.exclude_deprecate_not_in_snapshot:
-                                if deprecate_gold_out_of_snapshot(
-                                        curr_ground_truth_triple['triple'],
-                                        snapshot_triple_set(self.snapshot_to_triples,
-                                                            str_snapshot_year)):
-                                    continue
                         gt_per_prompt_type[llm_prompt_name]. \
                             add(tuple(curr_ground_truth_triple['triple_labels'] +
                                       curr_ground_truth_triple['triple']))

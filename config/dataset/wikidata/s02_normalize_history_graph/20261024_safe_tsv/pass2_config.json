@@ -1,0 +1,12 @@
+{
+  "input_format": "normalized",
+  "_input_format": "pass 2 reads the pass-1 output after s02_cat_sort.sh (one statement per line, byte-sorted)",
+  "path_wikidata_page": "/path/to/storage/wiki-dump-downloader/experiments/s01_download_wikidata_dump/20250201/pagetable/wikidatawiki-20250201-page.sql.gz",
+  "path_redirects": "/path/to/storage/wiki-dump-downloader/experiments/s01_download_wikidata_dump/20250201/redirecttable/wikidatawiki-20250201-redirect.sql.gz",
+  "caches_dir": "/path/to/storage/wikidata-processing/caches/20261024_safe_tsv/",
+  "output_dir_data": "/path/to/storage/wikidata-processing/output/experiments/s02_normalize_history_graph/20261024_safe_tsv/s02c_normalized_filtered_sorted_cat/",
+  "path_extracted_history_triples": "/path/to/storage/wikidata-processing/output/experiments/s02_normalize_history_graph/20261024_safe_tsv/s02b_cat/",
+  "stability_span": 168,
+  "stability_span_": "in hours, how much time should pass for a link to a particular target page to be considered stable",
+  "timestamp_precision": "milliseconds"
+}

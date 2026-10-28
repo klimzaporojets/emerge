@@ -282,6 +282,23 @@ two QIDs can refer to the same entity. This step:
 
 This step must be run **3 times** in sequence:
 
+> **Reading the step-01 output safely (2026-10-24).** Step 01 writes values without quoting, so a string value that
+> contains a line break splits its statement over several lines, and the next line may start with `"`. The 2025 run
+> read the files with Python's `csv` quoting: such a quote swallowed every following line up to the end of the file,
+> and the statements of whole id ranges were lost without any message. Pass 1 now reads the step-01 output statement
+> by statement without interpreting quotes (`misc/history_tsv.py`) and stops on anything it cannot delimit; values
+> are written without line breaks or TABs, so every output statement is one line; pass 2 and the graph loader stop if
+> a record spans several lines. The config key `input_format` (`raw_extraction` for pass 1, `normalized` for pass 2)
+> is required; the older dated config `20250320/` is kept as a record and does not have it. Each run writes
+> `s02_read_summary_<input_format>.json` (statements read, statements re-assembled from several lines, values with
+> TABs, dropped history fragments). Finished output files are skipped on a restart.
+> Three rare statement kinds of the Feb-2025 dump are counted in that summary instead of stopping the run (none is an
+> item-to-item edge, so none reaches the KG): value type `bad` (Wikidata's marker for an unparsable value), an empty
+> value with an empty type, and an entity value that is not an item, e.g. the entity schema `E250` or the invalid item
+> `Q-1` of May 2013 — skipped, counted per prefix (the 2025 code dropped such rows in a bare `except`). Each file's statistics are also saved in
+> `s02_read_stats_<input_format>/<file>.json`, so a restarted run still reports every file; a file counts as finished
+> only when its output and its statistics both exist.
+
 ### Sub-step 1: First pass — normalize each file independently
 
 Processes each step 01 triples file, resolves redirects, and filters unstable edits.
@@ -289,8 +306,8 @@ Output goes to `s02a_generated_history_triples_filtered/` (one file per input fi
 
 ```
 sbatch scripts/slurm/wikidata/s02_normalize_history_graph.sh \
-  config/dataset/wikidata/s02_normalize_history_graph/20250320/config.json \
-  logs/s02_normalize_history_graph_20250320.log
+  config/dataset/wikidata/s02_normalize_history_graph/20261024_safe_tsv/pass1_config.json \
+  logs/s02_normalize_history_graph_20261024_pass1.log
 ```
 
 ### Sub-step 2: Concatenate and sort
@@ -302,8 +319,10 @@ This requires a machine with enough RAM (~128G).
 sbatch:
 ```
 sbatch scripts/slurm/wikidata/s02_cat_sort.sh \
-  /path/to/storage/wikidata-processing/output/experiments/s02_normalize_history_graph/20250320
+  /path/to/storage/wikidata-processing/output/experiments/s02_normalize_history_graph/20261024_safe_tsv
 ```
+The sort must use byte order (`LC_ALL=C`, set in the script): in a language locale the TAB is ignored when comparing,
+so the rows of one (subject, property) group can interleave with another group's and pass 2 would not merge them.
 
 Or interactively via salloc:
 ```
@@ -312,7 +331,8 @@ salloc -p rome -n 1 --ntasks-per-node 1 --cpus-per-task 1 -t 5:00:00 --mem=128G
 
 Then run:
 ```
-OUTPUT_BASE=/path/to/storage/wikidata-processing/output/experiments/s02_normalize_history_graph/20250320
+OUTPUT_BASE=/path/to/storage/wikidata-processing/output/experiments/s02_normalize_history_graph/20261024_safe_tsv
+export LC_ALL=C
 
 mkdir -p $OUTPUT_BASE/s02b_cat/
 
@@ -331,11 +351,12 @@ the script can detect and merge triples that were split across files due to redi
 
 ```
 sbatch scripts/slurm/wikidata/s02_normalize_history_graph.sh \
-  config/dataset/wikidata/s02_normalize_history_graph/20250320/config.json \
-  logs/s02_normalize_history_graph_20250320_sorted.log
+  config/dataset/wikidata/s02_normalize_history_graph/20261024_safe_tsv/pass2_config.json \
+  logs/s02_normalize_history_graph_20261024_pass2.log
 ```
 
 **Config file** keys:
+- `input_format`: `raw_extraction` (sub-step 1, the step 01 output) or `normalized` (sub-step 3, the sorted pass-1 output)
 - `path_extracted_history_triples`: input triples directory (step 01 output for sub-step 1, `s02b_cat/` for sub-step 3)
 - `path_wikidata_page`, `path_redirects`: Wikidata SQL dumps for redirect resolution
 - `caches_dir`: pickle cache directory
@@ -402,6 +423,41 @@ sbatch (slurm):
 sbatch scripts/slurm/wikidata/s03_get_kg_snapshot.sh \
   config/dataset/wikidata/s03_get_kg_snapshot/20250320/config.json \
   logs/s03_get_kg_snapshot_20250320.log
+```
+
+**Released snapshots (HF `kg_snapshots/`).** The seven snapshots released with the benchmark (v1.0.1) are produced
+with `config/dataset/wikidata/s03_get_kg_snapshot/20261024_released_kg_snapshots_complete_history/config.json`, from
+the history cleaned by s02 with `20261024_safe_tsv`. Only triples whose head and tail are both in the entity list
+`path_entity_filter_qids` are kept (`heads_in_wikipedia` / `tails_in_wikipedia` = true). That list is released as
+`kg_snapshots/entity_filter_qids.txt.gz`: the entities of the 2025-03-30 entity index, i.e. those with an English
+Wikipedia page (the same filter used to build the TKGU labels). With `output_with_labels: true` each line has 6
+columns `subject_qid relation_id object_qid subject_label relation_label object_label` (a missing label is written as
+the id itself). The released file `kg_snapshot_<date>.tsv.gz` is `snapshot_<date>/triples.tsv` gzipped; checksums
+are in `kg_snapshots/SHA256SUMS`. Without `path_entity_filter_qids`, the Wikipedia filter is computed from
+`path_wikipedia_wikidata_map` and `wpedia_entity_creation_date_path` instead. `path_wikidata_labels` gives the
+entity labels. The graph cache name includes a fingerprint (size + mtime) of the input files, so a changed input is
+never served from a stale cache. `snapshot_timezone` (optional, `Europe/Amsterdam` for the released snapshots) fixes the cut-off at 00:00 in
+that zone; without it the machine's local time is used.
+
+The script checks its assumptions while it runs and stops early when one is broken (hard checks): the config
+(strictly increasing dates, precision, time zone, input files present) before the long graph load; the
+Wikipedia filter (non-empty `Q<digits>` keys); no TAB/CR/LF inside any label (it would split a line); the loaded
+graph (shapes, every index in range, timestamps in seconds within 2012..now, removals after additions, relation
+ids `P<digits>`, every entity inside the Wikipedia filter); per snapshot: not empty, every selected triple written,
+at most 10% of its entities without a label, a finished snapshot is never overwritten. Data properties that are not
+strict invariants (duplicate triples, overlapping validity intervals, edges never active, entities/relations
+without a label, a snapshot smaller than the previous one) are logged and stored under `checks` in
+`metadata.json`.
+
+Validate snapshot files (streams the `.gz`, read-only): every line has the 6 TAB fields the readers expect,
+well-formed ids, no empty label, one label per id across all snapshots, no duplicate triple, complete gzip, optional
+checks against `metadata_<date>.json` / `SHA256SUMS`, and an optional comparison with an older set of snapshots. It
+expects the released layout, one `kg_snapshot_<date>.tsv.gz` per date in `--snapshots-dir` (as downloaded with
+`--kg`). To validate your own build, gzip each `snapshot_<date>/triples.tsv` to `kg_snapshot_<date>.tsv.gz` and, for
+`--metadata-dir`, copy each `snapshot_<date>/metadata.json` to `metadata_<date>.json`:
+```
+python scripts/kg_context/validate_kg_snapshots.py --snapshots-dir data/kg_snapshots \
+    --sha256sums data/kg_snapshots/SHA256SUMS [--metadata-dir DIR] [--reference-dir OLD_DIR] [--workers 3]
 ```
 
 
@@ -640,8 +696,29 @@ Generates hash IDs, renames assessments, assigns TKGU operations (Exists, Add, M
 ```bash
 export PYTHONPATH="$PWD/src"
 python -u -m dataset.emerge.s06_refactor_final_format \
-    --config_file config/dataset/emerge/s06_refactor_final_format/20250830/config.json
+    --config_file config/dataset/emerge/s06_refactor_final_format/20261027_kg_consistent/config.json
 ```
+
+(`20250830/config.json` is kept as the record of the original run; it predates the KG rules below and lacks their
+two required keys, so the current s06 stops on it.)
+
+**Every operation must agree with the KG (config `20261027_kg_consistent`).** s06 applies the TKGU-operation rules
+of the manuscript (§3), which it shares with the final check (`src/dataset/emerge/tkgu_rules.py`): an Exists triple
+must be in the snapshot, an Add / Mint+Add / Infer triple must not; the emerging flags must fit the operation (Mint+Add
+at least one emerging entity, Infer exactly one); an entity to mint must not be in the KG and an existing one must be
+in it, where "in the KG" means in a snapshot triple or in the snapshot's entity dictionary. Deprecate has no rule. An
+operation that breaks a rule is dropped (e.g. a merged Wikidata item flagged as a new entity, or an existing entity
+missing from the KG), with one exception: an Add whose triple is already in the snapshot is written as an Exists (a
+statement created before the snapshot date whose start-time qualifier falls in the interval is an addition in
+Wikidata terms, but the KG already holds the fact), unless the instance already has that Exists. Two keys are
+required: `kg_snapshots_dir` (the released snapshots) and `entity_dicts_dir` (layout
+`<dir>/<year>-01-01/documents.jsonl.gz`, as downloaded to `data/indices/relik_entity_index`). Each file is streamed
+once, looking up only the needed triples and entities; the dropped and relabelled operations are logged per operation
+and reason at the end of the run. The operations of the released v1.0.1 data follow exactly these rules. s06 also
+skips an instance left without any operation, or with only Exists operations; the release instead keeps all its
+instances (11 test instances and 598 corpus instances contain only Exists operations, 101 corpus instances none).
+Final check after the last construction step (also for the corpus, via `--eval-set-dir`):
+`PYTHONPATH=src python scripts/kg_context/check_snapshot_consistency.py --snapshot-dir data/kg_snapshots --entity-dicts-dir data/indices/relik_entity_index --eval-set-dir <output> --years 2019 2020 2021 2022 2023 2024 2025`.
 
 ### s07 — reduce duplicates (v6)
 

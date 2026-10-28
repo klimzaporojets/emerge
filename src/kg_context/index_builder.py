@@ -19,7 +19,7 @@ Query side = `kg_context.retriever.MpnetIndexRetriever`.
 
 CLI:
     PYTHONPATH=src python -m kg_context.index_builder \
-        --snapshot data/kg_snapshots/kg_snapshot_2019-01-01.tsv \
+        --snapshot data/kg_snapshots/kg_snapshot_2019-01-01.tsv.gz \
         --out-dir data/kg_context_index/mpnet/2019 --kind both --device cuda
 """
 from __future__ import annotations
@@ -29,6 +29,8 @@ import json
 import os
 
 import numpy as np
+
+from kg_context.snapshot_io import open_kg_snapshot
 
 
 def extract_vocab(
@@ -49,7 +51,7 @@ def extract_vocab(
     relations: dict[str, str | None] = {}
     want_ent = kind in ("entities", "both")
     want_rel = kind in ("relations", "both")
-    with open(snapshot_path, "r", encoding="utf-8") as f:
+    with open_kg_snapshot(snapshot_path) as f:  # streams the .gz; never decompress
         for raw in f:
             line = raw.rstrip("\n").rstrip("\r")
             if not line:

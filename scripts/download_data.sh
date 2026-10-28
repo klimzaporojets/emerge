@@ -3,7 +3,7 @@
 #
 # Usage:
 #   ./scripts/download_data.sh                    # downloads evaluation set + annotations
-#   ./scripts/download_data.sh --kg               # also downloads KG snapshots (~3.7GB compressed)
+#   ./scripts/download_data.sh --kg               # also downloads KG snapshots (~3.8GB compressed)
 #   ./scripts/download_data.sh --indices          # also downloads ReLiK/EDC+ relation indices (~400MB)
 #   ./scripts/download_data.sh --corpus           # also downloads the full 233K-instance corpus (~2.3GB)
 #   ./scripts/download_data.sh --entity-dicts     # also downloads ALL gzipped KG-aware entity dictionaries (~17GB)
@@ -19,7 +19,7 @@ set -euo pipefail
 # ---- Configuration ----
 # Download target defaults to <repo>/data, but can be redirected with the
 # EMERGE_DATA_DIR env var (e.g. to project/scratch storage on an HPC cluster,
-# when the home quota is too small for the ~22 GB KG snapshots):
+# when the home quota is too small for the ~3.8 GB gzipped KG snapshots):
 #   EMERGE_DATA_DIR=/projects/.../data ./scripts/download_data.sh --kg
 HF_REPO="klimzaporojets/emerge-benchmark"
 DATA_DIR="${EMERGE_DATA_DIR:-$(cd "$(dirname "$0")/.." && pwd)/data}"
@@ -46,7 +46,7 @@ for arg in "$@"; do
             echo "Downloads the EMERGE dataset from HuggingFace Hub into data/."
             echo ""
             echo "Options:"
-            echo "  --kg            Download KG snapshots (~3.7GB compressed, ~22GB decompressed)"
+            echo "  --kg            Download KG snapshots (~3.8GB, kept gzipped; readers stream the .tsv.gz)"
             echo "                  Needed for relik-cie Exists operation evaluation"
             echo "  --indices       Download ReLiK/EDC+ RELATION indices (~400MB)"
             echo "                  Needed to re-run ReLiK and EDC+ (canonicalized) benchmarks"
@@ -98,7 +98,7 @@ echo "  - data/human_annotation/ (human annotation data)"
 # Optionally download KG snapshots
 if [ "$DOWNLOAD_KG" = true ]; then
     echo ""
-    echo "Downloading KG snapshots (~3.7GB compressed)..."
+    echo "Downloading KG snapshots (~3.8GB compressed)..."
     python3 -c "
 from huggingface_hub import snapshot_download
 snapshot_download(
@@ -109,22 +109,7 @@ snapshot_download(
 )
 "
     echo "  - data/kg_snapshots/    (7 yearly Wikidata KG snapshots, gzip compressed)"
-
-    # Decompress KG snapshots
-    echo ""
-    echo "Decompressing KG snapshots..."
-    for gz_file in "$DATA_DIR"/kg_snapshots/*.tsv.gz; do
-        if [ -f "$gz_file" ]; then
-            tsv_file="${gz_file%.gz}"
-            if [ -f "$tsv_file" ]; then
-                echo "  Skipping $(basename "$tsv_file") (already decompressed)"
-            else
-                echo "  Decompressing $(basename "$gz_file")..."
-                gunzip -k "$gz_file"
-            fi
-        fi
-    done
-    echo "  KG snapshots decompressed."
+    echo "    Kept gzipped: all readers STREAM the .tsv.gz directly — do NOT decompress (~22GB)."
 fi
 
 # Optionally download ReLiK/EDC+ indices

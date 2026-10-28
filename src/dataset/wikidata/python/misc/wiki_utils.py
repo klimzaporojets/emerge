@@ -5,12 +5,7 @@ import pickle
 import subprocess
 from typing import Set
 
-from torchgen.packaged.autograd.context import with_native_function_with_differentiability_info_and_key
-
-from utils import wiki_logger
-
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-                    datefmt='%m/%d/%Y %H:%M:%S', level=wiki_logger.logger_level)
+# logging format/level are configured once in dataset/wikidata/python/__init__.py (LOG_LEVEL, default INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -144,6 +139,19 @@ def generate_short_hash(input_string: str, hash_length: int):
     short_hash = base64.urlsafe_b64encode(hash_bytes).decode('utf-8').rstrip('=')
     # Return the first 8 characters for a shorter hash
     return short_hash[:hash_length]
+
+
+def input_files_fingerprint(paths):
+    """Short hash of (path, size, mtime) of every input file; a directory contributes each file inside it.
+    Used in cache names: a cache keyed on input paths alone is silently reused when a file changes under the same
+    path (this once produced stale released KG snapshots)."""
+    parts = []
+    for path in paths:
+        files = sorted(os.path.join(path, f) for f in os.listdir(path)) if os.path.isdir(path) else [path]
+        for curr_file in files:
+            stat = os.stat(curr_file)
+            parts.append(f'{curr_file}:{stat.st_size}:{stat.st_mtime_ns}')
+    return generate_short_hash('|'.join(parts), hash_length=8)
 
 # Example usage
 # input_str = "Hello, World!"

@@ -20,10 +20,7 @@ from typing import List, Dict
 
 # from requests.adapters import HTTPAdapter
 
-from utils import wiki_logger
-
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-                    datefmt='%m/%d/%Y %H:%M:%S', level=wiki_logger.logger_level)
+# logging format/level are configured once in dataset/wikidata/python/__init__.py (LOG_LEVEL, default INFO)
 logger = logging.getLogger(__name__)
 
 

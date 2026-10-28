@@ -46,6 +46,12 @@ public class ReaderJSONStream implements Runnable {
         BZ2
     }
 
+    // The output is TAB-separated without quoting: a value must not contain the separators, otherwise its statement
+    // splits over several lines (the 2025 cleaning step then lost the statements of whole id ranges).
+    static String sanitizeValue(String value) {
+        return value.replace('\r', ' ').replace('\n', ' ').replace('\t', ' ');
+    }
+
     public ReaderJSONStream(String pathToInputFile, BlockingQueue<JSONSnapshot> linkedBlockingQueue,
                             AtomicLong nrProcessedEntities,
                             String outputPathTriples,
@@ -232,7 +238,7 @@ public class ReaderJSONStream implements Runnable {
                                     ArrayList<long[]> kgDoubleActions = kgDoubleEntry.getValue();
                                     KGDouble kgDoubleInt = kgDoubleEntry.getKey();
                                     String tripleRelation = kgDoubleInt.getPropertyId();
-                                    String tripleObject = kgDoubleInt.getObjectQid();
+                                    String tripleObject = sanitizeValue(kgDoubleInt.getObjectQid());
                                     String type = kgDoubleInt.getType();
                                     StringBuilder stringTimestamps = new StringBuilder();
                                     for (long[] currAction : kgDoubleActions) {
@@ -311,7 +317,7 @@ public class ReaderJSONStream implements Runnable {
                 ArrayList<long[]> kgDoubleActions = kgDoubleEntry.getValue();
                 KGDouble kgDoubleInt = kgDoubleEntry.getKey();
                 String tripleRelation = kgDoubleInt.getPropertyId();
-                String tripleObject = kgDoubleInt.getObjectQid();
+                String tripleObject = sanitizeValue(kgDoubleInt.getObjectQid());
                 String type = kgDoubleInt.getType();
                 StringBuilder stringTimestamps = new StringBuilder();
                 for (long[] currAction : kgDoubleActions) {

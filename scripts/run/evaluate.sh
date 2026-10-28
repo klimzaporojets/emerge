@@ -15,7 +15,10 @@
 #   ./scripts/run/evaluate.sh [config_file]
 #
 # Examples:
-#   # Recommended — all 13 models, correct scoring, with KG snapshots:
+#   # Recommended: dataset v1.0.1 (re-issued), all 13 models, camera-ready scoring, with KG snapshots:
+#   ./scripts/run/evaluate.sh config/evaluation/s04_evaluate_predictions/20261023_v1_0_1_reissue/config.json
+#
+#   # Fixed scoring of dataset v1.0.0:
 #   ./scripts/run/evaluate.sh config/evaluation/s04_evaluate_predictions/20260324_all_models_with_zs_fixed_with_kg/config.json
 #
 #   # Legacy scoring (reproduces the original submission numbers):
@@ -27,7 +30,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
-CONFIG_FILE="${1:-config/evaluation/s04_evaluate_predictions/20260324_all_models_with_zs_fixed_with_kg/config.json}"
+CONFIG_FILE="${1:-config/evaluation/s04_evaluate_predictions/20261023_v1_0_1_reissue/config.json}"
 
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Error: config file not found: $CONFIG_FILE"

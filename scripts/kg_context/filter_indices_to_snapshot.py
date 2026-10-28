@@ -34,7 +34,7 @@ USAGE (run once; CPU). Preview reductions cheaply first with --dry-run (no embed
     --entity-native-base    /.../indexes-e5-small-v2-wikipedia-matryoshka \
     --entity-aida-base      /.../relik-retriever-e5-base-v2-aida-blink-encoder \
     --snapshot-dir          /.../kg_snapshots \
-    --snapshot-template     'kg_snapshot_{year}-01-01.tsv' \
+    --snapshot-template     'kg_snapshot_{year}-01-01.tsv.gz' \
     --out-base              /.../s08_snapshot_scoped \
     --years 2019 2020 2021 2022 2023 2024 2025 \
     [--pools relation entity_native entity_aida] [--mmap] [--dry-run] \
@@ -46,6 +46,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import gzip
 import json
 import os
 import shutil
@@ -84,14 +85,27 @@ def gold_violation(warn_only: bool, msg: str) -> None:
 
 # --------------------------------------------------------------------------- snapshots
 
+def resolve_snapshot(path: str) -> str | None:
+    """On-disk snapshot to read: the streamed `.gz` if present, else a plain `.tsv`, else None.
+    (Same rule as src/kg_context/snapshot_io.py; inlined to keep this script standalone.)"""
+    gz_path = path if path.endswith(".gz") else path + ".gz"
+    if os.path.exists(gz_path):
+        return gz_path
+    if not path.endswith(".gz") and os.path.exists(path):
+        return path
+    return None
+
+
 def scan_snapshot(path: str, want_qids: bool, want_pids: bool) -> tuple[set, set]:
-    """One pass over a snapshot TSV (head_qid<TAB>pid<TAB>tail_qid<TAB>...). Returns (qids, pids)."""
+    """One pass over a snapshot TSV (head_qid<TAB>pid<TAB>tail_qid<TAB>...). Returns (qids, pids).
+    Streams a `.gz` directly (never decompress)."""
     qids: set[str] = set()
     pids: set[str] = set()
     n = 0
     sz = os.path.getsize(path)
-    log(f"    loading snapshot {os.path.basename(path)} ({human(sz)}) ...")
-    with open(path, encoding="utf-8") as f:
+    log(f"    loading snapshot {os.path.basename(path)} ({human(sz)} on disk) ...")
+    opener = gzip.open(path, "rt", encoding="utf-8") if path.endswith(".gz") else open(path, encoding="utf-8")
+    with opener as f:
         for line in tqdm(f, desc=f"    scan {os.path.basename(path)}", unit="edge", unit_scale=True):
             parts = line.split("\t", 3)
             if len(parts) < 3:
@@ -295,9 +309,10 @@ def process_year(year: str, ctx: dict) -> tuple[list[dict], dict]:
     """All work for one year (snapshot scan + optional gold checks + each pool). Self-contained and
     picklable-arg'd so it can run in a worker process (year-level parallelism). Returns (stats, audit_delta)."""
     log(f"\n===================== YEAR {year} =====================")
-    snap = os.path.join(ctx["snapshot_dir"], ctx["snapshot_template"].format(year=year))
-    if not os.path.isfile(snap):
-        raise SystemExit(f"FATAL: snapshot missing: {snap}")
+    configured = os.path.join(ctx["snapshot_dir"], ctx["snapshot_template"].format(year=year))
+    snap = resolve_snapshot(configured)
+    if snap is None:
+        raise SystemExit(f"FATAL: snapshot missing: {configured} (nor {configured}.gz)")
     want_qids, want_pids, warn_only = ctx["want_qids"], ctx["want_pids"], ctx["warn_only"]
     qids, pids = scan_snapshot(snap, want_qids, want_pids)
     audit = {"exist_checked": 0, "exist_miss": 0, "mint_checked": 0, "mint_present": 0,
@@ -347,7 +362,7 @@ def main() -> None:
     ap.add_argument("--entity-native-base")
     ap.add_argument("--entity-aida-base")
     ap.add_argument("--snapshot-dir", required=True)
-    ap.add_argument("--snapshot-template", default="kg_snapshot_{year}-01-01.tsv")
+    ap.add_argument("--snapshot-template", default="kg_snapshot_{year}-01-01.tsv.gz")
     ap.add_argument("--out-base", required=True)
     ap.add_argument("--years", nargs="+", required=True)
     ap.add_argument("--pools", nargs="+", choices=POOLS, default=list(POOLS))

@@ -17,8 +17,18 @@ if [[ -z "$OUTPUT_BASE" ]]; then
 fi
 
 set -euo pipefail
+# byte order: keeps every (subject, property) group contiguous, which the second s02 pass relies on (in a language
+# locale the TAB is ignored when comparing, so e.g. the P107 and P1070 lines of one subject can interleave)
+export LC_ALL=C
 
 mkdir -p $OUTPUT_BASE/s02b_cat/
+
+# pass 1 writes each output as <file>.partial and renames it when done: a leftover .partial is an unfinished file
+if compgen -G "$OUTPUT_BASE/s02a_generated_history_triples_filtered/*.partial" > /dev/null; then
+  echo "$(date) - ERROR: unfinished pass-1 files (*.partial) in $OUTPUT_BASE/s02a_generated_history_triples_filtered/;"
+  echo "  re-run pass 1 (it resumes) before sorting"
+  exit 1
+fi
 
 echo "$(date) - concatenating files..."
 cat $OUTPUT_BASE/s02a_generated_history_triples_filtered/* > $OUTPUT_BASE/s02b_cat/merged_file.csv
