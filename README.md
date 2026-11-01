@@ -387,6 +387,24 @@ Scored with the same metrics as Table 3 — Completeness (C), G-BERTScore-R (G-R
 computable (open-IE methods produce no canonical IDs; MINT+ADD / INFER mint entities with no ID
 in `G_t`); `—` = operation not supported by that method.
 
+**Camera-ready numbers** (dataset v1.0.1 as re-issued on 2026-10-28; identical to Table 3 of the
+camera-ready paper). Deprecate E-R counts only the text-supported gold Deprecates whose triple is in
+the snapshot `G_t` (1,487 of the 1,628 in the test set), since a deprecation can only be executed on a
+triple of `G_t`; the others (an entity minted after `t`, or a statement entered into Wikidata only
+after `t`) are scored by C and G-R only. The E-R column is computed by
+[`scripts/stats/executable_recall_deprecate_in_snapshot.py`](scripts/stats/executable_recall_deprecate_in_snapshot.py)
+(see below).
+
+| Method | Exists (C / G-R / E-R) | Add (C / G-R / E-R) | Mint+Add (C / G-R / E-R) | Infer (C / G-R / E-R) | Deprecate (C / G-R / E-R) |
+|---|---|---|---|---|---|
+| KG-aware (oracle) | **60.2** / 49.9 / **50.0** | **46.6** / 42.9 / **39.4** | **43.2** / 47.6 / – | **50.3** / **75.9** / – | **37.4** / 35.8 / **37.6** |
+| KG-aware (kg_rag@32) | 13.9 / 27.3 / 19.3 | 15.6 / 19.0 / 12.7 | 30.6 / 49.7 / – | 11.3 / 52.1 / – | 12.3 / 12.7 / 12.5 |
+| KG-aware (oracle+kg_rag) | 52.5 / 49.0 / 42.9 | 27.3 / 27.0 / 18.1 | 39.3 / 53.1 / – | 45.0 / 75.5 / – | 18.7 / 18.4 / 18.5 |
+| EDC+ GPT-5.1 (no KG) | 25.8 / **66.5** / – | 39.9 / **77.3** / – | 35.6 / **77.3** / – | 21.9 / 72.4 / – | 34.8 / **53.2** / – |
+| ReLiK cIE | 15.2 / 31.0 / 16.2 | 18.2 / 57.5 / 15.3 | — | — | — |
+
+Earlier numbers (rebuttal, before the v1.0.1 re-issue; superseded by the table above, kept for reference):
+
 | Method | Exists (C / G-R / E-R) | Add (C / G-R / E-R) | Mint+Add (C / G-R / E-R) | Infer (C / G-R / E-R) | Deprecate (C / G-R / E-R) |
 |---|---|---|---|---|---|
 | KG-aware (oracle) | **60.4** / 50.3 / **50.3** | **46.5** / 42.9 / **39.6** | **43.2** / 47.6 / – | **50.3** / **75.9** / – | **38.6** / 35.8 / **37.4** |
@@ -396,14 +414,29 @@ in `G_t`); `—` = operation not supported by that method.
 | ReLiK cIE | 15.2 / 30.7 / 16.2 | 18.1 / 57.5 / 15.0 | — | — | — |
 
 With `oracle` context, the same GPT-5.1 gives the strongest near-exact updates (C) on every operation
-and — by canonicalizing against `G_t` — uniquely produces executable updates (E-R) where the
-entities already exist in the KG (EXISTS, ADD, DEPRECATE); DEPRECATE is executed by no other baseline.
+and — by canonicalizing against `G_t` — the highest executable updates (E-R) where the entities
+already exist in the KG (EXISTS, ADD, DEPRECATE). ReLiK cIE is the only other method with E-R (EXISTS
+and ADD); DEPRECATE is executed by no other baseline.
 The gap between `oracle` and `kg_rag@32` shows KG retrieval is a major bottleneck, and `oracle` not
 saturating shows a residual reasoning gap even with correct context. EDC+'s higher G-R reflects that
 metric rewarding semantic similarity rather than the exact KG form.
 
 **To reproduce these numbers**, see [`src/kg_context/README.md`](src/kg_context/README.md) — the
 AUGMENT → COMPOSE → PREDICT → SCORE runbook (configs, conda envs, commands, and a cheap smoke test).
+
+The **E-R column of the camera-ready table** (and of Table 3) is computed from the two s04 results
+files (configs `config/evaluation/s04_evaluate_predictions/20261023_v1_0_1_reissue/config.json` and
+`config/evaluation/s04_evaluate_predictions/20261028_kg_aware_v1_0_1_reissue/config.json`), the test
+set and the KG snapshots (`./scripts/download_data.sh --kg`); no GPU needed:
+
+```bash
+PYTHONPATH="$PWD/src" python scripts/stats/executable_recall_deprecate_in_snapshot.py \
+    --config config/evaluation/executable_recall_deprecate_in_snapshot/20261030_v1_0_1_reissue/config.json
+```
+
+It re-scores the s04 `cie_exact_match` rows with the same scorer, restricts the Deprecate gold to
+triples in `G_t`, and stops unless it reproduces both the s04 values (all supported gold) and the
+camera-ready column.
 
 ## Evaluating new benchmark predictions
 

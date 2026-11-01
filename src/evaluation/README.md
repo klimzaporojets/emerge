@@ -50,6 +50,15 @@ Enable in config:
 
 Results are shown in a separate table after the main similarity-based table.
 
+**Deprecate E-R (camera-ready Table 3).** The KG-aware baseline (`kg-aware/gpt-5.1/*`) also produces QID
+triples, including for DEPRECATE. A deprecation can only be executed on a triple of the snapshot `G_t`,
+so the camera-ready Table 3 computes DEPRECATE E-R only over the supported gold Deprecates whose triple is
+in `G_t` of the instance's year (1,487 of the 1,628 in the test set). `cie_exact_match` itself scores all
+supported gold; the restriction is applied afterwards, from the s04 results files, by
+`scripts/stats/executable_recall_deprecate_in_snapshot.py` (config
+`config/evaluation/executable_recall_deprecate_in_snapshot/20261030_v1_0_1_reissue/config.json`; usage in
+the main README, section "KG-aware baseline").
+
 ---
 
 ## How caching works

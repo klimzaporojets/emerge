@@ -1,0 +1,36 @@
+{
+  "_help": "Executable-R (E-R) column of the camera-ready Table 3 (dataset v1.0.1, re-issued). Deprecate E-R is computed only over the text-supported gold Deprecate triples whose (s,p,o) is in the KG snapshot T_t of the instance's year: a deprecation can only be executed as an edit on G_t. The other supported Deprecates (an entity minted after t, or a statement entered into Wikidata only after t) stay in the dataset and are scored by Completeness and G-BERTScore-R; E-R cannot evaluate them by definition. Exists / Add E-R are unchanged. Inputs = the two s04 results files (run s04_evaluate_predictions with the configs 20261023_v1_0_1_reissue and 20261028_kg_aware_v1_0_1_reissue first), the test set and the KG snapshots (./scripts/download_data.sh --kg). Script: scripts/stats/executable_recall_deprecate_in_snapshot.py.",
+  "results_kg_aware": "./output/s04_evaluate_predictions/20261028_kg_aware_v1_0_1_reissue/wiki_eval_result.pkl",
+  "results_ie": "./output/s04_evaluate_predictions/20261023_v1_0_1_reissue/wiki_eval_result.pkl",
+  "test_set": "./data/evaluation_set",
+  "snapshots_dir": "./data/kg_snapshots",
+  "output_dir": "./output/stats/executable_recall_deprecate_in_snapshot/20261030_v1_0_1_reissue",
+  "deprecate_assessor": "Meta-Llama-3.1-405B_prompt_v1",
+  "kg_aware_models": {
+    "kg-aware/gpt-5.1/kg_rag_32": "KGA-RAG",
+    "kg-aware/gpt-5.1/oracle": "KGA-O",
+    "kg-aware/gpt-5.1/oracle_kg_rag": "KGA-O+RAG"
+  },
+  "ie_models": {
+    "relik-cie": "ReLiK cIE"
+  },
+  "_expected_help": "expected_s04_er = E-R as the s04 cie_exact_match metric reports it (all supported gold); the script stops unless its re-score reproduces these. expected_table3_er = the camera-ready Table 3 E-R column; the script stops unless the restricted values match (tolerance 0.05). expected_counts = supported test Deprecates and their split.",
+  "expected_s04_er": {
+    "KGA-RAG": {"x-triples": 19.3, "e-triples": 12.7, "d-triples": 11.2},
+    "KGA-O": {"x-triples": 50.0, "e-triples": 39.4, "d-triples": 35.8},
+    "KGA-O+RAG": {"x-triples": 42.9, "e-triples": 18.1, "d-triples": 17.3},
+    "ReLiK cIE": {"x-triples": 16.2, "e-triples": 15.3}
+  },
+  "expected_table3_er": {
+    "KGA-RAG": {"x-triples": 19.3, "e-triples": 12.7, "d-triples": 12.5},
+    "KGA-O": {"x-triples": 50.0, "e-triples": 39.4, "d-triples": 37.6},
+    "KGA-O+RAG": {"x-triples": 42.9, "e-triples": 18.1, "d-triples": 18.5},
+    "ReLiK cIE": {"x-triples": 16.2, "e-triples": 15.3}
+  },
+  "expected_counts": {
+    "supported_deprecates": 1628,
+    "in_snapshot": 1487,
+    "not_in_snapshot_minted_entity": 43,
+    "not_in_snapshot_existing_entities": 98
+  }
+}
