@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/emerge_logo_white.png">
+    <img src="assets/emerge_logo.png" alt="EMERGE" width="100%">
+  </picture>
+</p>
+
 # EMERGE: A Benchmark for Updating Knowledge Graphs with Emerging Textual Knowledge
 
 **[Paper](https://arxiv.org/abs/2507.03617)** | **[Dataset](https://huggingface.co/datasets/klimzaporojets/emerge-benchmark)** | **[Code](https://github.com/klimzaporojets/emerge)**
